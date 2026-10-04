@@ -10,7 +10,6 @@ import {
   Printer,
   Trash2,
   LayoutDashboard,
-  Network,
   type LucideIcon,
 } from "lucide-react";
 import type { Dict } from "@/lib/i18n/dict";
@@ -134,13 +133,9 @@ export const navGroups: NavGroup[] = [
         screen: "DataCleanupScreen",
         icon: Trash2,
       },
-      {
-        titleKey: "sitemap",
-        href: "/sitemap",
-        uc: "—",
-        screen: "SiteMapScreen",
-        icon: Network,
-      },
     ],
   },
 ];
+
+// หน้า /sitemap ไม่อยู่ในเมนู เพราะเป็นเอกสารประกอบรายงาน (rubric ข้อ 29) ไม่ใช่งานที่ Admin ทำประจำ
+// เข้าถึงได้ทาง URL ตรงๆ เพื่อ capture ภาพไปใส่รายงาน
