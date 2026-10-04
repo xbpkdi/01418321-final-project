@@ -3,11 +3,13 @@
 // อิง shadcn block sidebar-16 → components/site-header.tsx
 // ส่วนท้ายแถบใช้วางปุ่มสลับภาษา (ตำแหน่งเดียวกับที่ block วาง SearchForm)
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftIcon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -46,7 +48,18 @@ export function SiteHeader() {
         />
         <Breadcrumb>
           <BreadcrumbList>
-            {group && (
+            {/* ชั้นแรกกดกลับหน้าภาพรวมได้ เพราะคนคุ้นกับการกด breadcrumb เพื่อย้อนกลับ */}
+            {pathname !== "/dashboard" && (
+              <>
+                <BreadcrumbItem className="hidden sm:block">
+                  <BreadcrumbLink asChild>
+                    <Link href="/dashboard">{t.nav.items.dashboard}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:block" />
+              </>
+            )}
+            {group && pathname !== "/dashboard" && (
               <>
                 <BreadcrumbItem className="hidden sm:block">
                   {t.nav.groups[group.labelKey]}
