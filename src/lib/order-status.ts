@@ -1,0 +1,57 @@
+/**
+ * ค่าสถานะทั้งหมดของ Order — ลอกมาจาก 00-use-case-descriptions.md ตรงตัว
+ * ห้ามเพิ่ม/แก้คำเอง ถ้าต้องเปลี่ยนให้แก้ที่ use case description ก่อน
+ */
+export const ORDER_STATUSES = [
+  "รอตรวจสอบคำสั่งซื้อ",
+  "รอจับคู่กฎ SKU",
+  "รอตรวจสอบสต๊อก",
+  "รอ Admin ตัดสินใจสั่งซื้อ",
+  "รอสั่งซื้อจาก Supplier",
+  "สั่งซื้อแล้ว",
+  "รอจัดรูปแบบใบปะสินค้า",
+  "รอพิมพ์ใบปะสินค้า",
+  "พิมพ์ใบปะสินค้าแล้ว",
+  "รอส่งคำสั่งซื้อ",
+  "รอส่งมอบ",
+  "อยู่ระหว่างจัดส่ง",
+  "จัดส่งสำเร็จ",
+  "รอยกเลิก Order",
+  "ยกเลิกแล้ว",
+  "รอดำเนินการด้วยตนเอง",
+  "รอดำเนินการพิเศษ",
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+/** กลุ่มสีของ badge ตาม ui-design-brief.md ข้อ 4 */
+export type StatusTone =
+  | "waiting"
+  | "progress"
+  | "success"
+  | "attention"
+  | "cancelled";
+
+const TONE_BY_STATUS: Record<OrderStatus, StatusTone> = {
+  รอตรวจสอบคำสั่งซื้อ: "waiting",
+  "รอจับคู่กฎ SKU": "waiting",
+  รอตรวจสอบสต๊อก: "waiting",
+  "รอ Admin ตัดสินใจสั่งซื้อ": "waiting",
+  "รอสั่งซื้อจาก Supplier": "waiting",
+  รอจัดรูปแบบใบปะสินค้า: "waiting",
+  รอพิมพ์ใบปะสินค้า: "waiting",
+  รอส่งคำสั่งซื้อ: "waiting",
+  รอส่งมอบ: "waiting",
+  สั่งซื้อแล้ว: "progress",
+  พิมพ์ใบปะสินค้าแล้ว: "progress",
+  อยู่ระหว่างจัดส่ง: "progress",
+  จัดส่งสำเร็จ: "success",
+  รอดำเนินการด้วยตนเอง: "attention",
+  รอดำเนินการพิเศษ: "attention",
+  "รอยกเลิก Order": "cancelled",
+  ยกเลิกแล้ว: "cancelled",
+};
+
+export function toneOf(status: OrderStatus): StatusTone {
+  return TONE_BY_STATUS[status];
+}
