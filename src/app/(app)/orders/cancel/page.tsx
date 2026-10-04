@@ -8,7 +8,8 @@ import { useState } from "react";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -127,21 +128,17 @@ export default function CancelOrderScreen() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-2">
-            <Label htmlFor="cancel_reason">เหตุผลการยกเลิก</Label>
-            <textarea
+          <Field data-invalid={error ? true : undefined}>
+            <FieldLabel htmlFor="cancel_reason">เหตุผลการยกเลิก</FieldLabel>
+            <Textarea
               id="cancel_reason"
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
+              aria-invalid={error !== null}
             />
-            {error && (
-              <p role="alert" className="text-destructive text-sm">
-                {error}
-              </p>
-            )}
-          </div>
+            {error && <FieldError>{error}</FieldError>}
+          </Field>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setTarget(null)}>

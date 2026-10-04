@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toneOf, type OrderStatus, type StatusTone } from "@/lib/order-status";
 
@@ -17,14 +18,11 @@ export function StatusBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        TONE_CLASS[toneOf(status)],
-        className,
-      )}
+    <Badge
+      variant="secondary"
+      className={cn(TONE_CLASS[toneOf(status)], className)}
     >
       {status}
-    </span>
+    </Badge>
   );
 }

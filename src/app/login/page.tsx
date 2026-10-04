@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes, Loader2 } from "lucide-react";
+import { Boxes } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { MOCK_USERS } from "@/mock/users";
 
 // รูปแบบอีเมลตามที่ UC 1A ขั้นตอนที่ 3 กำหนดไว้ตรงตัว
@@ -130,7 +131,7 @@ export default function LoginScreen() {
 
                 <Field>
                   <Button type="submit" disabled={submitting}>
-                    {submitting && <Loader2 className="animate-spin" />}
+                    {submitting && <Spinner />}
                     เข้าสู่ระบบ
                   </Button>
                 </Field>

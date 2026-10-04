@@ -4,10 +4,10 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
-import Link from "next/link";
-import { Printer, FileText } from "lucide-react";
+import { Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { DataTable } from "@/components/shared/data-table";
+import { printedColumns, queueColumns } from "./columns";
 import { MOCK_ORDERS } from "@/mock/orders";
 import { LABEL_TEMPLATES } from "@/mock/delivery";
 import type { Order } from "@/types/order";
@@ -72,6 +73,9 @@ export default function LabelPrintScreen() {
     queue.forEach(print);
   }
 
+  const queueCols = queueColumns(print);
+  const printedCols = printedColumns(setReprint);
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -85,96 +89,40 @@ export default function LabelPrintScreen() {
         }
       />
 
-      <section className="rounded-lg border">
-        <h2 className="border-b px-5 py-3.5 font-semibold">รอพิมพ์</h2>
-        {queue.length === 0 ? (
-          <EmptyState
-            icon={Printer}
-            title="ไม่มี Order ที่รอพิมพ์"
-            hint="Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่"
+      <Card>
+        <CardHeader>
+          <CardTitle>รอพิมพ์</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            data={queue}
+            columns={queueCols}
+            getRowId={(row) => row.order_id}
+            emptyState={
+              <EmptyState
+                icon={Printer}
+                title="ไม่มี Order ที่รอพิมพ์"
+                hint="Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่"
+              />
+            }
           />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="hidden px-5 py-2.5 text-left font-medium md:table-cell">
-                  ที่อยู่จัดส่ง
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">วิธีจัดส่ง</th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {queue.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="text-muted-foreground hidden max-w-[32ch] truncate px-5 py-3 md:table-cell">
-                    {order.shipping_address}
-                  </td>
-                  <td className="text-muted-foreground px-5 py-3">
-                    {order.shipping_method}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={order.order_status} />
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => print(order)}
-                    >
-                      พิมพ์ใบปะสินค้า
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+        </CardContent>
+      </Card>
 
       {printed.length > 0 && (
-        <section className="rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">พิมพ์แล้ว</h2>
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {printed.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={order.order_status} />
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="ghost" asChild>
-                        <Link href={`/reports/label/${order.order_id}`}>
-                          <FileText />
-                          ดูใบปะสินค้า
-                        </Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setReprint(order)}
-                      >
-                        พิมพ์ซ้ำ
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>พิมพ์แล้ว</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              data={printed}
+              columns={printedCols}
+              getRowId={(row) => row.order_id}
+              showColumnToggle={false}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* ทางเลือก #3: พิมพ์ซ้ำต้องให้ Admin ยืนยันก่อน แล้วบันทึก Log */}

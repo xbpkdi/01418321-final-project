@@ -9,7 +9,12 @@ import { Calculator, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -101,20 +106,22 @@ export default function CostCalculatorScreen() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="self-start rounded-lg border">
-          <div className="grid gap-2 border-b p-5">
-            <Label htmlFor="sku">เลือกสินค้า</Label>
-            <Select value={sku} onValueChange={selectSku}>
-              <SelectTrigger id="sku" className="w-full">
-                <SelectValue placeholder="เลือก SKU ที่ต้องการคำนวณ" />
-              </SelectTrigger>
-              <SelectContent>
-                {MOCK_PRODUCTS.map((p) => (
-                  <SelectItem key={p.sku} value={p.sku}>
-                    {p.sku} · {p.product_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="border-b p-5">
+            <Field>
+              <FieldLabel htmlFor="sku">เลือกสินค้า</FieldLabel>
+              <Select value={sku} onValueChange={selectSku}>
+                <SelectTrigger id="sku" className="w-full">
+                  <SelectValue placeholder="เลือก SKU ที่ต้องการคำนวณ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOCK_PRODUCTS.map((p) => (
+                    <SelectItem key={p.sku} value={p.sku}>
+                      {p.sku} · {p.product_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
           {!form ? (
@@ -125,10 +132,10 @@ export default function CostCalculatorScreen() {
             />
           ) : (
             <div className="grid gap-5 p-5">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <FieldGroup className="grid gap-4 sm:grid-cols-2">
                 {FIELDS.map((field) => (
-                  <div key={field.key} className="grid gap-2">
-                    <Label htmlFor={field.key}>{field.label}</Label>
+                  <Field key={field.key}>
+                    <FieldLabel htmlFor={field.key}>{field.label}</FieldLabel>
                     <Input
                       id={field.key}
                       type="number"
@@ -143,13 +150,11 @@ export default function CostCalculatorScreen() {
                       }
                     />
                     {field.hint && (
-                      <p className="text-muted-foreground text-xs">
-                        {field.hint}
-                      </p>
+                      <FieldDescription>{field.hint}</FieldDescription>
                     )}
-                  </div>
+                  </Field>
                 ))}
-              </div>
+              </FieldGroup>
 
               {error && (
                 <p

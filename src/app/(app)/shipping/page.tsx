@@ -6,10 +6,11 @@
 import { useState } from "react";
 import { Truck } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { DataTable } from "@/components/shared/data-table";
+import { shippedColumns, waitingColumns } from "./columns";
 import { MOCK_ORDERS } from "@/mock/orders";
 import { findTracking } from "@/mock/delivery";
 import type { Order } from "@/types/order";
@@ -62,6 +63,14 @@ export default function ShipmentScreen() {
     });
   }
 
+  const waitingCols = waitingColumns(dispatch);
+  const shippedCols = shippedColumns(
+    (order) =>
+      tracking[order.order_id] ??
+      findTracking(order.order_id)?.tracking_number ??
+      "ยังไม่มีหมายเลข",
+  );
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -69,88 +78,40 @@ export default function ShipmentScreen() {
         description="ส่งมอบพัสดุที่พิมพ์ใบปะสินค้าแล้วให้ผู้ให้บริการขนส่ง และติดตามสถานะจนถึงมือลูกค้า"
       />
 
-      <section className="rounded-lg border">
-        <h2 className="border-b px-5 py-3.5 font-semibold">รอส่งมอบ</h2>
-        {waiting.length === 0 ? (
-          <EmptyState
-            icon={Truck}
-            title="ไม่มีพัสดุรอส่งมอบ"
-            hint="Order ที่พิมพ์ใบปะสินค้าแล้วจะเข้ามารอส่งมอบที่นี่"
+      <Card>
+        <CardHeader>
+          <CardTitle>รอส่งมอบ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            data={waiting}
+            columns={waitingCols}
+            getRowId={(row) => row.order_id}
+            emptyState={
+              <EmptyState
+                icon={Truck}
+                title="ไม่มีพัสดุรอส่งมอบ"
+                hint="Order ที่พิมพ์ใบปะสินค้าแล้วจะเข้ามารอส่งมอบที่นี่"
+              />
+            }
           />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="hidden px-5 py-2.5 text-left font-medium md:table-cell">
-                  สินค้า
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">วิธีจัดส่ง</th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {waiting.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="text-muted-foreground hidden max-w-[28ch] truncate px-5 py-3 md:table-cell">
-                    {order.product_name}
-                  </td>
-                  <td className="text-muted-foreground px-5 py-3">
-                    {order.shipping_method}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={order.order_status} />
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => dispatch(order)}
-                    >
-                      ส่งมอบให้ Delivery
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+        </CardContent>
+      </Card>
 
       {shipped.length > 0 && (
-        <section className="rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">
-            ส่งมอบแล้ว
-          </h2>
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="px-5 py-2.5 text-left font-medium">
-                  หมายเลขติดตามพัสดุ
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {shipped.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="text-muted-foreground px-5 py-3">
-                    {tracking[order.order_id] ??
-                      findTracking(order.order_id)?.tracking_number ??
-                      "ยังไม่มีหมายเลข"}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={order.order_status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>ส่งมอบแล้ว</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              data={shipped}
+              columns={shippedCols}
+              getRowId={(row) => row.order_id}
+              showColumnToggle={false}
+            />
+          </CardContent>
+        </Card>
       )}
     </div>
   );

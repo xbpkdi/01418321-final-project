@@ -8,7 +8,23 @@ import { Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -129,83 +145,88 @@ export default function DataCleanupScreen() {
         </TabsList>
 
         <TabsContent value="range" className="mt-4">
-          <section className="grid gap-5 rounded-lg border p-5">
-            <fieldset className="grid gap-3">
-              <legend className="text-sm font-medium">ประเภทข้อมูล</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {DATA_TYPES.map((t) => (
-                  <label
-                    key={t.key}
-                    className="hover:bg-muted flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={types.includes(t.key)}
-                      onChange={() => toggleType(t.key)}
-                      className="size-4"
-                    />
-                    {t.label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+          <Card>
+            <CardContent>
+              <FieldGroup>
+                <FieldSet>
+                  <FieldLegend variant="label">ประเภทข้อมูล</FieldLegend>
+                  <FieldGroup className="grid gap-2 sm:grid-cols-2">
+                    {DATA_TYPES.map((t) => (
+                      <FieldLabel key={t.key} htmlFor={`data_type_${t.key}`}>
+                        <Field orientation="horizontal">
+                          <Checkbox
+                            id={`data_type_${t.key}`}
+                            checked={types.includes(t.key)}
+                            onCheckedChange={() => toggleType(t.key)}
+                          />
+                          <FieldTitle>{t.label}</FieldTitle>
+                        </Field>
+                      </FieldLabel>
+                    ))}
+                  </FieldGroup>
+                </FieldSet>
 
-            <div className="grid gap-2">
-              <Label htmlFor="cutoff_date">ลบข้อมูลที่เก่ากว่าวันที่</Label>
-              <Input
-                id="cutoff_date"
-                type="date"
-                value={cutoff}
-                onChange={(e) => {
-                  setCutoff(e.target.value);
-                  setError(null);
-                }}
-              />
-              <p className="text-muted-foreground text-xs">
-                ลบได้เฉพาะข้อมูลที่เก่ากว่า 12 เดือนขึ้นไป
-              </p>
-            </div>
+                <Field>
+                  <FieldLabel htmlFor="cutoff_date">
+                    ลบข้อมูลที่เก่ากว่าวันที่
+                  </FieldLabel>
+                  <Input
+                    id="cutoff_date"
+                    type="date"
+                    value={cutoff}
+                    onChange={(e) => {
+                      setCutoff(e.target.value);
+                      setError(null);
+                    }}
+                  />
+                  <FieldDescription>
+                    ลบได้เฉพาะข้อมูลที่เก่ากว่า 12 เดือนขึ้นไป
+                  </FieldDescription>
+                </Field>
 
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={reviewRange}>
-                <Trash2 />
-                ยืนยันการลบข้อมูล
-              </Button>
-              <Button variant="outline">
-                <Download />
-                ดาวน์โหลดไฟล์สำรองก่อนลบ
-              </Button>
-            </div>
-          </section>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={reviewRange}>
+                    <Trash2 />
+                    ยืนยันการลบข้อมูล
+                  </Button>
+                  <Button variant="outline">
+                    <Download />
+                    ดาวน์โหลดไฟล์สำรองก่อนลบ
+                  </Button>
+                </div>
+              </FieldGroup>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="closed" className="mt-4">
-          <section className="grid gap-5 rounded-lg border p-5">
-            <div>
-              <p className="text-sm">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-normal">
                 ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด
                 โดยไม่ต้องกำหนดช่วงวันที่
-              </p>
-              <p className="text-muted-foreground mt-1 text-sm">
+              </CardTitle>
+              <CardDescription>
                 พบ Order ที่ปิดแล้ว{" "}
                 <span data-numeric className="text-foreground font-medium">
                   {CLOSED_ORDERS.length}
                 </span>{" "}
                 รายการ พร้อมใบปะสินค้าที่เกี่ยวข้อง
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={reviewClosed}>
-                <Trash2 />
-                ยืนยันการลบข้อมูล
-              </Button>
-              <Button variant="outline">
-                <Download />
-                ดาวน์โหลดไฟล์สำรองก่อนลบ
-              </Button>
-            </div>
-          </section>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={reviewClosed}>
+                  <Trash2 />
+                  ยืนยันการลบข้อมูล
+                </Button>
+                <Button variant="outline">
+                  <Download />
+                  ดาวน์โหลดไฟล์สำรองก่อนลบ
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

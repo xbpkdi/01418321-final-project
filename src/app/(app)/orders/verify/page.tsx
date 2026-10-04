@@ -8,7 +8,7 @@ import { ClipboardCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -197,8 +197,8 @@ export default function OrderVerifyScreen() {
               </dl>
 
               {/* UC อนุญาตให้แก้ไขฟิลด์ที่กำหนดก่อนยืนยัน เช่น shipping_method */}
-              <div className="grid gap-2 border-t pt-4">
-                <Label htmlFor="shipping_method">วิธีจัดส่ง</Label>
+              <Field className="border-t pt-4">
+                <FieldLabel htmlFor="shipping_method">วิธีจัดส่ง</FieldLabel>
                 <Select
                   value={shippingMethod}
                   onValueChange={setShippingMethod}
@@ -214,10 +214,10 @@ export default function OrderVerifyScreen() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-muted-foreground text-xs">
+                <FieldDescription>
                   ระบบบันทึกผู้แก้ไขและเวลาที่แก้ไขไว้ทุกครั้ง
-                </p>
-              </div>
+                </FieldDescription>
+              </Field>
 
               {error && (
                 <p
