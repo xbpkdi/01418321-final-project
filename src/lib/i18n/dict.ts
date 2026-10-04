@@ -17,6 +17,9 @@ const th = {
     switchLanguage: "สลับภาษา",
     langLabel: "ไทย",
     admin: "Admin",
+    logout: "ออกจากระบบ",
+    logoutConfirm: "ต้องการออกจากระบบหรือไม่",
+    logoutDone: "ออกจากระบบแล้ว",
   },
 
   nav: {
@@ -415,6 +418,9 @@ const en: typeof th = {
     switchLanguage: "Switch language",
     langLabel: "EN",
     admin: "Admin",
+    logout: "Log out",
+    logoutConfirm: "Do you want to log out?",
+    logoutDone: "Logged out",
   },
 
   nav: {

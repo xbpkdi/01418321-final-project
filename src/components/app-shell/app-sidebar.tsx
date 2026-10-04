@@ -5,8 +5,15 @@
 // ผู้ใช้อยู่ที่ SidebarFooter ตามตำแหน่งที่ block วาง NavUser ไว้
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Boxes, UserRound } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Boxes, ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +32,14 @@ import { useT } from "@/lib/i18n/context";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useT();
+
+  // UC 1A: ล้าง session แล้ว redirect กลับหน้า Login (ไม่แตะฐานข้อมูล)
+  function logout() {
+    toast.success(t.app.logoutDone);
+    router.push("/login");
+  }
 
   return (
     <Sidebar
@@ -85,17 +99,33 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
-              <div className="bg-muted text-muted-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <UserRound className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{t.app.admin}</span>
-                <span className="text-muted-foreground truncate text-xs">
-                  admin@colorado.jp
-                </span>
-              </div>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  <div className="bg-muted text-muted-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                    <UserRound className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{t.app.admin}</span>
+                    <span className="text-muted-foreground truncate text-xs">
+                      admin@colorado.jp
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="w-(--radix-dropdown-menu-trigger-width)"
+              >
+                {/* UC 1A ขั้นตอนที่ 4 — ยกเลิก session แล้วกลับไปหน้า Login */}
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut />
+                  {t.app.logout}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
