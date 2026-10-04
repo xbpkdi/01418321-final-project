@@ -21,9 +21,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { navGroups } from "@/lib/nav";
+import { useT } from "@/lib/i18n/context";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <Sidebar
@@ -40,10 +42,10 @@ export function AppSidebar() {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    RSL Fulfillment Hub
+                    {t.app.name}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
-                    Colorado Co., Ltd.
+                    {t.app.company}
                   </span>
                 </div>
               </Link>
@@ -54,8 +56,10 @@ export function AppSidebar() {
 
       <SidebarContent>
         {navGroups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroup key={group.labelKey}>
+            <SidebarGroupLabel>
+              {t.nav.groups[group.labelKey]}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
@@ -63,11 +67,11 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === item.href}
-                      tooltip={item.title}
+                      tooltip={t.nav.items[item.titleKey]}
                     >
                       <Link href={item.href}>
                         <item.icon />
-                        <span>{item.title}</span>
+                        <span>{t.nav.items[item.titleKey]}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -86,7 +90,7 @@ export function AppSidebar() {
                 <UserRound className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">Admin</span>
+                <span className="truncate font-medium">{t.app.admin}</span>
                 <span className="text-muted-foreground truncate text-xs">
                   admin@colorado.jp
                 </span>

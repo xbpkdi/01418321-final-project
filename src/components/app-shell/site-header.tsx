@@ -17,10 +17,12 @@ import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { LanguageToggle } from "./language-toggle";
 import { navGroups } from "@/lib/nav";
+import { useT } from "@/lib/i18n/context";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const pathname = usePathname();
+  const t = useT();
   const group = navGroups.find((g) =>
     g.items.some((item) => item.href === pathname),
   );
@@ -36,7 +38,7 @@ export function SiteHeader() {
           onClick={toggleSidebar}
         >
           <PanelLeftIcon />
-          <span className="sr-only">สลับการแสดงเมนู</span>
+          <span className="sr-only">{t.app.toggleMenu}</span>
         </Button>
         <Separator
           orientation="vertical"
@@ -47,14 +49,14 @@ export function SiteHeader() {
             {group && (
               <>
                 <BreadcrumbItem className="hidden sm:block">
-                  {group.label}
+                  {t.nav.groups[group.labelKey]}
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden sm:block" />
               </>
             )}
             <BreadcrumbItem>
               <BreadcrumbPage>
-                {current?.title ?? "RSL Fulfillment Hub"}
+                {current ? t.nav.items[current.titleKey] : t.app.name}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>

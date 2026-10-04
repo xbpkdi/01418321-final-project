@@ -1,6 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useT } from "@/lib/i18n/context";
 import {
   ChartContainer,
   ChartTooltip,
@@ -8,15 +9,18 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
-const config = {
-  count: { label: "จำนวน Order", color: "var(--primary)" },
-} satisfies ChartConfig;
+
 
 export function OrderVolumeChart({
   data,
 }: {
   data: { date: string; count: number }[];
 }) {
+  const t = useT();
+  const config = {
+    count: { label: t.dashboard.chartSeries, color: "var(--primary)" },
+  } satisfies ChartConfig;
+
   return (
     <ChartContainer config={config} className="h-44 w-full">
       <BarChart data={data} margin={{ left: -16, right: 8, top: 4 }}>

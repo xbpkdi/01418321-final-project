@@ -1,3 +1,5 @@
+"use client";
+
 // StockCheckScreen — UC 3S ตรวจสอบของสินค้าใน stock + RSL
 // ข้อความและเกณฑ์ทั้งหมดมาจาก 00-use-case-descriptions.md
 

@@ -13,9 +13,14 @@ import {
   Network,
   type LucideIcon,
 } from "lucide-react";
+import type { Dict } from "@/lib/i18n/dict";
+
+type GroupKey = keyof Dict["nav"]["groups"];
+type ItemKey = keyof Dict["nav"]["items"];
 
 export type NavItem = {
-  title: string;
+  /** key ของข้อความ ไม่เก็บข้อความตรงๆ เพื่อให้สลับภาษาได้ */
+  titleKey: ItemKey;
   href: string;
   uc: string;
   screen: string;
@@ -23,17 +28,17 @@ export type NavItem = {
 };
 
 export type NavGroup = {
-  label: string;
+  labelKey: GroupKey;
   items: NavItem[];
 };
 
 /** โครงเมนูตาม ui-design-brief.md ข้อ 9.2 — ใช้ร่วมกันระหว่าง Sidebar กับหน้า Site map (rubric ข้อ 29) */
 export const navGroups: NavGroup[] = [
   {
-    label: "หน้าหลัก",
+    labelKey: "main",
     items: [
       {
-        title: "ภาพรวมระบบ",
+        titleKey: "dashboard",
         href: "/dashboard",
         uc: "—",
         screen: "DashboardScreen",
@@ -42,24 +47,24 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "คำสั่งซื้อ",
+    labelKey: "orders",
     items: [
       {
-        title: "ตรวจสอบคำสั่งซื้อ",
+        titleKey: "verify",
         href: "/orders/verify",
         uc: "2A",
         screen: "OrderVerifyScreen",
         icon: ClipboardCheck,
       },
       {
-        title: "จับคู่ Order กับ RSL",
+        titleKey: "rslMatch",
         href: "/orders/rsl-match",
         uc: "1S",
         screen: "RslMatchScreen",
         icon: Link2,
       },
       {
-        title: "ยกเลิก Order",
+        titleKey: "cancel",
         href: "/orders/cancel",
         uc: "7A",
         screen: "CancelOrderScreen",
@@ -68,31 +73,31 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "สินค้าและสต๊อก",
+    labelKey: "products",
     items: [
       {
-        title: "ตั้งกฎ SKU / ข้อมูลสินค้า",
+        titleKey: "products",
         href: "/products",
         uc: "3A",
         screen: "ProductScreen",
         icon: Package,
       },
       {
-        title: "ตรวจสอบสต๊อก",
+        titleKey: "stock",
         href: "/products/stock",
         uc: "3S",
         screen: "StockCheckScreen",
         icon: Boxes,
       },
       {
-        title: "คำนวณต้นทุน",
+        titleKey: "cost",
         href: "/products/cost",
         uc: "4S",
         screen: "CostCalculatorScreen",
         icon: Calculator,
       },
       {
-        title: "ตัดสินใจสั่งซื้อเพิ่ม",
+        titleKey: "reorder",
         href: "/products/reorder",
         uc: "5A+6A",
         screen: "ReorderDecisionScreen",
@@ -101,17 +106,17 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "จัดส่ง",
+    labelKey: "shipping",
     items: [
       {
-        title: "จัดส่งสินค้าให้ลูกค้า",
+        titleKey: "shipping",
         href: "/shipping",
         uc: "8A",
         screen: "ShipmentScreen",
         icon: Truck,
       },
       {
-        title: "พิมพ์ใบปะสินค้า",
+        titleKey: "label",
         href: "/shipping/label",
         uc: "9A",
         screen: "LabelPrintScreen",
@@ -120,17 +125,17 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "ระบบ",
+    labelKey: "system",
     items: [
       {
-        title: "ลบข้อมูลเก่า",
+        titleKey: "cleanup",
         href: "/system/cleanup",
         uc: "10A",
         screen: "DataCleanupScreen",
         icon: Trash2,
       },
       {
-        title: "ผังโครงสร้างหน้าจอ",
+        titleKey: "sitemap",
         href: "/sitemap",
         uc: "—",
         screen: "SiteMapScreen",

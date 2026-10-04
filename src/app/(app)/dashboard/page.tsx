@@ -1,3 +1,5 @@
+"use client";
+
 // DashboardScreen — หน้ารวมหลัง login (UC 1A Post-Condition)
 // โครงหน้าอิง shadcn block dashboard-01: section cards → chart → data table
 // เนื้อหายึดตาม biz-requirement ข้อ 12: ออเดอร์รอพิมพ์ label, สต๊อกต่ำกว่าเกณฑ์,
@@ -27,6 +29,7 @@ import {
 } from "@/mock/orders";
 import { MOCK_STOCK } from "@/mock/products";
 import type { OrderStatus } from "@/lib/order-status";
+import { useT } from "@/lib/i18n/context";
 
 const WATCHED: { status: OrderStatus; href: string }[] = [
   { status: "รอตรวจสอบคำสั่งซื้อ", href: "/orders/verify" },
@@ -43,6 +46,7 @@ const timeFormatter = new Intl.DateTimeFormat("th-TH", {
 });
 
 export default function DashboardScreen() {
+  const t = useT();
   const counts = WATCHED.map((item) => ({
     ...item,
     count: MOCK_ORDERS.filter((o) => o.order_status === item.status).length,
@@ -56,14 +60,14 @@ export default function DashboardScreen() {
     <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
       <div className="flex flex-wrap items-start justify-between gap-4 px-4 lg:px-6">
         <div>
-          <h1 className="text-2xl font-semibold">ภาพรวมระบบ</h1>
+          <h1 className="text-2xl font-semibold">{t.dashboard.title}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            สรุปงานที่ค้างอยู่และสถานะการเชื่อมต่อช่องทางขาย
+            {t.dashboard.description}
           </p>
         </div>
         <Button>
           <DownloadCloud />
-          นำเข้า Order
+          {t.dashboard.importOrders}
         </Button>
       </div>
 
@@ -73,8 +77,9 @@ export default function DashboardScreen() {
             role="alert"
             className="border-status-attention/30 bg-status-attention-bg text-status-attention rounded-lg border px-4 py-3 text-sm"
           >
-            ไม่สามารถเชื่อมต่อกับ {failed.map((c) => c.channel).join(", ")} ได้
-            กรุณาตรวจสอบการตั้งค่า
+            {t.dashboard.connectionFailed(
+              failed.map((c) => c.channel).join(", "),
+            )}
           </div>
         </div>
       )}
@@ -98,7 +103,7 @@ export default function DashboardScreen() {
                 href={item.href}
                 className="text-muted-foreground hover:text-foreground group inline-flex items-center gap-1 text-xs"
               >
-                ดูรายการ
+                {t.dashboard.viewList}
                 <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </CardFooter>
@@ -109,13 +114,11 @@ export default function DashboardScreen() {
       <div className="grid items-start gap-4 px-4 lg:grid-cols-[2fr_1fr] lg:px-6">
         <Card>
           <CardHeader>
-            <CardTitle>Order ล่าสุด</CardTitle>
-            <CardDescription>
-              รายการที่เพิ่งเข้าระบบและสถานะปัจจุบัน
-            </CardDescription>
+            <CardTitle>{t.dashboard.recentOrders}</CardTitle>
+            <CardDescription>{t.dashboard.recentOrdersHint}</CardDescription>
             <CardAction>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/orders/verify">ดูทั้งหมด</Link>
+                <Link href="/orders/verify">{t.dashboard.viewAll}</Link>
               </Button>
             </CardAction>
           </CardHeader>
@@ -127,7 +130,7 @@ export default function DashboardScreen() {
         <div className="grid content-start gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>การเชื่อมต่อช่องทางขาย</CardTitle>
+              <CardTitle>{t.dashboard.connections}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               {MOCK_CONNECTIONS.map((c) => (
@@ -138,7 +141,9 @@ export default function DashboardScreen() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{c.channel}</p>
                     <p className="text-muted-foreground text-xs">
-                      ซิงก์ล่าสุด {timeFormatter.format(new Date(c.last_sync))}
+                      {t.dashboard.lastSync(
+                        timeFormatter.format(new Date(c.last_sync)),
+                      )}
                     </p>
                   </div>
                   <Badge
@@ -149,7 +154,7 @@ export default function DashboardScreen() {
                         : "bg-status-cancelled-bg text-status-cancelled"
                     }
                   >
-                    {c.connected ? "เชื่อมต่อแล้ว" : "เชื่อมต่อไม่ได้"}
+                    {c.connected ? t.dashboard.connected : t.dashboard.disconnected}
                   </Badge>
                 </div>
               ))}
@@ -158,15 +163,13 @@ export default function DashboardScreen() {
 
           <Card>
             <CardHeader>
-              <CardTitle>สต๊อกต่ำกว่าเกณฑ์</CardTitle>
-              <CardDescription>
-                SKU ที่ยอดรวมคลังบริษัทกับ RSL ถึงเกณฑ์เติมแล้ว
-              </CardDescription>
+              <CardTitle>{t.dashboard.lowStock}</CardTitle>
+              <CardDescription>{t.dashboard.lowStockHint}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {lowStock.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  ไม่มี SKU ที่ต่ำกว่าเกณฑ์
+                  {t.dashboard.noLowStock}
                 </p>
               ) : (
                 lowStock.map((s) => (
@@ -192,14 +195,14 @@ export default function DashboardScreen() {
                 href="/products/stock"
                 className="text-muted-foreground hover:text-foreground text-xs"
               >
-                ดูสต๊อกทั้งหมด
+                {t.dashboard.viewAllStock}
               </Link>
             </CardFooter>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Order ที่นำเข้า 7 วันล่าสุด</CardTitle>
+              <CardTitle>{t.dashboard.weeklyVolume}</CardTitle>
             </CardHeader>
             <CardContent>
               <OrderVolumeChart data={MOCK_DAILY_VOLUME} />

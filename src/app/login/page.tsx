@@ -19,6 +19,7 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_USERS } from "@/mock/users";
 
 // รูปแบบอีเมลตามที่ UC 1A ขั้นตอนที่ 3 กำหนดไว้ตรงตัว
@@ -26,6 +27,7 @@ const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
 
 export default function LoginScreen() {
   const router = useRouter();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,13 +39,13 @@ export default function LoginScreen() {
 
     // 1. ตรวจสอบค่าที่กรอกมา
     if (!email.trim() || !password.trim()) {
-      setError("ข้อมูลที่กรอกมาไม่ครบ");
+      setError(t.login.errIncomplete);
       return;
     }
 
     // 2. ตรวจสอบรูปแบบอีเมล
     if (!EMAIL_PATTERN.test(email.trim())) {
-      setError("รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง");
+      setError(t.login.errEmailFormat);
       return;
     }
 
@@ -53,21 +55,19 @@ export default function LoginScreen() {
       const user = MOCK_USERS.find((u) => u.user_email === email.trim());
 
       if (user && user.fail_attempts >= 5) {
-        setError(
-          "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
-        );
+        setError(t.login.errTooManyAttempts);
         setSubmitting(false);
         return;
       }
 
       // ไม่ระบุว่าผิดที่ฟิลด์ใด เพื่อความปลอดภัย
       if (!user || user.user_password !== password) {
-        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        setError(t.login.errWrongCredentials);
         setSubmitting(false);
         return;
       }
 
-      toast.success("เข้าสู่ระบบสำเร็จ");
+      toast.success(t.login.okLogin);
       router.push("/dashboard");
     }, 600);
   }
@@ -79,21 +79,19 @@ export default function LoginScreen() {
           <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
             <Boxes className="size-4" />
           </div>
-          RSL Fulfillment Hub
+          {t.app.name}
         </div>
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">เข้าสู่ระบบ</CardTitle>
-            <CardDescription>
-              ใช้บัญชีผู้ดูแลที่ลงทะเบียนไว้กับระบบ
-            </CardDescription>
+            <CardTitle className="text-xl">{t.login.title}</CardTitle>
+            <CardDescription>{t.login.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} noValidate>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="user_email">อีเมล</FieldLabel>
+                  <FieldLabel htmlFor="user_email">{t.login.email}</FieldLabel>
                   <Input
                     id="user_email"
                     name="user_email"
@@ -107,7 +105,7 @@ export default function LoginScreen() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="user_password">รหัสผ่าน</FieldLabel>
+                  <FieldLabel htmlFor="user_password">{t.login.password}</FieldLabel>
                   <Input
                     id="user_password"
                     name="user_password"
@@ -132,7 +130,7 @@ export default function LoginScreen() {
                 <Field>
                   <Button type="submit" disabled={submitting}>
                     {submitting && <Spinner />}
-                    เข้าสู่ระบบ
+                    {t.login.submit}
                   </Button>
                 </Field>
               </FieldGroup>
@@ -141,7 +139,7 @@ export default function LoginScreen() {
         </Card>
 
         <FieldDescription className="text-center">
-          Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น
+          {t.login.footer}
         </FieldDescription>
       </div>
     </div>

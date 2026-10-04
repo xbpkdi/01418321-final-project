@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useT } from "@/lib/i18n/context";
 import {
   Table,
   TableBody,
@@ -94,6 +95,7 @@ export function DataTable<T extends object>({
     [],
   );
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const t = useT();
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize,
@@ -124,7 +126,7 @@ export function DataTable<T extends object>({
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Columns3Icon data-icon="inline-start" />
-                  คอลัมน์
+                  {t.table.columns}
                   <ChevronDownIcon data-icon="inline-end" />
                 </Button>
               </DropdownMenuTrigger>
@@ -195,7 +197,7 @@ export function DataTable<T extends object>({
                 <TableCell colSpan={columns.length} className="p-0">
                   {emptyState ?? (
                     <div className="text-muted-foreground h-24 text-center leading-24">
-                      ไม่พบข้อมูล
+                      {t.common.notFound}
                     </div>
                   )}
                 </TableCell>
@@ -208,12 +210,12 @@ export function DataTable<T extends object>({
       {showPagination && (
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-            ทั้งหมด {table.getFilteredRowModel().rows.length} รายการ
+            {t.table.totalRows(table.getFilteredRowModel().rows.length)}
           </div>
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                แถวต่อหน้า
+                {t.table.rowsPerPage}
               </Label>
               <Select
                 value={`${table.state.pagination!.pageSize}`}
@@ -234,8 +236,10 @@ export function DataTable<T extends object>({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              หน้า {table.state.pagination!.pageIndex + 1} จาก{" "}
-              {table.getPageCount()}
+              {t.table.pageOf(
+                table.state.pagination!.pageIndex + 1,
+                table.getPageCount(),
+              )}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
               <Button
@@ -244,7 +248,7 @@ export function DataTable<T extends object>({
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">ไปหน้าแรก</span>
+                <span className="sr-only">{t.table.firstPage}</span>
                 <ChevronsLeftIcon />
               </Button>
               <Button
@@ -253,7 +257,7 @@ export function DataTable<T extends object>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <span className="sr-only">หน้าก่อนหน้า</span>
+                <span className="sr-only">{t.table.prevPage}</span>
                 <ChevronLeftIcon />
               </Button>
               <Button
@@ -262,7 +266,7 @@ export function DataTable<T extends object>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">หน้าถัดไป</span>
+                <span className="sr-only">{t.table.nextPage}</span>
                 <ChevronRightIcon />
               </Button>
               <Button
@@ -271,7 +275,7 @@ export function DataTable<T extends object>({
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
-                <span className="sr-only">ไปหน้าสุดท้าย</span>
+                <span className="sr-only">{t.table.lastPage}</span>
                 <ChevronsRightIcon />
               </Button>
             </div>
