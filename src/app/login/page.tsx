@@ -64,8 +64,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="grid min-h-[100dvh] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <section className="bg-primary text-primary-foreground flex flex-col justify-between gap-10 px-8 py-10 lg:px-14 lg:py-14">
+    <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-none">
+      {/* บนมือถือย่อเหลือแถบแบรนด์ เพื่อให้ฟอร์มอยู่ในจอแรกโดยไม่ต้องเลื่อน */}
+      <section className="bg-primary text-primary-foreground flex flex-col justify-between gap-10 px-6 py-5 lg:px-14 lg:py-14">
         <div className="flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-lg bg-white/15">
             <Boxes className="size-5" />
@@ -73,9 +74,10 @@ export default function LoginScreen() {
           <span className="text-lg font-semibold">RSL Fulfillment Hub</span>
         </div>
 
-        <div className="max-w-md">
-          <h1 className="text-2xl leading-snug font-semibold lg:text-3xl">
-            จัดการคำสั่งซื้อจากมาร์เก็ตเพลสญี่ปุ่น
+        <div className="hidden max-w-lg lg:block">
+          {/* ขึ้นบรรทัดเอง เพราะเบราว์เซอร์ตัดบรรทัดภาษาไทยกลางคำได้ */}
+          <h1 className="text-3xl leading-snug font-semibold">
+            จัดการออเดอร์จากทุกช่องทางขาย
             <br />
             ไว้ที่เดียว
           </h1>
@@ -85,7 +87,7 @@ export default function LoginScreen() {
           </p>
         </div>
 
-        <p className="text-xs text-white/50">
+        <p className="hidden text-xs text-white/50 lg:block">
           Colorado Co., Ltd. · Rakuten Ichiba · Yahoo! Auctions · Amazon
         </p>
       </section>
