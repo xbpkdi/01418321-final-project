@@ -150,8 +150,30 @@
   html {
     @apply font-sans;
   }
+
+  /* ส่วนที่เบราว์เซอร์วาดเองก็ต้องเป็นสีของระบบ ไม่ใช่ค่า default */
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 18%, transparent);
+    color: var(--foreground);
+  }
+  :root {
+    caret-color: var(--primary);
+    accent-color: var(--primary);
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  /* ตัวเลขต้องกว้างเท่ากันทุกหลัก เพื่อให้สแกนตารางได้ */
+  table,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
+/* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 /* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 @media print {
   .no-print {
