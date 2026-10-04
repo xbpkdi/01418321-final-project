@@ -4,6 +4,7 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ type MatchState = {
 const UNMATCHED: OrderStatus[] = ["รอจับคู่กฎ SKU", "รอตรวจสอบสต๊อก"];
 
 export default function RslMatchScreen() {
+  const router = useRouter();
   const t = useT();
   const [matches, setMatches] = useState<Record<string, MatchState>>({});
   const [candidates, setCandidates] = useState<{
@@ -91,7 +93,12 @@ export default function RslMatchScreen() {
     }));
     setCandidates(null);
     setError(null);
-    toast.success(`${t.rslMatch.okMatched} · ${shipment.rsl_order_id}`);
+    toast.success(`${t.rslMatch.okMatched} · ${shipment.rsl_order_id}`, {
+      action: {
+        label: t.nav.items.label,
+        onClick: () => router.push("/shipping/label"),
+      },
+    });
   }
 
   function matchAll() {

@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ClipboardCheck, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import type { Order } from "@/types/order";
 const SHIPPING_METHODS = ["RSL ปกติ", "RSL ขนาดใหญ่", "จัดส่งเอง"];
 
 export default function OrderVerifyScreen() {
+  const router = useRouter();
   const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [keyword, setKeyword] = useState("");
@@ -114,7 +116,13 @@ export default function OrderVerifyScreen() {
       );
       setSelectedId(null);
       setSubmitting(false);
-      toast.success(t.verify.okVerified);
+      // บอกขั้นถัดไปด้วย ไม่งั้นผู้ใช้ต้องเดาเองว่า Order ที่ยืนยันแล้วไปโผล่ที่ไหน
+      toast.success(t.verify.okVerified, {
+        action: {
+          label: t.nav.items.rslMatch,
+          onClick: () => router.push("/orders/rsl-match"),
+        },
+      });
     }, 500);
   }
 

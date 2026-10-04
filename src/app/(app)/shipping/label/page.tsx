@@ -4,6 +4,7 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import type { OrderStatus } from "@/lib/order-status";
 const READY: OrderStatus[] = ["รอพิมพ์ใบปะสินค้า", "รอจัดรูปแบบใบปะสินค้า"];
 
 export default function LabelPrintScreen() {
+  const router = useRouter();
   const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [reprint, setReprint] = useState<Order | null>(null);
@@ -68,6 +70,10 @@ export default function LabelPrintScreen() {
     );
     toast.success(t.label.okPrinted(order.order_id), {
       description: t.label.okPrintedHint(template),
+      action: {
+        label: t.nav.items.shipping,
+        onClick: () => router.push("/shipping"),
+      },
     });
   }
 
