@@ -19,7 +19,7 @@ export function OrderVolumeChart({
 }) {
   return (
     <ChartContainer config={config} className="h-44 w-full">
-      <BarChart data={data} margin={{ left: -24, right: 4, top: 4 }}>
+      <BarChart data={data} margin={{ left: -16, right: 8, top: 4 }}>
         <CartesianGrid vertical={false} stroke="var(--border)" />
         <XAxis
           dataKey="date"
@@ -27,6 +27,8 @@ export function OrderVolumeChart({
           axisLine={false}
           tickMargin={8}
           fontSize={12}
+          interval={0}
+          minTickGap={0}
         />
         <YAxis
           tickLine={false}

@@ -85,7 +85,7 @@ export default function DashboardScreen() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <section className="rounded-lg border">
+        <section className="self-start rounded-lg border">
           <div className="flex items-center justify-between border-b px-5 py-3.5">
             <h2 className="font-semibold">Order ล่าสุด</h2>
             <Link
