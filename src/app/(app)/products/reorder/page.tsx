@@ -9,7 +9,7 @@ import { ShoppingCart, PackageCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataTable } from "@/components/shared/data-table";
+import { purchaseColumns } from "./columns";
 import { MOCK_PURCHASE_QUEUE, MOCK_REORDER_CANDIDATES } from "@/mock/products";
 import type { ReorderCandidate } from "@/types/product";
 
@@ -92,6 +94,8 @@ export default function ReorderDecisionScreen() {
       description: "สถานะเปลี่ยนเป็น สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับสินค้า",
     });
   }
+
+  const purchaseCols = purchaseColumns(purchase);
 
   return (
     <div className="grid gap-6 p-6">
@@ -190,69 +194,18 @@ export default function ReorderDecisionScreen() {
         </TabsContent>
 
         <TabsContent value="purchase" className="mt-4">
-          <section className="rounded-lg border">
-            {queue.length === 0 ? (
+          <DataTable
+            data={queue}
+            columns={purchaseCols}
+            getRowId={(row) => row.sku}
+            emptyState={
               <EmptyState
                 icon={PackageCheck}
                 title="ไม่มี SKU ที่ต่ำกว่าเกณฑ์"
                 hint="ระบบจะดึง SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์เติมขึ้นมาที่นี่ตามรอบเวลาที่ตั้งไว้"
               />
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-muted text-muted-foreground text-xs">
-                  <tr>
-                    <th className="px-5 py-2.5 text-left font-medium">SKU</th>
-                    <th className="px-5 py-2.5 text-left font-medium">สินค้า</th>
-                    <th className="hidden px-5 py-2.5 text-left font-medium lg:table-cell">
-                      ซัพพลายเออร์
-                    </th>
-                    <th className="px-5 py-2.5 text-right font-medium">
-                      คงเหลือ / เกณฑ์
-                    </th>
-                    <th className="px-5 py-2.5 text-right font-medium">
-                      จำนวนที่จะสั่ง
-                    </th>
-                    <th className="px-5 py-2.5" />
-                  </tr>
-                </thead>
-                <tbody className="divide-border divide-y">
-                  {queue.map((item) => (
-                    <tr key={item.sku} className="hover:bg-muted/60">
-                      <td className="px-5 py-3 font-medium">{item.sku}</td>
-                      <td className="px-5 py-3">
-                        <p>{item.product_name}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {item.variation}
-                        </p>
-                      </td>
-                      <td className="text-muted-foreground hidden px-5 py-3 lg:table-cell">
-                        {item.supplier_name || (
-                          <span className="text-status-attention">
-                            ยังไม่ได้ตั้งค่า
-                          </span>
-                        )}
-                      </td>
-                      <td data-numeric className="px-5 py-3 text-right">
-                        {item.total_qty} / {item.reorder_threshold}
-                      </td>
-                      <td data-numeric className="px-5 py-3 text-right">
-                        {item.reorder_qty}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => purchase(item.sku)}
-                        >
-                          สั่งซื้อ
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
+            }
+          />
         </TabsContent>
       </Tabs>
 
@@ -274,8 +227,8 @@ export default function ReorderDecisionScreen() {
           </DialogHeader>
 
           {confirming?.decision === "คุ้มค่า" && (
-            <div className="grid gap-2">
-              <Label htmlFor="order_qty">จำนวนที่จะสั่งซื้อ</Label>
+            <Field>
+              <FieldLabel htmlFor="order_qty">จำนวนที่จะสั่งซื้อ</FieldLabel>
               <Input
                 id="order_qty"
                 type="number"
@@ -285,10 +238,10 @@ export default function ReorderDecisionScreen() {
                   setConfirming({ ...confirming, qty: Number(e.target.value) })
                 }
               />
-              <p className="text-muted-foreground text-xs">
+              <FieldDescription>
                 ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบจำนวนสั่งเติมที่ตั้งไว้ในกฎ SKU
-              </p>
-            </div>
+              </FieldDescription>
+            </Field>
           )}
 
           <DialogFooter>

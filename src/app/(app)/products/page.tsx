@@ -4,11 +4,11 @@
 // ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
-import { Package, Pencil } from "lucide-react";
+import { Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataTable } from "@/components/shared/data-table";
+import { productColumns } from "./columns";
 import { MOCK_PRODUCTS } from "@/mock/products";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Product } from "@/types/product";
@@ -49,12 +51,6 @@ const BLANK: Product = {
   selling_price: 0,
   active: true,
 };
-
-const baht = new Intl.NumberFormat("th-TH", {
-  style: "currency",
-  currency: "THB",
-  maximumFractionDigits: 0,
-});
 
 export default function ProductScreen() {
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
@@ -113,6 +109,8 @@ export default function ProductScreen() {
     toast.success("บันทึกข้อมูลสินค้าสำเร็จ");
   }
 
+  const columns = productColumns(openEdit, toggleActive);
+
   // ทางเลือก #1: ลบไม่ได้ถ้ายังมีรายการที่เกี่ยวข้อง ให้เปลี่ยนเป็นปิดการขายแทน
   function toggleActive(product: Product) {
     const linked = MOCK_ORDERS.some((o) => o.sku === product.sku);
@@ -136,89 +134,19 @@ export default function ProductScreen() {
         action={<Button onClick={openCreate}>เพิ่มสินค้าใหม่</Button>}
       />
 
-      <section className="rounded-lg border">
-        {products.length === 0 ? (
+      <DataTable
+        data={products}
+        columns={columns}
+        getRowId={(row) => row.sku}
+        emptyState={
           <EmptyState
             icon={Package}
             title="ยังไม่มีสินค้าในระบบ"
             hint="เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้"
             action={<Button onClick={openCreate}>เพิ่มสินค้าใหม่</Button>}
           />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">SKU</th>
-                <th className="px-5 py-2.5 text-left font-medium">สินค้า</th>
-                <th className="hidden px-5 py-2.5 text-left font-medium lg:table-cell">
-                  ซัพพลายเออร์
-                </th>
-                <th className="px-5 py-2.5 text-right font-medium">เกณฑ์เติม</th>
-                <th className="hidden px-5 py-2.5 text-right font-medium sm:table-cell">
-                  ราคาขาย
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {products.map((p) => (
-                <tr key={p.sku} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{p.sku}</td>
-                  <td className="px-5 py-3">
-                    <p>{p.product_name}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {p.variation} · {p.sales_channel}
-                    </p>
-                  </td>
-                  <td className="text-muted-foreground hidden px-5 py-3 lg:table-cell">
-                    {p.supplier_name}
-                  </td>
-                  <td data-numeric className="px-5 py-3 text-right">
-                    {p.reorder_threshold} / {p.reorder_qty}
-                  </td>
-                  <td
-                    data-numeric
-                    className="hidden px-5 py-3 text-right sm:table-cell"
-                  >
-                    {baht.format(p.selling_price)}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={
-                        p.active
-                          ? "bg-status-success-bg text-status-success rounded-md px-2 py-0.5 text-xs font-medium"
-                          : "bg-status-waiting-bg text-status-waiting rounded-md px-2 py-0.5 text-xs font-medium"
-                      }
-                    >
-                      {p.active ? "เปิดขาย" : "ปิดการขาย"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEdit(p)}
-                      >
-                        <Pencil />
-                        แก้ไข
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => toggleActive(p)}
-                      >
-                        {p.active ? "ปิดการขาย" : "เปิดขาย"}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+        }
+      />
 
       <Dialog open={draft !== null} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="sm:max-w-lg">
@@ -232,9 +160,9 @@ export default function ProductScreen() {
           </DialogHeader>
 
           {draft && (
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="product_name">ชื่อสินค้า</Label>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="product_name">ชื่อสินค้า</FieldLabel>
                 <Input
                   id="product_name"
                   value={draft.product_name}
@@ -242,19 +170,19 @@ export default function ProductScreen() {
                     setDraft({ ...draft, product_name: e.target.value })
                   }
                 />
-              </div>
+              </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="sku">SKU</Label>
+                <Field>
+                  <FieldLabel htmlFor="sku">SKU</FieldLabel>
                   <Input
                     id="sku"
                     value={draft.sku}
                     onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="variation">Variation</Label>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="variation">Variation</FieldLabel>
                   <Input
                     id="variation"
                     value={draft.variation}
@@ -262,12 +190,12 @@ export default function ProductScreen() {
                       setDraft({ ...draft, variation: e.target.value })
                     }
                   />
-                </div>
+                </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="sales_channel">ช่องทางขาย</Label>
+                <Field>
+                  <FieldLabel htmlFor="sales_channel">ช่องทางขาย</FieldLabel>
                   <Select
                     value={draft.sales_channel}
                     onValueChange={(v) =>
@@ -285,9 +213,9 @@ export default function ProductScreen() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="supplier_name">ซัพพลายเออร์</Label>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="supplier_name">ซัพพลายเออร์</FieldLabel>
                   <Input
                     id="supplier_name"
                     value={draft.supplier_name}
@@ -295,12 +223,14 @@ export default function ProductScreen() {
                       setDraft({ ...draft, supplier_name: e.target.value })
                     }
                   />
-                </div>
+                </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="reorder_threshold">เกณฑ์เติมสต๊อก</Label>
+                <Field>
+                  <FieldLabel htmlFor="reorder_threshold">
+                    เกณฑ์เติมสต๊อก
+                  </FieldLabel>
                   <Input
                     id="reorder_threshold"
                     type="number"
@@ -313,9 +243,9 @@ export default function ProductScreen() {
                       })
                     }
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="reorder_qty">จำนวนที่สั่งเติม</Label>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="reorder_qty">จำนวนที่สั่งเติม</FieldLabel>
                   <Input
                     id="reorder_qty"
                     type="number"
@@ -325,9 +255,9 @@ export default function ProductScreen() {
                       setDraft({ ...draft, reorder_qty: Number(e.target.value) })
                     }
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="selling_price">ราคาขาย</Label>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="selling_price">ราคาขาย</FieldLabel>
                   <Input
                     id="selling_price"
                     type="number"
@@ -340,7 +270,7 @@ export default function ProductScreen() {
                       })
                     }
                   />
-                </div>
+                </Field>
               </div>
 
               {error && (
@@ -351,7 +281,7 @@ export default function ProductScreen() {
                   {error}
                 </p>
               )}
-            </div>
+            </FieldGroup>
           )}
 
           <DialogFooter>

@@ -4,12 +4,15 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
-import { Link2, Link2Off, Loader2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { DataTable } from "@/components/shared/data-table";
+import { matchedColumns, queueColumns } from "./columns";
 import { MOCK_ORDERS } from "@/mock/orders";
 import { findRslMatches, type RslShipment } from "@/mock/rsl";
 import type { Order } from "@/types/order";
@@ -106,6 +109,17 @@ export default function RslMatchScreen() {
     toast.success("ยกเลิกการจับคู่แล้ว");
   }
 
+  const queueCols = queueColumns(
+    (order) => matches[order.order_id]?.status ?? order.order_status,
+    match,
+    working,
+  );
+  const matchedCols = matchedColumns(
+    (order) => matches[order.order_id]?.rsl_reference_id ?? null,
+    (order) => matches[order.order_id].status,
+    unmatch,
+  );
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -128,133 +142,72 @@ export default function RslMatchScreen() {
       )}
 
       {candidates && (
-        <section className="border-status-attention/30 bg-status-attention-bg/40 rounded-lg border">
-          <h2 className="border-status-attention/20 border-b px-5 py-3 text-sm font-semibold">
-            เลือกรายการ RSL สำหรับ {candidates.order.order_id} ·{" "}
-            {candidates.order.sku}
-          </h2>
-          <ul className="divide-border divide-y">
+        <Card className="border-status-attention/30 bg-status-attention-bg/40">
+          <CardHeader>
+            <CardTitle className="text-sm">
+              เลือกรายการ RSL สำหรับ {candidates.order.order_id} ·{" "}
+              {candidates.order.sku}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2">
             {candidates.options.map((option) => (
-              <li
-                key={option.rsl_order_id}
-                className="flex items-center justify-between gap-4 px-5 py-3"
-              >
-                <div>
-                  <p className="text-sm font-medium">{option.rsl_order_id}</p>
-                  <p className="text-muted-foreground text-xs">
+              <Item key={option.rsl_order_id} variant="outline">
+                <ItemContent>
+                  <ItemTitle>{option.rsl_order_id}</ItemTitle>
+                  <ItemDescription>
                     คงเหลือในคลัง RSL{" "}
                     <span data-numeric>{option.rsl_stock_qty}</span> ชิ้น
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => commit(candidates.order, option)}
-                >
-                  เลือกรายการนี้
-                </Button>
-              </li>
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => commit(candidates.order, option)}
+                  >
+                    เลือกรายการนี้
+                  </Button>
+                </ItemActions>
+              </Item>
             ))}
-          </ul>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
-      <section className="rounded-lg border">
-        <h2 className="border-b px-5 py-3.5 font-semibold">รอจับคู่</h2>
-        {queue.length === 0 ? (
-          <EmptyState
-            icon={Link2}
-            title="จับคู่ครบทุก Order แล้ว"
-            hint="Order ที่ผ่านการตรวจสอบและจับคู่กฎ SKU แล้วจะเข้ามารอที่นี่"
+      <Card>
+        <CardHeader>
+          <CardTitle>รอจับคู่</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            data={queue}
+            columns={queueCols}
+            getRowId={(row) => row.order_id}
+            emptyState={
+              <EmptyState
+                icon={Link2}
+                title="จับคู่ครบทุก Order แล้ว"
+                hint="Order ที่ผ่านการตรวจสอบและจับคู่กฎ SKU แล้วจะเข้ามารอที่นี่"
+              />
+            }
           />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="px-5 py-2.5 text-left font-medium">SKU</th>
-                <th className="hidden px-5 py-2.5 text-left font-medium md:table-cell">
-                  Variation
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {queue.map((order) => {
-                const state = matches[order.order_id];
-                return (
-                  <tr key={order.order_id} className="hover:bg-muted/60">
-                    <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                    <td className="text-muted-foreground px-5 py-3">
-                      {order.sku}
-                    </td>
-                    <td className="text-muted-foreground hidden px-5 py-3 md:table-cell">
-                      {order.variation}
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusBadge status={state?.status ?? order.order_status} />
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => match(order)}
-                        disabled={working === order.order_id}
-                      >
-                        {working === order.order_id && (
-                          <Loader2 className="animate-spin" />
-                        )}
-                        จับคู่กับ RSL
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </section>
+        </CardContent>
+      </Card>
 
       {matched.length > 0 && (
-        <section className="rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">จับคู่แล้ว</h2>
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="px-5 py-2.5 text-left font-medium">
-                  หมายเลขอ้างอิง RSL
-                </th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {matched.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="text-muted-foreground px-5 py-3">
-                    {matches[order.order_id].rsl_reference_id}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={matches[order.order_id].status} />
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => unmatch(order.order_id)}
-                    >
-                      <Link2Off />
-                      ยกเลิกการจับคู่
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>จับคู่แล้ว</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              data={matched}
+              columns={matchedCols}
+              getRowId={(row) => row.order_id}
+              showColumnToggle={false}
+            />
+          </CardContent>
+        </Card>
       )}
     </div>
   );

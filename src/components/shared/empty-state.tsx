@@ -1,6 +1,17 @@
 import type { LucideIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
-/** ไม่ใช่แค่บอกว่า "ไม่มีข้อมูล" แต่บอกด้วยว่าทำยังไงถึงจะมี */
+/**
+ * ชื่อย่อของ Empty ตระกูล shadcn ที่ใช้ซ้ำทั้งโปรเจกต์
+ * ไม่ใช่แค่บอกว่า "ไม่มีข้อมูล" แต่บอกด้วยว่าทำยังไงถึงจะมี
+ */
 export function EmptyState({
   icon: Icon,
   title,
@@ -13,19 +24,15 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <div className="bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-full">
-        <Icon className="size-5" />
-      </div>
-      <div>
-        <p className="font-medium">{title}</p>
-        {hint && (
-          <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
-            {hint}
-          </p>
-        )}
-      </div>
-      {action}
-    </div>
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Icon />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        {hint && <EmptyDescription>{hint}</EmptyDescription>}
+      </EmptyHeader>
+      {action && <EmptyContent>{action}</EmptyContent>}
+    </Empty>
   );
 }
