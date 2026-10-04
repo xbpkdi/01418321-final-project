@@ -92,7 +92,7 @@ export default function ReorderDecisionScreen() {
     }
 
     setQueue((prev) => prev.filter((q) => q.sku !== sku));
-    toast.success(`ส่งคำสั่งซื้อ ${sku} ไปยัง ${item.supplier_name} แล้ว`, {
+    toast.success(t.reorder.okPurchased(sku, item.supplier_name), {
       description: t.reorder.okPurchasedHint,
     });
   }
