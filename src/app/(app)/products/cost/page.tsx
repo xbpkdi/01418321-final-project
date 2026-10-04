@@ -24,19 +24,33 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { useT } from "@/lib/i18n/context";
+import type { Dict } from "@/lib/i18n/dict";
 import { MOCK_COSTS, MOCK_PRODUCTS } from "@/mock/products";
 import { calcUnitCost, type CostComponents } from "@/types/product";
 
-const FIELDS: { key: keyof CostComponents; label: string; hint?: string }[] = [
-  { key: "purchase_price", label: "ราคาซื้อต่อหน่วย" },
-  { key: "exchange_rate", label: "อัตราแลกเปลี่ยน" },
-  { key: "intl_freight", label: "ค่าขนส่งระหว่างประเทศ", hint: "ทั้งล็อต" },
-  { key: "duty_fee", label: "ภาษีนำเข้า", hint: "ทั้งล็อต" },
-  { key: "order_qty", label: "จำนวนที่สั่งต่อล็อต" },
-  { key: "marketplace_fee", label: "ค่าธรรมเนียมมาร์เก็ตเพลส", hint: "ต่อชิ้น" },
-  { key: "domestic_shipping", label: "ค่าส่งในประเทศ", hint: "ต่อชิ้น" },
-  { key: "rsl_charge", label: "ค่าธรรมเนียม RSL", hint: "ต่อชิ้น" },
-];
+type CostField = { key: keyof CostComponents; label: string; hint?: string };
+
+function costFields(t: Dict): CostField[] {
+  return [
+    { key: "purchase_price", label: t.cost.purchasePrice },
+    { key: "exchange_rate", label: t.cost.exchangeRate },
+    { key: "intl_freight", label: t.cost.intlFreight, hint: t.cost.perLot },
+    { key: "duty_fee", label: t.cost.dutyFee, hint: t.cost.perLot },
+    { key: "order_qty", label: t.cost.orderQty },
+    {
+      key: "marketplace_fee",
+      label: t.cost.marketplaceFee,
+      hint: t.cost.perPiece,
+    },
+    {
+      key: "domestic_shipping",
+      label: t.cost.domesticShipping,
+      hint: t.cost.perPiece,
+    },
+    { key: "rsl_charge", label: t.cost.rslCharge, hint: t.cost.perPiece },
+  ];
+}
 
 const baht = new Intl.NumberFormat("th-TH", {
   style: "currency",
@@ -45,6 +59,8 @@ const baht = new Intl.NumberFormat("th-TH", {
 });
 
 export default function CostCalculatorScreen() {
+  const t = useT();
+  const FIELDS = costFields(t);
   const [sku, setSku] = useState<string>("");
   const [form, setForm] = useState<CostComponents | null>(null);
   const [result, setResult] = useState<number | null>(null);
@@ -84,14 +100,14 @@ export default function CostCalculatorScreen() {
       return typeof value !== "number" || Number.isNaN(value) || value < 0;
     });
     if (invalid || form.order_qty <= 0) {
-      setError("กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง");
+      setError(t.cost.errInvalid);
       return;
     }
 
     // Q5.2 แล้วบันทึกผลด้วย Q5.3
     const unitCost = calcUnitCost(form);
     setResult(unitCost);
-    toast.success("คำนวณต้นทุนต่อหน่วยแล้ว");
+    toast.success(t.cost.okCalculated);
   }
 
   const overSellingPrice =
@@ -100,18 +116,18 @@ export default function CostCalculatorScreen() {
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="คำนวณต้นทุนต่อหน่วย"
-        description="รวมราคาซื้อ อัตราแลกเปลี่ยน ค่าขนส่ง ภาษี และค่าธรรมเนียมทุกตัวเป็นต้นทุนจริงต่อชิ้น"
+        title={t.cost.title}
+        description={t.cost.description}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="self-start rounded-lg border">
           <div className="border-b p-5">
             <Field>
-              <FieldLabel htmlFor="sku">เลือกสินค้า</FieldLabel>
+              <FieldLabel htmlFor="sku">{t.cost.selectProduct}</FieldLabel>
               <Select value={sku} onValueChange={selectSku}>
                 <SelectTrigger id="sku" className="w-full">
-                  <SelectValue placeholder="เลือก SKU ที่ต้องการคำนวณ" />
+                  <SelectValue placeholder={t.cost.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {MOCK_PRODUCTS.map((p) => (
@@ -127,8 +143,8 @@ export default function CostCalculatorScreen() {
           {!form ? (
             <EmptyState
               icon={Calculator}
-              title="ยังไม่ได้เลือกสินค้า"
-              hint="เลือก SKU ด้านบน ระบบจะดึงองค์ประกอบต้นทุนที่เคยบันทึกไว้มาให้แก้ไข"
+              title={t.cost.noProductTitle}
+              hint={t.cost.noProductHint}
             />
           ) : (
             <div className="grid gap-5 p-5">
@@ -166,25 +182,27 @@ export default function CostCalculatorScreen() {
               )}
 
               <Button onClick={calculate} className="w-fit">
-                คำนวณ
+                {t.cost.calculate}
               </Button>
             </div>
           )}
         </section>
 
         <section className="self-start rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">ผลการคำนวณ</h2>
+          <h2 className="border-b px-5 py-3.5 font-semibold">
+            {t.cost.resultTitle}
+          </h2>
 
           {result === null || !form ? (
             <EmptyState
               icon={Calculator}
-              title="ยังไม่มีผลการคำนวณ"
-              hint="กรอกองค์ประกอบต้นทุนให้ครบแล้วกดคำนวณ"
+              title={t.cost.noResultTitle}
+              hint={t.cost.noResultHint}
             />
           ) : (
             <div className="grid gap-4 p-5">
               <div>
-                <p className="text-muted-foreground text-sm">ต้นทุนต่อหน่วย</p>
+                <p className="text-muted-foreground text-sm">{t.cost.unitCost}</p>
                 <p
                   data-numeric
                   className="text-primary mt-1 text-3xl font-semibold"
@@ -195,13 +213,13 @@ export default function CostCalculatorScreen() {
 
               <dl className="grid gap-2 border-t pt-4 text-sm">
                 <Line
-                  label="ราคาซื้อคิดเป็นเงินบาท"
+                  label={t.cost.purchaseInBaht}
                   value={form.purchase_price * form.exchange_rate}
                 />
-                <Line label="ค่าขนส่งระหว่างประเทศ" value={form.intl_freight} />
-                <Line label="ภาษีนำเข้า" value={form.duty_fee} />
+                <Line label={t.cost.intlFreight} value={form.intl_freight} />
+                <Line label={t.cost.dutyFee} value={form.duty_fee} />
                 <Line
-                  label={`หารด้วยจำนวนต่อล็อต (${form.order_qty})`}
+                  label={t.cost.dividedBy(form.order_qty)}
                   value={
                     (form.purchase_price * form.exchange_rate +
                       form.intl_freight +
@@ -210,21 +228,23 @@ export default function CostCalculatorScreen() {
                   }
                 />
                 <Line
-                  label="ค่าธรรมเนียมมาร์เก็ตเพลส"
+                  label={t.cost.marketplaceFee}
                   value={form.marketplace_fee}
                 />
-                <Line label="ค่าส่งในประเทศ" value={form.domestic_shipping} />
-                <Line label="ค่าธรรมเนียม RSL" value={form.rsl_charge} />
+                <Line label={t.cost.domesticShipping} value={form.domestic_shipping} />
+                <Line label={t.cost.rslCharge} value={form.rsl_charge} />
               </dl>
 
               {product && (
                 <div className="border-t pt-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">ราคาขายปัจจุบัน</span>
+                    <span className="text-muted-foreground">
+                      {t.cost.currentPrice}
+                    </span>
                     <span data-numeric>{baht.format(product.selling_price)}</span>
                   </div>
                   <div className="mt-1 flex justify-between font-medium">
-                    <span>กำไรต่อหน่วย</span>
+                    <span>{t.cost.marginPerUnit}</span>
                     <span data-numeric>
                       {baht.format(product.selling_price - result)}
                     </span>
@@ -237,14 +257,14 @@ export default function CostCalculatorScreen() {
                   role="alert"
                   className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
                 >
-                  ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน
+                  {t.cost.errOverPrice}
                 </p>
               )}
 
               <Button asChild variant="outline">
                 <Link href={`/reports/unit-cost/${form.sku}`}>
                   <FileText />
-                  ดูรายงานต้นทุนต่อหน่วย
+                  {t.cost.viewReport}
                 </Link>
               </Button>
             </div>

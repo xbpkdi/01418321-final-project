@@ -3,6 +3,7 @@
 // OrderVerifyScreen — UC 2A ตรวจสอบคำสั่งซื้อ
 // ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md
 
+import * as React from "react";
 import { useMemo, useState } from "react";
 import { ClipboardCheck, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -22,12 +23,14 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable } from "@/components/shared/data-table";
 import { verifyColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Order } from "@/types/order";
 
 const SHIPPING_METHODS = ["RSL ปกติ", "RSL ขนาดใหญ่", "จัดส่งเอง"];
 
 export default function OrderVerifyScreen() {
+  const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [keyword, setKeyword] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -54,6 +57,7 @@ export default function OrderVerifyScreen() {
   }, [pending, keyword]);
 
   const selected = orders.find((o) => o.order_id === selectedId) ?? null;
+  const columns = React.useMemo(() => verifyColumns(t), [t]);
 
   function select(order: Order) {
     setSelectedId(order.order_id);
@@ -71,7 +75,7 @@ export default function OrderVerifyScreen() {
       !selected.shipping_address.trim() ||
       selected.qty === null
     ) {
-      setError("ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ");
+      setError(t.verify.errIncomplete);
       setOrders((prev) =>
         prev.map((o) =>
           o.order_id === selected.order_id
@@ -84,13 +88,13 @@ export default function OrderVerifyScreen() {
     }
 
     if (!Number.isInteger(selected.qty) || selected.qty <= 0) {
-      setError("จำนวนสินค้าต้องมากกว่า 0");
+      setError(t.verify.errQty);
       return;
     }
 
     // 3. ตรวจสอบสถานะของ Order
     if (selected.order_status !== "รอตรวจสอบคำสั่งซื้อ") {
-      setError("Order นี้ผ่านการตรวจสอบไปแล้ว");
+      setError(t.verify.errAlreadyVerified);
       return;
     }
 
@@ -110,21 +114,21 @@ export default function OrderVerifyScreen() {
       );
       setSelectedId(null);
       setSubmitting(false);
-      toast.success("ยืนยันคำสั่งซื้อสำเร็จ");
+      toast.success(t.verify.okVerified);
     }, 500);
   }
 
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ตรวจสอบคำสั่งซื้อ"
-        description="ตรวจทานรายละเอียด Order ก่อนส่งเข้าสู่ขั้นตอนจับคู่กฎ SKU"
+        title={t.verify.title}
+        description={t.verify.description}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <DataTable
           data={visible}
-          columns={verifyColumns}
+          columns={columns}
           getRowId={(row) => row.order_id}
           onRowClick={select}
           selectedRowId={selectedId}
@@ -135,8 +139,8 @@ export default function OrderVerifyScreen() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 className="pl-9"
-                aria-label="ค้นหา Order"
-                placeholder="ค้นหาด้วย Order ID, SKU หรือช่องทางขาย"
+                aria-label={t.verify.searchLabel}
+                placeholder={t.verify.searchPlaceholder}
               />
             </div>
           }
@@ -144,30 +148,24 @@ export default function OrderVerifyScreen() {
             <EmptyState
               icon={ClipboardCheck}
               title={
-                keyword
-                  ? "ไม่พบ Order ที่ตรงกับคำค้นหา"
-                  : "ไม่มี Order ที่รอตรวจสอบ"
+                keyword ? t.verify.emptySearchTitle : t.verify.emptyTitle
               }
-              hint={
-                keyword
-                  ? "ลองค้นด้วย Order ID, SKU หรือชื่อช่องทางขายอีกครั้ง"
-                  : "Order ใหม่จะเข้ามาที่นี่หลังกดนำเข้า Order จากหน้าภาพรวมระบบ"
-              }
+              hint={keyword ? t.verify.emptySearchHint : t.verify.emptyHint}
             />
           }
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>รายละเอียดคำสั่งซื้อ</CardTitle>
+            <CardTitle>{t.verify.detailTitle}</CardTitle>
           </CardHeader>
 
           {!selected ? (
             <CardContent>
               <EmptyState
                 icon={ClipboardCheck}
-                title="ยังไม่ได้เลือก Order"
-                hint="เลือกรายการจากตารางด้านซ้ายเพื่อตรวจทานรายละเอียดก่อนยืนยัน"
+                title={t.verify.noSelectionTitle}
+                hint={t.verify.noSelectionHint}
               />
             </CardContent>
           ) : (
@@ -175,21 +173,21 @@ export default function OrderVerifyScreen() {
               <dl className="grid gap-3 text-sm">
                 <Row label="Order ID" value={selected.order_id} />
                 <Row
-                  label="เลขคำสั่งซื้อจากช่องทางขาย"
+                  label={t.verify.marketplaceOrderId}
                   value={selected.marketplace_order_id}
                 />
-                <Row label="ช่องทางขาย" value={selected.sales_channel} />
+                <Row label={t.common.salesChannel} value={selected.sales_channel} />
                 <Row label="SKU" value={selected.sku} />
-                <Row label="สินค้า" value={selected.product_name} />
+                <Row label={t.common.product} value={selected.product_name} />
                 <Row label="Variation" value={selected.variation} />
-                <Row label="จำนวน" value={String(selected.qty)} numeric />
+                <Row label={t.common.qty} value={String(selected.qty)} numeric />
                 <Row
-                  label="ที่อยู่จัดส่ง"
+                  label={t.common.shippingAddress}
                   value={selected.shipping_address}
                   multiline
                 />
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-muted-foreground">สถานะ</dt>
+                  <dt className="text-muted-foreground">{t.common.status}</dt>
                   <dd>
                     <StatusBadge status={selected.order_status} />
                   </dd>
@@ -198,7 +196,9 @@ export default function OrderVerifyScreen() {
 
               {/* UC อนุญาตให้แก้ไขฟิลด์ที่กำหนดก่อนยืนยัน เช่น shipping_method */}
               <Field className="border-t pt-4">
-                <FieldLabel htmlFor="shipping_method">วิธีจัดส่ง</FieldLabel>
+                <FieldLabel htmlFor="shipping_method">
+                  {t.common.shippingMethod}
+                </FieldLabel>
                 <Select
                   value={shippingMethod}
                   onValueChange={setShippingMethod}
@@ -214,9 +214,7 @@ export default function OrderVerifyScreen() {
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldDescription>
-                  ระบบบันทึกผู้แก้ไขและเวลาที่แก้ไขไว้ทุกครั้ง
-                </FieldDescription>
+                <FieldDescription>{t.verify.editNote}</FieldDescription>
               </Field>
 
               {error && (
@@ -229,7 +227,7 @@ export default function OrderVerifyScreen() {
               )}
 
               <Button onClick={confirm} disabled={submitting}>
-                ยืนยันคำสั่งซื้อ
+                {t.verify.submit}
               </Button>
             </CardContent>
           )}

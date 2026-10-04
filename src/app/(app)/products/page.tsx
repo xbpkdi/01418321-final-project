@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { productColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_PRODUCTS } from "@/mock/products";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Product } from "@/types/product";
@@ -53,6 +54,7 @@ const BLANK: Product = {
 };
 
 export default function ProductScreen() {
+  const t = useT();
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [draft, setDraft] = useState<Product | null>(null);
   const [editingSku, setEditingSku] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export default function ProductScreen() {
 
     // ตรวจสอบ: ชื่อสินค้าและ SKU ต้องไม่เป็นช่องว่าง
     if (!draft.product_name.trim() || !draft.sku.trim()) {
-      setError("กรุณากรอกข้อมูลให้ครบถ้วน");
+      setError(t.products.errIncomplete);
       return;
     }
 
@@ -84,7 +86,7 @@ export default function ProductScreen() {
       (p) => p.sku === draft.sku.trim() && p.sku !== editingSku,
     );
     if (duplicate) {
-      setError("SKU นี้มีอยู่ในระบบแล้ว");
+      setError(t.products.errDuplicateSku);
       return;
     }
 
@@ -95,7 +97,7 @@ export default function ProductScreen() {
       !Number.isInteger(draft.reorder_qty) ||
       draft.reorder_qty < 0
     ) {
-      setError("กรุณากรอกข้อมูลให้ครบถ้วน");
+      setError(t.products.errIncomplete);
       return;
     }
 
@@ -106,17 +108,17 @@ export default function ProductScreen() {
         : [...prev, { ...draft }],
     );
     setDraft(null);
-    toast.success("บันทึกข้อมูลสินค้าสำเร็จ");
+    toast.success(t.products.okSaved);
   }
 
-  const columns = productColumns(openEdit, toggleActive);
+  const columns = productColumns(t, openEdit, toggleActive);
 
   // ทางเลือก #1: ลบไม่ได้ถ้ายังมีรายการที่เกี่ยวข้อง ให้เปลี่ยนเป็นปิดการขายแทน
   function toggleActive(product: Product) {
     const linked = MOCK_ORDERS.some((o) => o.sku === product.sku);
     if (product.active && linked) {
-      toast.error("ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่", {
-        description: "เปลี่ยนเป็นสถานะ ปิดการขาย แทน",
+      toast.error(t.products.errHasRelated, {
+        description: t.products.errHasRelatedHint,
       });
     }
     setProducts((prev) =>
@@ -129,9 +131,9 @@ export default function ProductScreen() {
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ตั้งกฎ SKU และข้อมูลสินค้า"
-        description="ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ"
-        action={<Button onClick={openCreate}>เพิ่มสินค้าใหม่</Button>}
+        title={t.products.title}
+        description={t.products.description}
+        action={<Button onClick={openCreate}>{t.products.create}</Button>}
       />
 
       <DataTable
@@ -141,9 +143,9 @@ export default function ProductScreen() {
         emptyState={
           <EmptyState
             icon={Package}
-            title="ยังไม่มีสินค้าในระบบ"
-            hint="เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้"
-            action={<Button onClick={openCreate}>เพิ่มสินค้าใหม่</Button>}
+            title={t.products.emptyTitle}
+            hint={t.products.emptyHint}
+            action={<Button onClick={openCreate}>{t.products.create}</Button>}
           />
         }
       />
@@ -152,17 +154,17 @@ export default function ProductScreen() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingSku ? "แก้ไขข้อมูลสินค้า" : "เพิ่มสินค้าใหม่"}
+              {editingSku ? t.products.editTitle : t.products.create}
             </DialogTitle>
-            <DialogDescription>
-              SKU ที่กรอกจะถูกใช้จับคู่กับ Order สต๊อก และต้นทุนทั้งระบบ
-            </DialogDescription>
+            <DialogDescription>{t.products.dialogHint}</DialogDescription>
           </DialogHeader>
 
           {draft && (
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="product_name">ชื่อสินค้า</FieldLabel>
+                <FieldLabel htmlFor="product_name">
+                  {t.products.productName}
+                </FieldLabel>
                 <Input
                   id="product_name"
                   value={draft.product_name}
@@ -195,7 +197,9 @@ export default function ProductScreen() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="sales_channel">ช่องทางขาย</FieldLabel>
+                  <FieldLabel htmlFor="sales_channel">
+                    {t.common.salesChannel}
+                  </FieldLabel>
                   <Select
                     value={draft.sales_channel}
                     onValueChange={(v) =>
@@ -215,7 +219,9 @@ export default function ProductScreen() {
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="supplier_name">ซัพพลายเออร์</FieldLabel>
+                  <FieldLabel htmlFor="supplier_name">
+                    {t.common.supplier}
+                  </FieldLabel>
                   <Input
                     id="supplier_name"
                     value={draft.supplier_name}
@@ -229,7 +235,7 @@ export default function ProductScreen() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field>
                   <FieldLabel htmlFor="reorder_threshold">
-                    เกณฑ์เติมสต๊อก
+                    {t.products.reorderThresholdField}
                   </FieldLabel>
                   <Input
                     id="reorder_threshold"
@@ -245,7 +251,9 @@ export default function ProductScreen() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="reorder_qty">จำนวนที่สั่งเติม</FieldLabel>
+                  <FieldLabel htmlFor="reorder_qty">
+                    {t.products.reorderQty}
+                  </FieldLabel>
                   <Input
                     id="reorder_qty"
                     type="number"
@@ -257,7 +265,9 @@ export default function ProductScreen() {
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="selling_price">ราคาขาย</FieldLabel>
+                  <FieldLabel htmlFor="selling_price">
+                    {t.common.sellingPrice}
+                  </FieldLabel>
                   <Input
                     id="selling_price"
                     type="number"
@@ -286,9 +296,9 @@ export default function ProductScreen() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDraft(null)}>
-              ยกเลิก
+              {t.common.cancel}
             </Button>
-            <Button onClick={save}>บันทึก</Button>
+            <Button onClick={save}>{t.common.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

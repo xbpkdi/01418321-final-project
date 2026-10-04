@@ -4,12 +4,13 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import type { AppTableFeatures } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import type { Dict } from "@/lib/i18n/dict";
 import type { Order } from "@/types/order";
 
 const col = createColumnHelper<AppTableFeatures, Order>();
 
 /** ตารางรอส่งมอบ */
-export function waitingColumns(onDispatch: (order: Order) => void) {
+export function waitingColumns(t: Dict, onDispatch: (order: Order) => void) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -17,8 +18,8 @@ export function waitingColumns(onDispatch: (order: Order) => void) {
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
     col.accessor("product_name", {
-      header: "สินค้า",
-      meta: { label: "สินค้า" },
+      header: t.common.product,
+      meta: { label: t.common.product },
       cell: (ctx) => (
         <span className="text-muted-foreground block max-w-[28ch] truncate">
           {ctx.getValue()}
@@ -26,15 +27,15 @@ export function waitingColumns(onDispatch: (order: Order) => void) {
       ),
     }),
     col.accessor("shipping_method", {
-      header: "วิธีจัดส่ง",
-      meta: { label: "วิธีจัดส่ง" },
+      header: t.common.shippingMethod,
+      meta: { label: t.common.shippingMethod },
       cell: (ctx) => (
         <span className="text-muted-foreground">{ctx.getValue()}</span>
       ),
     }),
     col.accessor("order_status", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
     col.display({
@@ -46,7 +47,7 @@ export function waitingColumns(onDispatch: (order: Order) => void) {
             variant="outline"
             onClick={() => onDispatch(ctx.row.original)}
           >
-            ส่งมอบให้ Delivery
+            {t.shipping.dispatch}
           </Button>
         </div>
       ),
@@ -55,7 +56,7 @@ export function waitingColumns(onDispatch: (order: Order) => void) {
 }
 
 /** ตารางส่งมอบแล้ว */
-export function shippedColumns(trackingOf: (order: Order) => string) {
+export function shippedColumns(t: Dict, trackingOf: (order: Order) => string) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -64,7 +65,7 @@ export function shippedColumns(trackingOf: (order: Order) => string) {
     }),
     col.display({
       id: "tracking_number",
-      header: "หมายเลขติดตามพัสดุ",
+      header: t.shipping.trackingNumber,
       cell: (ctx) => (
         <span className="text-muted-foreground">
           {trackingOf(ctx.row.original)}
@@ -72,8 +73,8 @@ export function shippedColumns(trackingOf: (order: Order) => string) {
       ),
     }),
     col.accessor("order_status", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
   ]);

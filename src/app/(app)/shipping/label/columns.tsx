@@ -6,12 +6,13 @@ import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AppTableFeatures } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import type { Dict } from "@/lib/i18n/dict";
 import type { Order } from "@/types/order";
 
 const col = createColumnHelper<AppTableFeatures, Order>();
 
 /** ตารางรอพิมพ์ */
-export function queueColumns(onPrint: (order: Order) => void) {
+export function queueColumns(t: Dict, onPrint: (order: Order) => void) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -19,8 +20,8 @@ export function queueColumns(onPrint: (order: Order) => void) {
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
     col.accessor("shipping_address", {
-      header: "ที่อยู่จัดส่ง",
-      meta: { label: "ที่อยู่จัดส่ง" },
+      header: t.common.shippingAddress,
+      meta: { label: t.common.shippingAddress },
       cell: (ctx) => (
         <span className="text-muted-foreground block max-w-[32ch] truncate">
           {ctx.getValue()}
@@ -28,15 +29,15 @@ export function queueColumns(onPrint: (order: Order) => void) {
       ),
     }),
     col.accessor("shipping_method", {
-      header: "วิธีจัดส่ง",
-      meta: { label: "วิธีจัดส่ง" },
+      header: t.common.shippingMethod,
+      meta: { label: t.common.shippingMethod },
       cell: (ctx) => (
         <span className="text-muted-foreground">{ctx.getValue()}</span>
       ),
     }),
     col.accessor("order_status", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
     col.display({
@@ -48,7 +49,7 @@ export function queueColumns(onPrint: (order: Order) => void) {
             variant="outline"
             onClick={() => onPrint(ctx.row.original)}
           >
-            พิมพ์ใบปะสินค้า
+            {t.label.print}
           </Button>
         </div>
       ),
@@ -57,7 +58,7 @@ export function queueColumns(onPrint: (order: Order) => void) {
 }
 
 /** ตารางพิมพ์แล้ว */
-export function printedColumns(onReprint: (order: Order) => void) {
+export function printedColumns(t: Dict, onReprint: (order: Order) => void) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -65,8 +66,8 @@ export function printedColumns(onReprint: (order: Order) => void) {
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
     col.accessor("order_status", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
     col.display({
@@ -76,7 +77,7 @@ export function printedColumns(onReprint: (order: Order) => void) {
           <Button size="sm" variant="ghost" asChild>
             <Link href={`/reports/label/${ctx.row.original.order_id}`}>
               <FileText />
-              ดูใบปะสินค้า
+              {t.label.viewLabel}
             </Link>
           </Button>
           <Button
@@ -84,7 +85,7 @@ export function printedColumns(onReprint: (order: Order) => void) {
             variant="ghost"
             onClick={() => onReprint(ctx.row.original)}
           >
-            พิมพ์ซ้ำ
+            {t.label.reprint}
           </Button>
         </div>
       ),

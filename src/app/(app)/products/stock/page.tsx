@@ -5,9 +5,11 @@
 
 import { PageHeader } from "@/components/shared/page-header";
 import { StockTable } from "./stock-table";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_STOCK } from "@/mock/products";
 
 export default function StockCheckScreen() {
+  const t = useT();
   // ทางเลือก #2: เรียงรายการที่ต่ำกว่าเกณฑ์ไว้บนสุด
   const rows = [...MOCK_STOCK]
     .map((s) => ({
@@ -22,8 +24,8 @@ export default function StockCheckScreen() {
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ตรวจสอบสต๊อก"
-        description="ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU"
+        title={t.stock.title}
+        description={t.stock.description}
       />
 
       {incomplete.length > 0 && (
@@ -31,7 +33,7 @@ export default function StockCheckScreen() {
           role="alert"
           className="border-status-attention/30 bg-status-attention-bg text-status-attention rounded-lg border px-4 py-3 text-sm"
         >
-          ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล ·{" "}
+          {t.stock.errIncomplete} ·{" "}
           {incomplete.map((r) => r.sku).join(", ")}
         </p>
       )}

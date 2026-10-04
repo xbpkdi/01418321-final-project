@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { purchaseColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_PURCHASE_QUEUE, MOCK_REORDER_CANDIDATES } from "@/mock/products";
 import type { ReorderCandidate } from "@/types/product";
 
@@ -35,6 +36,7 @@ const baht = new Intl.NumberFormat("th-TH", {
 type Decision = "คุ้มค่า" | "ไม่คุ้มค่า";
 
 export default function ReorderDecisionScreen() {
+  const t = useT();
   const [candidates, setCandidates] = useState(MOCK_REORDER_CANDIDATES);
   const [queue, setQueue] = useState(MOCK_PURCHASE_QUEUE);
   const [confirming, setConfirming] = useState<{
@@ -47,8 +49,8 @@ export default function ReorderDecisionScreen() {
   function decide(candidate: ReorderCandidate, decision: Decision) {
     // ไม่พบราคาขาย คำนวณกำไรไม่ได้
     if (candidate.selling_price === null) {
-      toast.error("ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ", {
-        description: "ระบบตั้งสถานะเป็น รอดำเนินการด้วยตนเอง จนกว่าจะระบุราคาขาย",
+      toast.error(t.reorder.errNoPrice, {
+        description: t.reorder.errNoPriceHint,
       });
       setCandidates((prev) =>
         prev.filter((c) => c.order_id !== candidate.order_id),
@@ -71,11 +73,11 @@ export default function ReorderDecisionScreen() {
       prev.filter((c) => c.order_id !== candidate.order_id),
     );
     setConfirming(null);
-    toast.success("บันทึกผลการตัดสินใจสำเร็จ", {
+    toast.success(t.reorder.okDecided, {
       description:
         decision === "คุ้มค่า"
-          ? "ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier"
-          : "ส่ง Order เข้าสู่การยกเลิก Order",
+          ? t.reorder.okDecidedApprove
+          : t.reorder.okDecidedReject,
     });
   }
 
@@ -85,32 +87,32 @@ export default function ReorderDecisionScreen() {
     if (!item) return;
 
     if (!item.configured) {
-      toast.error("ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ");
+      toast.error(t.reorder.errNotConfigured);
       return;
     }
 
     setQueue((prev) => prev.filter((q) => q.sku !== sku));
     toast.success(`ส่งคำสั่งซื้อ ${sku} ไปยัง ${item.supplier_name} แล้ว`, {
-      description: "สถานะเปลี่ยนเป็น สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับสินค้า",
+      description: t.reorder.okPurchasedHint,
     });
   }
 
-  const purchaseCols = purchaseColumns(purchase);
+  const purchaseCols = purchaseColumns(t, purchase);
 
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ตัดสินใจสั่งซื้อสินค้าเพิ่ม"
-        description="ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์"
+        title={t.reorder.title}
+        description={t.reorder.description}
       />
 
       <Tabs defaultValue="decide">
         <TabsList>
           <TabsTrigger value="decide">
-            รอตัดสินใจ ({candidates.length})
+            {t.reorder.tabDecide(candidates.length)}
           </TabsTrigger>
           <TabsTrigger value="purchase">
-            รอสั่งซื้อเติมสต๊อก ({queue.length})
+            {t.reorder.tabPurchase(queue.length)}
           </TabsTrigger>
         </TabsList>
 
@@ -119,8 +121,8 @@ export default function ReorderDecisionScreen() {
             <div className="rounded-lg border">
               <EmptyState
                 icon={ShoppingCart}
-                title="ไม่มีรายการรอตัดสินใจ"
-                hint="Order ที่ระบบคำนวณต้นทุนเสร็จแล้วจะเข้ามารอการตัดสินใจที่นี่"
+                title={t.reorder.emptyDecideTitle}
+                hint={t.reorder.emptyDecideHint}
               />
             </div>
           ) : (
@@ -138,25 +140,33 @@ export default function ReorderDecisionScreen() {
                         </p>
                       </div>
                       <p className="text-muted-foreground text-xs">
-                        {c.supplier_name} · รอของ{" "}
-                        <span data-numeric>{c.lead_time_days}</span> วัน
+                        {c.supplier_name} · {t.reorder.leadTime}{" "}
+                        <span data-numeric>{c.lead_time_days}</span>{" "}
+                        {t.reorder.days}
                       </p>
                     </div>
 
                     <dl className="divide-border grid divide-y sm:grid-cols-3 sm:divide-y-0">
-                      <Metric label="ต้นทุนต่อหน่วย" value={baht.format(c.unit_cost)} />
                       <Metric
-                        label="ราคาขายปัจจุบัน"
+                        label={t.reorder.unitCost}
+                        value={baht.format(c.unit_cost)}
+                      />
+                      <Metric
+                        label={t.reorder.currentPrice}
                         value={
                           c.selling_price === null
-                            ? "ไม่พบราคาขาย"
+                            ? t.reorder.noPrice
                             : baht.format(c.selling_price)
                         }
                         muted={c.selling_price === null}
                       />
                       <Metric
-                        label="กำไรต่อหน่วยที่คาดการณ์"
-                        value={margin === null ? "คำนวณไม่ได้" : baht.format(margin)}
+                        label={t.reorder.expectedMargin}
+                        value={
+                          margin === null
+                            ? t.reorder.cannotCompute
+                            : baht.format(margin)
+                        }
                         muted={margin === null}
                         tone={
                           margin === null
@@ -170,20 +180,19 @@ export default function ReorderDecisionScreen() {
 
                     {c.has_pending_po && (
                       <p className="border-status-attention/30 bg-status-attention-bg text-status-attention border-t px-5 py-3 text-sm">
-                        มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่ ·
-                        ล็อตเดิมคาดว่าได้รับ {c.pending_po_eta}
+                        {t.reorder.pendingPo(c.pending_po_eta ?? "")}
                       </p>
                     )}
 
                     <div className="flex flex-wrap gap-2 border-t px-5 py-3.5">
                       <Button onClick={() => decide(c, "คุ้มค่า")}>
-                        คุ้มค่า - สั่งซื้อเพิ่ม
+                        {t.reorder.approve}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => decide(c, "ไม่คุ้มค่า")}
                       >
-                        ไม่คุ้มค่า - ยกเลิก
+                        {t.reorder.reject}
                       </Button>
                     </div>
                   </article>
@@ -201,8 +210,8 @@ export default function ReorderDecisionScreen() {
             emptyState={
               <EmptyState
                 icon={PackageCheck}
-                title="ไม่มี SKU ที่ต่ำกว่าเกณฑ์"
-                hint="ระบบจะดึง SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์เติมขึ้นมาที่นี่ตามรอบเวลาที่ตั้งไว้"
+                title={t.reorder.emptyPurchaseTitle}
+                hint={t.reorder.emptyPurchaseHint}
               />
             }
           />
@@ -217,18 +226,24 @@ export default function ReorderDecisionScreen() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              ยืนยันผลการตัดสินใจ: {confirming?.decision}
+              {t.reorder.confirmTitle(
+                confirming?.decision === "คุ้มค่า"
+                  ? t.reorder.decisionApprove
+                  : t.reorder.decisionReject,
+              )}
             </DialogTitle>
             <DialogDescription>
               {confirming?.decision === "คุ้มค่า"
-                ? "Order จะถูกส่งเข้าสู่การสั่งซื้อจาก Supplier"
-                : "Order จะถูกส่งเข้าสู่การยกเลิก Order"}
+                ? t.reorder.confirmApprove
+                : t.reorder.confirmReject}
             </DialogDescription>
           </DialogHeader>
 
           {confirming?.decision === "คุ้มค่า" && (
             <Field>
-              <FieldLabel htmlFor="order_qty">จำนวนที่จะสั่งซื้อ</FieldLabel>
+              <FieldLabel htmlFor="order_qty">
+                {t.reorder.orderQtyLabel}
+              </FieldLabel>
               <Input
                 id="order_qty"
                 type="number"
@@ -238,17 +253,15 @@ export default function ReorderDecisionScreen() {
                   setConfirming({ ...confirming, qty: Number(e.target.value) })
                 }
               />
-              <FieldDescription>
-                ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบจำนวนสั่งเติมที่ตั้งไว้ในกฎ SKU
-              </FieldDescription>
+              <FieldDescription>{t.reorder.orderQtyHint}</FieldDescription>
             </Field>
           )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(null)}>
-              ยกเลิก
+              {t.common.cancel}
             </Button>
-            <Button onClick={commitDecision}>ยืนยัน</Button>
+            <Button onClick={commitDecision}>{t.common.confirm}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

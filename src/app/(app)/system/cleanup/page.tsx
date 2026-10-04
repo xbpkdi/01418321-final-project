@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
 
 const DATA_TYPES = [
@@ -50,6 +51,7 @@ const CLOSED_ORDERS = MOCK_ORDERS.filter((o) =>
 );
 
 export default function DataCleanupScreen() {
+  const t = useT();
   const [types, setTypes] = useState<string[]>([]);
   const [cutoff, setCutoff] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function DataCleanupScreen() {
 
   function toggleType(key: string) {
     setTypes((prev) =>
-      prev.includes(key) ? prev.filter((t) => t !== key) : [...prev, key],
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
     setError(null);
   }
@@ -68,12 +70,12 @@ export default function DataCleanupScreen() {
 
     // ต้องเลือกประเภทข้อมูลอย่างน้อย 1 ประเภท
     if (types.length === 0) {
-      setError("กรุณาเลือกประเภทข้อมูลที่ต้องการลบ");
+      setError(t.cleanup.errNoType);
       return;
     }
 
     if (!cutoff) {
-      setError("สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น");
+      setError(t.cleanup.errCutoff);
       return;
     }
 
@@ -81,7 +83,7 @@ export default function DataCleanupScreen() {
     const limit = new Date();
     limit.setMonth(limit.getMonth() - 12);
     if (new Date(cutoff) > limit) {
-      setError("สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น");
+      setError(t.cleanup.errCutoff);
       return;
     }
 
@@ -92,7 +94,7 @@ export default function DataCleanupScreen() {
         new Date(o.order_date) < new Date(cutoff),
     );
     if (matched.length === 0) {
-      setError("ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก");
+      setError(t.cleanup.errNoData);
       return;
     }
 
@@ -103,7 +105,7 @@ export default function DataCleanupScreen() {
   function reviewClosed() {
     setError(null);
     if (CLOSED_ORDERS.length === 0) {
-      setError("ไม่พบ Order ที่ปิดแล้วให้ลบ");
+      setError(t.cleanup.errNoClosed);
       return;
     }
     setConfirming("closed");
@@ -111,12 +113,10 @@ export default function DataCleanupScreen() {
 
   function commit() {
     if (confirming === "closed") {
-      toast.success(
-        `ลบ Order ที่ปิดแล้วสำเร็จ ${CLOSED_ORDERS.length} รายการ`,
-      );
+      toast.success(t.cleanup.okDeletedClosed(CLOSED_ORDERS.length));
     } else {
-      toast.success(`ลบข้อมูลสำเร็จ ${types.length} ประเภท`, {
-        description: "ระบบบันทึก Log การลบไว้แล้ว",
+      toast.success(t.cleanup.okDeleted(types.length), {
+        description: t.cleanup.okDeletedHint,
       });
     }
     setConfirming(null);
@@ -125,8 +125,8 @@ export default function DataCleanupScreen() {
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ลบข้อมูลเก่า"
-        description="ลบข้อมูลที่สิ้นสุดแล้วออกจากระบบเพื่อลดปริมาณข้อมูลสะสม ระบบบันทึก Log การลบทุกครั้ง"
+        title={t.cleanup.title}
+        description={t.cleanup.description}
       />
 
       {error && (
@@ -140,8 +140,8 @@ export default function DataCleanupScreen() {
 
       <Tabs defaultValue="range" className="max-w-2xl">
         <TabsList>
-          <TabsTrigger value="range">ลบตามช่วงวันที่</TabsTrigger>
-          <TabsTrigger value="closed">ลบ Order ที่ปิดแล้ว</TabsTrigger>
+          <TabsTrigger value="range">{t.cleanup.tabRange}</TabsTrigger>
+          <TabsTrigger value="closed">{t.cleanup.tabClosed}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="range" className="mt-4">
@@ -149,17 +149,20 @@ export default function DataCleanupScreen() {
             <CardContent>
               <FieldGroup>
                 <FieldSet>
-                  <FieldLegend variant="label">ประเภทข้อมูล</FieldLegend>
+                  <FieldLegend variant="label">{t.cleanup.dataTypes}</FieldLegend>
                   <FieldGroup className="grid gap-2 sm:grid-cols-2">
-                    {DATA_TYPES.map((t) => (
-                      <FieldLabel key={t.key} htmlFor={`data_type_${t.key}`}>
+                    {DATA_TYPES.map((dataType) => (
+                      <FieldLabel
+                        key={dataType.key}
+                        htmlFor={`data_type_${dataType.key}`}
+                      >
                         <Field orientation="horizontal">
                           <Checkbox
-                            id={`data_type_${t.key}`}
-                            checked={types.includes(t.key)}
-                            onCheckedChange={() => toggleType(t.key)}
+                            id={`data_type_${dataType.key}`}
+                            checked={types.includes(dataType.key)}
+                            onCheckedChange={() => toggleType(dataType.key)}
                           />
-                          <FieldTitle>{t.label}</FieldTitle>
+                          <FieldTitle>{dataType.label}</FieldTitle>
                         </Field>
                       </FieldLabel>
                     ))}
@@ -168,7 +171,7 @@ export default function DataCleanupScreen() {
 
                 <Field>
                   <FieldLabel htmlFor="cutoff_date">
-                    ลบข้อมูลที่เก่ากว่าวันที่
+                    {t.cleanup.cutoffLabel}
                   </FieldLabel>
                   <Input
                     id="cutoff_date"
@@ -179,19 +182,17 @@ export default function DataCleanupScreen() {
                       setError(null);
                     }}
                   />
-                  <FieldDescription>
-                    ลบได้เฉพาะข้อมูลที่เก่ากว่า 12 เดือนขึ้นไป
-                  </FieldDescription>
+                  <FieldDescription>{t.cleanup.cutoffHint}</FieldDescription>
                 </Field>
 
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={reviewRange}>
                     <Trash2 />
-                    ยืนยันการลบข้อมูล
+                    {t.cleanup.submit}
                   </Button>
                   <Button variant="outline">
                     <Download />
-                    ดาวน์โหลดไฟล์สำรองก่อนลบ
+                    {t.cleanup.backup}
                   </Button>
                 </div>
               </FieldGroup>
@@ -203,26 +204,25 @@ export default function DataCleanupScreen() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base font-normal">
-                ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด
-                โดยไม่ต้องกำหนดช่วงวันที่
+                {t.cleanup.closedTitle}
               </CardTitle>
               <CardDescription>
-                พบ Order ที่ปิดแล้ว{" "}
+                {t.cleanup.closedCount}{" "}
                 <span data-numeric className="text-foreground font-medium">
                   {CLOSED_ORDERS.length}
                 </span>{" "}
-                รายการ พร้อมใบปะสินค้าที่เกี่ยวข้อง
+                {t.cleanup.closedCountSuffix}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={reviewClosed}>
                   <Trash2 />
-                  ยืนยันการลบข้อมูล
+                  {t.cleanup.submit}
                 </Button>
                 <Button variant="outline">
                   <Download />
-                  ดาวน์โหลดไฟล์สำรองก่อนลบ
+                  {t.cleanup.backup}
                 </Button>
               </div>
             </CardContent>
@@ -236,20 +236,20 @@ export default function DataCleanupScreen() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ยืนยันการลบข้อมูล</DialogTitle>
+            <DialogTitle>{t.cleanup.confirmTitle}</DialogTitle>
             <DialogDescription>
               {confirming === "closed"
-                ? `ระบบจะลบ Order ที่ปิดแล้ว ${CLOSED_ORDERS.length} รายการ พร้อมใบปะสินค้าที่เกี่ยวข้อง`
-                : `ระบบจะลบข้อมูลประเภท ${types.join(", ")} ที่เก่ากว่า ${cutoff}`}
+                ? t.cleanup.confirmClosed(CLOSED_ORDERS.length)
+                : t.cleanup.confirmRange(types.join(", "), cutoff)}
               {" · "}
-              การลบนี้ย้อนกลับไม่ได้
+              {t.cleanup.irreversible}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(null)}>
-              ยกเลิก
+              {t.common.cancel}
             </Button>
-            <Button onClick={commit}>ยืนยันการลบข้อมูล</Button>
+            <Button onClick={commit}>{t.cleanup.submit}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

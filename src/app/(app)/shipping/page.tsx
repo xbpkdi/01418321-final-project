@@ -11,11 +11,13 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { shippedColumns, waitingColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
 import { findTracking } from "@/mock/delivery";
 import type { Order } from "@/types/order";
 
 export default function ShipmentScreen() {
+  const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [tracking, setTracking] = useState<Record<string, string>>({});
 
@@ -29,15 +31,15 @@ export default function ShipmentScreen() {
   function dispatch(order: Order) {
     // ตรวจสอบ: ต้องพิมพ์ใบปะสินค้าแล้วเท่านั้น
     if (order.order_status !== "พิมพ์ใบปะสินค้าแล้ว") {
-      toast.error("Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้");
+      toast.error(t.shipping.errNotPrinted);
       return;
     }
 
     // Q8.1: ดึงหมายเลขติดตามพัสดุ
     const info = findTracking(order.order_id);
     if (!info) {
-      toast.error("ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง", {
-        description: "คง Order ไว้ในสถานะ รอส่งมอบ",
+      toast.error(t.shipping.errNoTracking, {
+        description: t.shipping.errNoTrackingHint,
       });
       setOrders((prev) =>
         prev.map((o) =>
@@ -58,29 +60,30 @@ export default function ShipmentScreen() {
           : o,
       ),
     );
-    toast.success(`ส่งมอบ ${order.order_id} ให้ ${info.carrier_name} แล้ว`, {
-      description: `หมายเลขติดตามพัสดุ ${info.tracking_number}`,
+    toast.success(t.shipping.okDispatched(order.order_id, info.carrier_name), {
+      description: t.shipping.okDispatchedHint(info.tracking_number),
     });
   }
 
-  const waitingCols = waitingColumns(dispatch);
+  const waitingCols = waitingColumns(t, dispatch);
   const shippedCols = shippedColumns(
-    (order) =>
+    t,
+    (order: Order) =>
       tracking[order.order_id] ??
       findTracking(order.order_id)?.tracking_number ??
-      "ยังไม่มีหมายเลข",
+      t.shipping.noTrackingYet,
   );
 
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="จัดส่งสินค้าให้ลูกค้า"
-        description="ส่งมอบพัสดุที่พิมพ์ใบปะสินค้าแล้วให้ผู้ให้บริการขนส่ง และติดตามสถานะจนถึงมือลูกค้า"
+        title={t.shipping.title}
+        description={t.shipping.description}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>รอส่งมอบ</CardTitle>
+          <CardTitle>{t.shipping.waitingTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -91,8 +94,8 @@ export default function ShipmentScreen() {
             emptyState={
               <EmptyState
                 icon={Truck}
-                title="ไม่มีพัสดุรอส่งมอบ"
-                hint="Order ที่พิมพ์ใบปะสินค้าแล้วจะเข้ามารอส่งมอบที่นี่"
+                title={t.shipping.emptyTitle}
+                hint={t.shipping.emptyHint}
               />
             }
           />
@@ -102,7 +105,7 @@ export default function ShipmentScreen() {
       {shipped.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>ส่งมอบแล้ว</CardTitle>
+            <CardTitle>{t.shipping.shippedTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable

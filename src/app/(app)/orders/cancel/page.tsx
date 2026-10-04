@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { cancelColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Order } from "@/types/order";
 import type { OrderStatus } from "@/lib/order-status";
@@ -34,30 +35,32 @@ const IN_TRANSIT: OrderStatus = "อยู่ระหว่างจัดส�
 const LABEL_PRINTED: OrderStatus = "พิมพ์ใบปะสินค้าแล้ว";
 
 export default function CancelOrderScreen() {
+  const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [target, setTarget] = useState<Order | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  function open(order: Order) {
-    // ตรวจสอบก่อนเปิดฟอร์ม
-    if (CLOSED.includes(order.order_status)) {
-      toast.error(
-        "ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว",
-      );
-      return;
-    }
-    setTarget(order);
-    setReason("");
-    setError(null);
-  }
+  const open = React.useCallback(
+    (order: Order) => {
+      // ตรวจสอบก่อนเปิดฟอร์ม
+      if (CLOSED.includes(order.order_status)) {
+        toast.error(t.cancel.errClosed);
+        return;
+      }
+      setTarget(order);
+      setReason("");
+      setError(null);
+    },
+    [t],
+  );
 
   function confirmCancel() {
     if (!target) return;
 
     // ต้องระบุเหตุผลการยกเลิก
     if (!reason.trim()) {
-      setError("กรุณาระบุเหตุผลการยกเลิก");
+      setError(t.cancel.errNoReason);
       return;
     }
 
@@ -71,9 +74,7 @@ export default function CancelOrderScreen() {
         ),
       );
       setTarget(null);
-      toast.error(
-        "Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน",
-      );
+      toast.error(t.cancel.errInTransit);
       return;
     }
 
@@ -87,21 +88,21 @@ export default function CancelOrderScreen() {
       ),
     );
     setTarget(null);
-    toast.success("ยกเลิก Order สำเร็จ", {
+    toast.success(t.cancel.okCancelled, {
       description: needLabelWarning
-        ? `คืนสต๊อก ${target.qty} ชิ้นแล้ว · Order นี้พิมพ์ใบปะสินค้าไปแล้ว กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย`
-        : `คืนสต๊อก ${target.qty} ชิ้นกลับเข้าคลังแล้ว`,
+        ? t.cancel.restockedWithLabel(target.qty)
+        : t.cancel.restocked(target.qty),
     });
   }
 
   const cancellable = orders.filter((o) => !CLOSED.includes(o.order_status));
-  const columns = React.useMemo(() => cancelColumns(open), []);
+  const columns = React.useMemo(() => cancelColumns(t, open), [t, open]);
 
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="ยกเลิก Order"
-        description="ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมคืนสต๊อกกลับเข้าคลังอัตโนมัติ"
+        title={t.cancel.title}
+        description={t.cancel.description}
       />
 
       <DataTable
@@ -111,8 +112,8 @@ export default function CancelOrderScreen() {
         emptyState={
           <EmptyState
             icon={XCircle}
-            title="ไม่มี Order ที่ยกเลิกได้"
-            hint="Order ที่จัดส่งสำเร็จหรือยกเลิกไปแล้วจะไม่แสดงที่นี่"
+            title={t.cancel.emptyTitle}
+            hint={t.cancel.emptyHint}
           />
         }
       />
@@ -120,16 +121,18 @@ export default function CancelOrderScreen() {
       <Dialog open={target !== null} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ยกเลิก {target?.order_id}</DialogTitle>
+            <DialogTitle>{t.cancel.dialogTitle(target?.order_id ?? "")}</DialogTitle>
             <DialogDescription>
-              {target?.product_name} · จำนวน {target?.qty} ชิ้น
-              {target?.order_status === LABEL_PRINTED &&
-                " · Order นี้พิมพ์ใบปะสินค้าไปแล้ว"}
+              {target?.product_name} · {t.common.qty} {target?.qty}{" "}
+              {t.common.unitPieces}
+              {target?.order_status === LABEL_PRINTED && t.cancel.alreadyPrinted}
             </DialogDescription>
           </DialogHeader>
 
           <Field data-invalid={error ? true : undefined}>
-            <FieldLabel htmlFor="cancel_reason">เหตุผลการยกเลิก</FieldLabel>
+            <FieldLabel htmlFor="cancel_reason">
+              {t.cancel.reasonLabel}
+            </FieldLabel>
             <Textarea
               id="cancel_reason"
               rows={3}
@@ -142,9 +145,9 @@ export default function CancelOrderScreen() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setTarget(null)}>
-              ยกเลิก
+              {t.common.cancel}
             </Button>
-            <Button onClick={confirmCancel}>ยืนยันการยกเลิก</Button>
+            <Button onClick={confirmCancel}>{t.cancel.submit}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

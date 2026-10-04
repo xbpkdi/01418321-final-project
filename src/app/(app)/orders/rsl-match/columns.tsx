@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { AppTableFeatures } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import type { Dict } from "@/lib/i18n/dict";
 import type { Order } from "@/types/order";
 import type { OrderStatus } from "@/lib/order-status";
 
@@ -13,6 +14,7 @@ const col = createColumnHelper<AppTableFeatures, Order>();
 
 /** ตารางรอจับคู่ — สถานะมาจาก state ที่หน้าถืออยู่ ไม่ใช่ค่าใน Order ตรงๆ */
 export function queueColumns(
+  t: Dict,
   statusOf: (order: Order) => OrderStatus,
   onMatch: (order: Order) => void,
   workingId: string | null,
@@ -39,7 +41,7 @@ export function queueColumns(
     }),
     col.display({
       id: "status",
-      header: "สถานะ",
+      header: t.common.status,
       cell: (ctx) => <StatusBadge status={statusOf(ctx.row.original)} />,
     }),
     col.display({
@@ -53,7 +55,7 @@ export function queueColumns(
             disabled={workingId === ctx.row.original.order_id}
           >
             {workingId === ctx.row.original.order_id && <Spinner />}
-            จับคู่กับ RSL
+            {t.rslMatch.match}
           </Button>
         </div>
       ),
@@ -63,6 +65,7 @@ export function queueColumns(
 
 /** ตารางจับคู่แล้ว */
 export function matchedColumns(
+  t: Dict,
   referenceOf: (order: Order) => string | null,
   statusOf: (order: Order) => OrderStatus,
   onUnmatch: (orderId: string) => void,
@@ -75,7 +78,7 @@ export function matchedColumns(
     }),
     col.display({
       id: "rsl_reference_id",
-      header: "หมายเลขอ้างอิง RSL",
+      header: t.rslMatch.rslReference,
       cell: (ctx) => (
         <span className="text-muted-foreground">
           {referenceOf(ctx.row.original)}
@@ -84,7 +87,7 @@ export function matchedColumns(
     }),
     col.display({
       id: "status",
-      header: "สถานะ",
+      header: t.common.status,
       cell: (ctx) => <StatusBadge status={statusOf(ctx.row.original)} />,
     }),
     col.display({
@@ -97,7 +100,7 @@ export function matchedColumns(
             onClick={() => onUnmatch(ctx.row.original.order_id)}
           >
             <Link2Off />
-            ยกเลิกการจับคู่
+            {t.rslMatch.unmatch}
           </Button>
         </div>
       ),

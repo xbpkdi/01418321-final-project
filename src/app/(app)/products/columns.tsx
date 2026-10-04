@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AppTableFeatures } from "@/components/shared/data-table";
+import type { Dict } from "@/lib/i18n/dict";
 import type { Product } from "@/types/product";
 
 const baht = new Intl.NumberFormat("th-TH", {
@@ -16,6 +17,7 @@ const baht = new Intl.NumberFormat("th-TH", {
 const col = createColumnHelper<AppTableFeatures, Product>();
 
 export function productColumns(
+  t: Dict,
   onEdit: (product: Product) => void,
   onToggleActive: (product: Product) => void,
 ) {
@@ -26,8 +28,8 @@ export function productColumns(
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
     col.accessor("product_name", {
-      header: "สินค้า",
-      meta: { label: "สินค้า" },
+      header: t.common.product,
+      meta: { label: t.common.product },
       cell: (ctx) => (
         <div>
           <p>{ctx.getValue()}</p>
@@ -38,15 +40,17 @@ export function productColumns(
       ),
     }),
     col.accessor("supplier_name", {
-      header: "ซัพพลายเออร์",
-      meta: { label: "ซัพพลายเออร์" },
+      header: t.common.supplier,
+      meta: { label: t.common.supplier },
       cell: (ctx) => (
         <span className="text-muted-foreground">{ctx.getValue()}</span>
       ),
     }),
     col.display({
       id: "reorder",
-      header: () => <div className="text-right">เกณฑ์เติม</div>,
+      header: () => (
+        <div className="text-right">{t.common.reorderThreshold}</div>
+      ),
       cell: (ctx) => (
         <div data-numeric className="text-right">
           {ctx.row.original.reorder_threshold} / {ctx.row.original.reorder_qty}
@@ -54,8 +58,8 @@ export function productColumns(
       ),
     }),
     col.accessor("selling_price", {
-      header: () => <div className="text-right">ราคาขาย</div>,
-      meta: { label: "ราคาขาย" },
+      header: () => <div className="text-right">{t.common.sellingPrice}</div>,
+      meta: { label: t.common.sellingPrice },
       cell: (ctx) => (
         <div data-numeric className="text-right">
           {baht.format(ctx.getValue())}
@@ -63,8 +67,8 @@ export function productColumns(
       ),
     }),
     col.accessor("active", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => (
         <Badge
           variant="secondary"
@@ -74,7 +78,7 @@ export function productColumns(
               : "bg-status-waiting-bg text-status-waiting"
           }
         >
-          {ctx.getValue() ? "เปิดขาย" : "ปิดการขาย"}
+          {ctx.getValue() ? t.products.active : t.products.inactive}
         </Badge>
       ),
     }),
@@ -88,14 +92,14 @@ export function productColumns(
             onClick={() => onEdit(ctx.row.original)}
           >
             <Pencil />
-            แก้ไข
+            {t.products.edit}
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onToggleActive(ctx.row.original)}
           >
-            {ctx.row.original.active ? "ปิดการขาย" : "เปิดขาย"}
+            {ctx.row.original.active ? t.products.inactive : t.products.active}
           </Button>
         </div>
       ),

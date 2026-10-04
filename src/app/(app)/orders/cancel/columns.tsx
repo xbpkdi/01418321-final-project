@@ -4,11 +4,12 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import type { AppTableFeatures } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import type { Dict } from "@/lib/i18n/dict";
 import type { Order } from "@/types/order";
 
 const col = createColumnHelper<AppTableFeatures, Order>();
 
-export function cancelColumns(onCancel: (order: Order) => void) {
+export function cancelColumns(t: Dict, onCancel: (order: Order) => void) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -16,8 +17,8 @@ export function cancelColumns(onCancel: (order: Order) => void) {
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
     col.accessor("product_name", {
-      header: "สินค้า",
-      meta: { label: "สินค้า" },
+      header: t.common.product,
+      meta: { label: t.common.product },
       cell: (ctx) => (
         <span className="text-muted-foreground block max-w-[28ch] truncate">
           {ctx.getValue()}
@@ -25,8 +26,8 @@ export function cancelColumns(onCancel: (order: Order) => void) {
       ),
     }),
     col.accessor("qty", {
-      header: () => <div className="text-right">จำนวน</div>,
-      meta: { label: "จำนวน" },
+      header: () => <div className="text-right">{t.common.qty}</div>,
+      meta: { label: t.common.qty },
       cell: (ctx) => (
         <div data-numeric className="text-right">
           {ctx.getValue()}
@@ -34,8 +35,8 @@ export function cancelColumns(onCancel: (order: Order) => void) {
       ),
     }),
     col.accessor("order_status", {
-      header: "สถานะ",
-      meta: { label: "สถานะ" },
+      header: t.common.status,
+      meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
     col.display({
@@ -47,7 +48,7 @@ export function cancelColumns(onCancel: (order: Order) => void) {
             variant="outline"
             onClick={() => onCancel(ctx.row.original)}
           >
-            ยกเลิก Order
+            {t.cancel.action}
           </Button>
         </div>
       ),

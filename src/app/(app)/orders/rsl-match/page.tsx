@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { matchedColumns, queueColumns } from "./columns";
+import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
 import { findRslMatches, type RslShipment } from "@/mock/rsl";
 import type { Order } from "@/types/order";
@@ -27,6 +28,7 @@ type MatchState = {
 const UNMATCHED: OrderStatus[] = ["รอจับคู่กฎ SKU", "รอตรวจสอบสต๊อก"];
 
 export default function RslMatchScreen() {
+  const t = useT();
   const [matches, setMatches] = useState<Record<string, MatchState>>({});
   const [candidates, setCandidates] = useState<{
     order: Order;
@@ -53,7 +55,7 @@ export default function RslMatchScreen() {
 
       // ทางเลือก #1: ไม่พบ SKU ที่ตรงกันใน RSL
       if (found.length === 0) {
-        setError("ไม่พบสินค้านี้ในระบบ RSL");
+        setError(t.rslMatch.errNotFound);
         setMatches((prev) => ({
           ...prev,
           [order.order_id]: {
@@ -67,7 +69,7 @@ export default function RslMatchScreen() {
 
       // ทางเลือก #2: พบมากกว่า 1 รายการ ให้ Admin เลือกเอง
       if (found.length > 1) {
-        setError("พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง");
+        setError(t.rslMatch.errMultiple);
         setCandidates({ order, options: found });
         setWorking(null);
         return;
@@ -89,7 +91,7 @@ export default function RslMatchScreen() {
     }));
     setCandidates(null);
     setError(null);
-    toast.success(`จับคู่ Order กับ RSL สำเร็จ · ${shipment.rsl_order_id}`);
+    toast.success(`${t.rslMatch.okMatched} · ${shipment.rsl_order_id}`);
   }
 
   function matchAll() {
@@ -106,15 +108,17 @@ export default function RslMatchScreen() {
       delete next[orderId];
       return next;
     });
-    toast.success("ยกเลิกการจับคู่แล้ว");
+    toast.success(t.rslMatch.okUnmatched);
   }
 
   const queueCols = queueColumns(
+    t,
     (order) => matches[order.order_id]?.status ?? order.order_status,
     match,
     working,
   );
   const matchedCols = matchedColumns(
+    t,
     (order) => matches[order.order_id]?.rsl_reference_id ?? null,
     (order) => matches[order.order_id].status,
     unmatch,
@@ -123,11 +127,11 @@ export default function RslMatchScreen() {
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
-        title="จับคู่ Order กับ RSL"
-        description="เทียบ SKU และ Variation ของ Order กับข้อมูลในคลัง RSL ก่อนจัดรูปแบบใบปะสินค้า"
+        title={t.rslMatch.title}
+        description={t.rslMatch.description}
         action={
           <Button onClick={matchAll} disabled={queue.length === 0}>
-            จับคู่อัตโนมัติทั้งหมด
+            {t.rslMatch.matchAll}
           </Button>
         }
       />
@@ -145,8 +149,10 @@ export default function RslMatchScreen() {
         <Card className="border-status-attention/30 bg-status-attention-bg/40">
           <CardHeader>
             <CardTitle className="text-sm">
-              เลือกรายการ RSL สำหรับ {candidates.order.order_id} ·{" "}
-              {candidates.order.sku}
+              {t.rslMatch.chooseFor(
+                candidates.order.order_id,
+                candidates.order.sku,
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2">
@@ -155,8 +161,9 @@ export default function RslMatchScreen() {
                 <ItemContent>
                   <ItemTitle>{option.rsl_order_id}</ItemTitle>
                   <ItemDescription>
-                    คงเหลือในคลัง RSL{" "}
-                    <span data-numeric>{option.rsl_stock_qty}</span> ชิ้น
+                    {t.rslMatch.stockLeft}{" "}
+                    <span data-numeric>{option.rsl_stock_qty}</span>{" "}
+                    {t.common.unitPieces}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
@@ -165,7 +172,7 @@ export default function RslMatchScreen() {
                     variant="outline"
                     onClick={() => commit(candidates.order, option)}
                   >
-                    เลือกรายการนี้
+                    {t.rslMatch.chooseThis}
                   </Button>
                 </ItemActions>
               </Item>
@@ -176,7 +183,7 @@ export default function RslMatchScreen() {
 
       <Card>
         <CardHeader>
-          <CardTitle>รอจับคู่</CardTitle>
+          <CardTitle>{t.rslMatch.queueTitle}</CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -187,8 +194,8 @@ export default function RslMatchScreen() {
             emptyState={
               <EmptyState
                 icon={Link2}
-                title="จับคู่ครบทุก Order แล้ว"
-                hint="Order ที่ผ่านการตรวจสอบและจับคู่กฎ SKU แล้วจะเข้ามารอที่นี่"
+                title={t.rslMatch.emptyTitle}
+                hint={t.rslMatch.emptyHint}
               />
             }
           />
@@ -198,7 +205,7 @@ export default function RslMatchScreen() {
       {matched.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>จับคู่แล้ว</CardTitle>
+            <CardTitle>{t.rslMatch.matchedTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <DataTable
