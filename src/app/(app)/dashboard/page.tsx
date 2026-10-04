@@ -29,7 +29,7 @@ import {
 } from "@/mock/orders";
 import { MOCK_STOCK } from "@/mock/products";
 import type { OrderStatus } from "@/lib/order-status";
-import { useT } from "@/lib/i18n/context";
+import { useLanguage } from "@/lib/i18n/context";
 
 const WATCHED: { status: OrderStatus; href: string }[] = [
   { status: "รอตรวจสอบคำสั่งซื้อ", href: "/orders/verify" },
@@ -38,15 +38,19 @@ const WATCHED: { status: OrderStatus; href: string }[] = [
   { status: "รอดำเนินการด้วยตนเอง", href: "/orders/verify" },
 ];
 
-const timeFormatter = new Intl.DateTimeFormat("th-TH", {
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+/** วันที่ต้องตามภาษาที่ผู้ใช้เลือก ไม่ใช่ล็อกไว้ที่ไทยเสมอ */
+function makeTimeFormatter(lang: string) {
+  return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "th-TH", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function DashboardScreen() {
-  const t = useT();
+  const { lang, t } = useLanguage();
+  const timeFormatter = makeTimeFormatter(lang);
   const counts = WATCHED.map((item) => ({
     ...item,
     count: MOCK_ORDERS.filter((o) => o.order_status === item.status).length,
