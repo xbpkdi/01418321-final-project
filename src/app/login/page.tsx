@@ -15,6 +15,14 @@ import { MOCK_USERS } from "@/mock/users";
 // รูปแบบอีเมลตามที่ UC 1A ขั้นตอนที่ 3 กำหนดไว้ตรงตัว
 const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
 
+/** ลำดับงานจริงที่ระบบนี้ดูแล ใช้เป็นเนื้อหาของแผงซ้ายแทน copy โฆษณา */
+const PIPELINE = [
+  { step: "01", label: "ดึงออเดอร์เข้าระบบ", detail: "Rakuten · Yahoo! · Amazon" },
+  { step: "02", label: "ตรวจสอบและจับคู่กฎ SKU", detail: "ยืนยันก่อนส่งต่อ" },
+  { step: "03", label: "จับคู่คลัง RSL และพิมพ์ใบปะสินค้า", detail: "ลดงานพิมพ์มือ" },
+  { step: "04", label: "ตัดสต๊อกและแจ้งเลขติดตาม", detail: "ปิดงานอัตโนมัติ" },
+];
+
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -64,39 +72,52 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-none">
-      {/* บนมือถือย่อเหลือแถบแบรนด์ เพื่อให้ฟอร์มอยู่ในจอแรกโดยไม่ต้องเลื่อน */}
-      <section className="bg-primary text-primary-foreground flex flex-col justify-between gap-10 px-6 py-5 lg:px-14 lg:py-14">
-        <div className="flex items-center gap-2.5">
+    <div className="grid min-h-[100dvh] grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:grid-rows-none">
+      {/* แผงซ้ายไล่เฉดเล็กน้อยให้เป็นวัสดุ ไม่ใช่บล็อกสีทึบแปะไว้ */}
+      <section className="from-primary relative flex flex-col gap-14 overflow-hidden bg-linear-to-b to-[oklch(0.31_0.13_265)] px-6 py-5 text-white lg:px-10 lg:py-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:28px_28px]"
+        />
+
+        <div className="relative flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-lg bg-white/15">
             <Boxes className="size-5" />
           </div>
           <span className="text-lg font-semibold">RSL Fulfillment Hub</span>
         </div>
 
-        <div className="hidden max-w-lg lg:block">
-          {/* ขึ้นบรรทัดเอง เพราะเบราว์เซอร์ตัดบรรทัดภาษาไทยกลางคำได้ */}
-          <h1 className="text-3xl leading-snug font-semibold">
-            จัดการออเดอร์จากทุกช่องทางขาย
-            <br />
-            ไว้ที่เดียว
-          </h1>
-          <p className="mt-4 text-sm leading-relaxed text-white/70">
-            ตรวจสอบคำสั่งซื้อ จับคู่คลัง RSL พิมพ์ใบปะสินค้า ตรวจสต๊อก
-            และคำนวณต้นทุนต่อหน่วย โดยไม่ต้องสลับไปมาหลายระบบ
-          </p>
-        </div>
+        {/* ลำดับงานจริง ไม่ใช่ประโยคขายของ คนที่เห็นหน้านี้คือคนเดียวที่ใช้ระบบ */}
+        <ol className="relative hidden lg:block">
+          {PIPELINE.map((item) => (
+            <li
+              key={item.step}
+              className="flex gap-4 border-t border-white/15 py-4 last:border-b"
+            >
+              <span
+                data-numeric
+                className="pt-0.5 text-xs font-medium text-white/45"
+              >
+                {item.step}
+              </span>
+              <div>
+                <p className="text-sm leading-snug font-medium">{item.label}</p>
+                <p className="mt-0.5 text-xs text-white/55">{item.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
 
-        <p className="hidden text-xs text-white/50 lg:block">
-          Colorado Co., Ltd. · Rakuten Ichiba · Yahoo! Auctions · Amazon
+        <p className="relative mt-auto hidden text-xs text-white/45 lg:block">
+          Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น
         </p>
       </section>
 
-      <section className="flex items-center justify-center px-6 py-12 lg:px-14">
+      <section className="flex items-center px-6 py-12 lg:px-16">
         <form onSubmit={handleSubmit} className="w-full max-w-sm" noValidate>
-          <h2 className="text-xl font-semibold">เข้าสู่ระบบ</h2>
+          <h1 className="text-2xl font-semibold">เข้าสู่ระบบ</h1>
           <p className="text-muted-foreground mt-1.5 text-sm">
-            สำหรับผู้ดูแลระบบเท่านั้น
+            ใช้บัญชีผู้ดูแลที่ลงทะเบียนไว้กับระบบ
           </p>
 
           <div className="mt-8 grid gap-5">
@@ -131,13 +152,18 @@ export default function LoginScreen() {
             {error && (
               <p
                 role="alert"
-                className="text-destructive bg-destructive/8 rounded-md px-3 py-2.5 text-sm"
+                className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
               >
                 {error}
               </p>
             )}
 
-            <Button type="submit" className="mt-1 w-full" disabled={submitting}>
+            <Button
+              type="submit"
+              size="lg"
+              className="mt-1 w-full"
+              disabled={submitting}
+            >
               {submitting && <Loader2 className="animate-spin" />}
               เข้าสู่ระบบ
             </Button>
