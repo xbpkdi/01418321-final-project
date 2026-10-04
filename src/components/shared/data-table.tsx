@@ -74,6 +74,7 @@ export function DataTable<T extends object>({
   emptyState,
   toolbar,
   pageSize = 10,
+  showColumnToggle = true,
 }: {
   data: T[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +85,8 @@ export function DataTable<T extends object>({
   emptyState?: React.ReactNode;
   toolbar?: React.ReactNode;
   pageSize?: number;
+  /** ปิดเมื่อฝังตารางไว้ในการ์ด ที่ปุ่มเลือกคอลัมน์กลายเป็นส่วนเกิน */
+  showColumnToggle?: boolean;
 }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<ColumnVisibilityState>({});
@@ -113,40 +116,46 @@ export function DataTable<T extends object>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex-1">{toolbar}</div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Columns3Icon data-icon="inline-start" />
-              คอลัมน์
-              <ChevronDownIcon data-icon="inline-end" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            {table
-              .getAllColumns()
-              .filter(
-                (column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide(),
-              )
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {typeof column.columnDef.meta === "object" &&
-                  column.columnDef.meta !== null &&
-                  "label" in column.columnDef.meta
-                    ? String(column.columnDef.meta.label)
-                    : column.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {(toolbar || showColumnToggle) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex-1">{toolbar}</div>
+          {showColumnToggle && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Columns3Icon data-icon="inline-start" />
+                  คอลัมน์
+                  <ChevronDownIcon data-icon="inline-end" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) =>
+                      typeof column.accessorFn !== "undefined" &&
+                      column.getCanHide(),
+                  )
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {typeof column.columnDef.meta === "object" &&
+                      column.columnDef.meta !== null &&
+                      "label" in column.columnDef.meta
+                        ? String(column.columnDef.meta.label)
+                        : column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>

@@ -38,7 +38,13 @@ export function OrderVolumeChart({
           allowDecimals={false}
         />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+        {/* ปิด animation: แท่งวิ่งขึ้นไม่ได้สื่อสถานะอะไร และทำให้ภาพที่ capture ได้ไม่ตรง */}
+        <Bar
+          dataKey="count"
+          fill="var(--color-count)"
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        />
       </BarChart>
     </ChartContainer>
   );
