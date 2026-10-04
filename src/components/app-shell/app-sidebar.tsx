@@ -88,7 +88,7 @@ export function AppSidebar() {
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">Admin</span>
                 <span className="text-muted-foreground truncate text-xs">
-                  admin@colorado.co.jp
+                  admin@colorado.jp
                 </span>
               </div>
             </SidebarMenuButton>

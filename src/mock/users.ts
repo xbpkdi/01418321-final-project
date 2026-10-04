@@ -14,13 +14,13 @@ export type MockUser = {
 export const MOCK_USERS: MockUser[] = [
   {
     user_id: "U001",
-    user_email: "admin@colorado.co.jp",
+    user_email: "admin@colorado.jp",
     user_password: "demo1234",
     fail_attempts: 0,
   },
   {
     user_id: "U002",
-    user_email: "locked@colorado.co.jp",
+    user_email: "locked@colorado.jp",
     user_password: "demo1234",
     fail_attempts: 5, // ใช้ทดสอบเคส fail_attempts >= 5
   },
