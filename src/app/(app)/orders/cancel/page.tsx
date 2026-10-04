@@ -4,7 +4,9 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
 import * as React from "react";
+import { Suspense } from "react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,7 +36,8 @@ const IN_TRANSIT: OrderStatus = "อยู่ระหว่างจัดส�
 /** สถานะที่พิมพ์ใบปะสินค้าไปแล้วแต่ยังไม่ส่งมอบ */
 const LABEL_PRINTED: OrderStatus = "พิมพ์ใบปะสินค้าแล้ว";
 
-export default function CancelOrderScreen() {
+function CancelOrderContent() {
+  const searchParams = useSearchParams();
   const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [target, setTarget] = useState<Order | null>(null);
@@ -95,7 +98,11 @@ export default function CancelOrderScreen() {
     });
   }
 
-  const cancellable = orders.filter((o) => !CLOSED.includes(o.order_status));
+  // กรองตาม status ที่ส่งมาจากการ์ดบนหน้าภาพรวม เพื่อให้เห็นเฉพาะรายการที่กดมา
+  const focusStatus = searchParams.get("status");
+  const cancellable = orders
+    .filter((o) => !CLOSED.includes(o.order_status))
+    .filter((o) => !focusStatus || o.order_status === focusStatus);
   const columns = React.useMemo(() => cancelColumns(t, open), [t, open]);
 
   return (
@@ -152,5 +159,14 @@ export default function CancelOrderScreen() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// useSearchParams ต้องอยู่ใต้ Suspense ตามที่ Next.js บังคับเวลา prerender
+export default function CancelOrderScreen() {
+  return (
+    <Suspense>
+      <CancelOrderContent />
+    </Suspense>
   );
 }

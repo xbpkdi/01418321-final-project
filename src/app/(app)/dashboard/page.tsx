@@ -31,11 +31,17 @@ import { MOCK_STOCK } from "@/mock/products";
 import type { OrderStatus } from "@/lib/order-status";
 import { useLanguage } from "@/lib/i18n/context";
 
+// ส่ง status ไปกรองปลายทางด้วย ไม่งั้นพอรายการเยอะจะหาไม่เจอว่ากดมาจากใบไหน
+// "รอดำเนินการด้วยตนเอง" ต้องไปหน้ายกเลิก Order เพราะเป็นหน้าเดียวที่แสดง Order ได้ทุกสถานะ
+// (หน้าตรวจสอบคำสั่งซื้อกรองเฉพาะ "รอตรวจสอบคำสั่งซื้อ" จึงไม่เคยแสดงรายการกลุ่มนี้)
 const WATCHED: { status: OrderStatus; href: string }[] = [
   { status: "รอตรวจสอบคำสั่งซื้อ", href: "/orders/verify" },
   { status: "รอ Admin ตัดสินใจสั่งซื้อ", href: "/products/reorder" },
   { status: "รอพิมพ์ใบปะสินค้า", href: "/shipping/label" },
-  { status: "รอดำเนินการด้วยตนเอง", href: "/orders/verify" },
+  {
+    status: "รอดำเนินการด้วยตนเอง",
+    href: `/orders/cancel?status=${encodeURIComponent("รอดำเนินการด้วยตนเอง")}`,
+  },
 ];
 
 /** วันที่ต้องตามภาษาที่ผู้ใช้เลือก ไม่ใช่ล็อกไว้ที่ไทยเสมอ */
