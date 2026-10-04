@@ -98,6 +98,7 @@ export default function LabelPrintScreen() {
             data={queue}
             columns={queueCols}
             getRowId={(row) => row.order_id}
+            showColumnToggle={false}
             emptyState={
               <EmptyState
                 icon={Printer}

@@ -87,6 +87,7 @@ export default function ShipmentScreen() {
             data={waiting}
             columns={waitingCols}
             getRowId={(row) => row.order_id}
+            showColumnToggle={false}
             emptyState={
               <EmptyState
                 icon={Truck}
