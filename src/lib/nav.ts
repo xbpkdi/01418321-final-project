@@ -10,6 +10,7 @@ import {
   Printer,
   Trash2,
   LayoutDashboard,
+  Network,
   type LucideIcon,
 } from "lucide-react";
 
@@ -127,6 +128,13 @@ export const navGroups: NavGroup[] = [
         uc: "10A",
         screen: "DataCleanupScreen",
         icon: Trash2,
+      },
+      {
+        title: "ผังโครงสร้างหน้าจอ",
+        href: "/sitemap",
+        uc: "—",
+        screen: "SiteMapScreen",
+        icon: Network,
       },
     ],
   },
