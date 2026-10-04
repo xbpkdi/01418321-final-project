@@ -16,9 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { DataTable } from "@/components/shared/data-table";
+import { verifyColumns } from "./columns";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Order } from "@/types/order";
 
@@ -119,9 +122,14 @@ export default function OrderVerifyScreen() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section className="self-start rounded-lg border">
-          <div className="border-b p-3">
-            <div className="relative">
+        <DataTable
+          data={visible}
+          columns={verifyColumns}
+          getRowId={(row) => row.order_id}
+          onRowClick={select}
+          selectedRowId={selectedId}
+          toolbar={
+            <div className="relative max-w-sm">
               <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
               <Input
                 value={keyword}
@@ -131,9 +139,8 @@ export default function OrderVerifyScreen() {
                 placeholder="ค้นหาด้วย Order ID, SKU หรือช่องทางขาย"
               />
             </div>
-          </div>
-
-          {visible.length === 0 ? (
+          }
+          emptyState={
             <EmptyState
               icon={ClipboardCheck}
               title={
@@ -147,56 +154,24 @@ export default function OrderVerifyScreen() {
                   : "Order ใหม่จะเข้ามาที่นี่หลังกดนำเข้า Order จากหน้าภาพรวมระบบ"
               }
             />
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted text-muted-foreground text-xs">
-                <tr>
-                  <th className="px-4 py-2.5 text-left font-medium">Order ID</th>
-                  <th className="px-4 py-2.5 text-left font-medium">SKU</th>
-                  <th className="hidden px-4 py-2.5 text-left font-medium sm:table-cell">
-                    ช่องทางขาย
-                  </th>
-                  <th className="px-4 py-2.5 text-right font-medium">จำนวน</th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
-                {visible.map((order) => (
-                  <tr
-                    key={order.order_id}
-                    onClick={() => select(order)}
-                    aria-selected={order.order_id === selectedId}
-                    className="hover:bg-muted/60 aria-selected:bg-accent cursor-pointer"
-                  >
-                    <td className="px-4 py-3 font-medium">{order.order_id}</td>
-                    <td className="text-muted-foreground px-4 py-3">
-                      {order.sku}
-                    </td>
-                    <td className="text-muted-foreground hidden px-4 py-3 sm:table-cell">
-                      {order.sales_channel}
-                    </td>
-                    <td data-numeric className="px-4 py-3 text-right">
-                      {order.qty}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+          }
+        />
 
-        <section className="self-start rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">
-            รายละเอียดคำสั่งซื้อ
-          </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>รายละเอียดคำสั่งซื้อ</CardTitle>
+          </CardHeader>
 
           {!selected ? (
-            <EmptyState
-              icon={ClipboardCheck}
-              title="ยังไม่ได้เลือก Order"
-              hint="เลือกรายการจากตารางด้านซ้ายเพื่อตรวจทานรายละเอียดก่อนยืนยัน"
-            />
+            <CardContent>
+              <EmptyState
+                icon={ClipboardCheck}
+                title="ยังไม่ได้เลือก Order"
+                hint="เลือกรายการจากตารางด้านซ้ายเพื่อตรวจทานรายละเอียดก่อนยืนยัน"
+              />
+            </CardContent>
           ) : (
-            <div className="grid gap-4 p-5">
+            <CardContent className="grid gap-4">
               <dl className="grid gap-3 text-sm">
                 <Row label="Order ID" value={selected.order_id} />
                 <Row
@@ -256,9 +231,9 @@ export default function OrderVerifyScreen() {
               <Button onClick={confirm} disabled={submitting}>
                 ยืนยันคำสั่งซื้อ
               </Button>
-            </div>
+            </CardContent>
           )}
-        </section>
+        </Card>
       </div>
     </div>
   );

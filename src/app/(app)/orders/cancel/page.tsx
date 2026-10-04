@@ -3,6 +3,7 @@
 // CancelOrderScreen — UC 7A ยกเลิก Order
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
+import * as React from "react";
 import { useState } from "react";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { DataTable } from "@/components/shared/data-table";
+import { cancelColumns } from "./columns";
 import { MOCK_ORDERS } from "@/mock/orders";
 import type { Order } from "@/types/order";
 import type { OrderStatus } from "@/lib/order-status";
@@ -92,6 +94,7 @@ export default function CancelOrderScreen() {
   }
 
   const cancellable = orders.filter((o) => !CLOSED.includes(o.order_status));
+  const columns = React.useMemo(() => cancelColumns(open), []);
 
   return (
     <div className="grid gap-6 p-6">
@@ -100,58 +103,18 @@ export default function CancelOrderScreen() {
         description="ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมคืนสต๊อกกลับเข้าคลังอัตโนมัติ"
       />
 
-      <section className="rounded-lg border">
-        <h2 className="border-b px-5 py-3.5 font-semibold">
-          Order ที่ยังยกเลิกได้
-        </h2>
-
-        {cancellable.length === 0 ? (
+      <DataTable
+        data={cancellable}
+        columns={columns}
+        getRowId={(row) => row.order_id}
+        emptyState={
           <EmptyState
             icon={XCircle}
             title="ไม่มี Order ที่ยกเลิกได้"
             hint="Order ที่จัดส่งสำเร็จหรือยกเลิกไปแล้วจะไม่แสดงที่นี่"
           />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground text-xs">
-              <tr>
-                <th className="px-5 py-2.5 text-left font-medium">Order ID</th>
-                <th className="hidden px-5 py-2.5 text-left font-medium md:table-cell">
-                  สินค้า
-                </th>
-                <th className="px-5 py-2.5 text-right font-medium">จำนวน</th>
-                <th className="px-5 py-2.5 text-left font-medium">สถานะ</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {cancellable.map((order) => (
-                <tr key={order.order_id} className="hover:bg-muted/60">
-                  <td className="px-5 py-3 font-medium">{order.order_id}</td>
-                  <td className="text-muted-foreground hidden max-w-[28ch] truncate px-5 py-3 md:table-cell">
-                    {order.product_name}
-                  </td>
-                  <td data-numeric className="px-5 py-3 text-right">
-                    {order.qty}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={order.order_status} />
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => open(order)}
-                    >
-                      ยกเลิก Order
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+        }
+      />
 
       <Dialog open={target !== null} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
