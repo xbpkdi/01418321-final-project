@@ -116,8 +116,10 @@ export function DataTable<T extends object>({
   const rows = table.getRowModel().rows;
   const showPagination = table.getPageCount() > 1;
 
+  // min-w-0 จำเป็น เพราะ grid/flex item ตั้ง min-width เป็น auto
+  // ทำให้ตารางหดต่ำกว่าความกว้างเนื้อหาไม่ได้ แล้วดันทะลุ padding ของหน้าบนจอแคบ
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       {(toolbar || showColumnToggle) && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex-1">{toolbar}</div>
