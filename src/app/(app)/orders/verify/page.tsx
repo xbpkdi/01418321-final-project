@@ -6,10 +6,9 @@
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardCheck, Search } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -23,6 +22,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { verifyColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
@@ -141,16 +141,12 @@ export default function OrderVerifyScreen() {
           onRowClick={select}
           selectedRowId={selectedId}
           toolbar={
-            <div className="relative max-w-sm">
-              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-              <Input
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className="pl-9"
-                aria-label={t.verify.searchLabel}
-                placeholder={t.verify.searchPlaceholder}
-              />
-            </div>
+            <TableSearch
+              value={keyword}
+              onChange={setKeyword}
+              label={t.verify.searchLabel}
+              placeholder={t.verify.searchPlaceholder}
+            />
           }
           emptyState={
             <EmptyState
