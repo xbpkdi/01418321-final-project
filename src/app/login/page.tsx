@@ -98,13 +98,13 @@ export default function LoginScreen() {
         <LanguageToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1180px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,400px)] lg:gap-16">
+      <main className="mx-auto grid w-full max-w-[1320px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,380px)] lg:gap-10">
         {/* @container: ขนาดหัวข้อคิดจากความกว้างคอลัมน์นี้ ไม่ใช่ทั้งจอ */}
         <section className="rise @container">
           <p className="eyebrow">{t.app.company}</p>
           <FlapTitle
             text={t.app.name}
-            className="display mt-4 cursor-default text-[min(11rem,21cqw)]"
+            className="display mt-4 cursor-default text-[min(12rem,21cqw)]"
             suffix={
               <span
                 aria-hidden
@@ -112,13 +112,13 @@ export default function LoginScreen() {
               />
             }
           />
-          <p className="text-muted-foreground mt-6 max-w-md text-base leading-relaxed">
+          <p className="text-muted-foreground mt-6 text-base leading-relaxed">
             {t.login.tagline}
           </p>
         </section>
 
         <div className="rise" style={{ animationDelay: "140ms" }}>
-          <GlowCard className="p-6 sm:p-8">
+          <GlowCard className="px-6 py-7 sm:py-8">
             {/* ขีดสั้นแบบที่คั่นหนังสือ สีคอรัลเข้าชุดกับจุดหลังหัวข้อใหญ่ */}
             <span aria-hidden className="bg-coral mb-4 block h-1 w-10 rounded-full" />
             <h2 className="display text-4xl">{t.login.title}</h2>

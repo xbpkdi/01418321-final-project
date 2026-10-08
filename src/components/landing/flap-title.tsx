@@ -3,6 +3,8 @@
 // - ชี้ตัวอักษรตัวไหน ตัวนั้นเอียงและเป็นสี cobalt
 // ภาพทั้งหมดอยู่ใน .flap-char ที่ globals.css ผู้ใช้ที่ตั้ง prefers-reduced-motion เห็นข้อความนิ่ง
 
+import { Fragment } from "react";
+
 export function FlapTitle({
   text,
   className,
@@ -18,18 +20,22 @@ export function FlapTitle({
   return (
     <h1 aria-label={text} className={className}>
       {text.split(" ").map((word, w, words) => (
-        <span key={w} aria-hidden className="inline-block whitespace-nowrap">
-          {[...word].map((ch, i) => (
-            <span
-              key={i}
-              className="flap-char"
-              style={{ "--i": index++ } as React.CSSProperties}
-            >
-              {ch}
-            </span>
-          ))}
-          {w < words.length - 1 ? " " : suffix}
-        </span>
+        // ช่องว่างระหว่างคำอยู่นอกกล่องคำ ไม่ให้ช่องว่างนับเป็นความกว้างของคำ
+        <Fragment key={w}>
+          <span aria-hidden className="inline-block whitespace-nowrap">
+            {[...word].map((ch, i) => (
+              <span
+                key={i}
+                className="flap-char"
+                style={{ "--i": index++ } as React.CSSProperties}
+              >
+                {ch}
+              </span>
+            ))}
+            {w === words.length - 1 && suffix}
+          </span>
+          {w < words.length - 1 && " "}
+        </Fragment>
       ))}
     </h1>
   );
