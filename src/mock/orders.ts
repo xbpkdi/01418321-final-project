@@ -157,13 +157,13 @@ export const MOCK_CONNECTIONS: ChannelConnection[] = [
   },
 ];
 
-/** จำนวน Order ที่นำเข้าย้อนหลัง 7 วัน */
+/** จำนวน Order ที่นำเข้าย้อนหลัง 7 วัน — เก็บวันที่แบบ ISO ให้กราฟแปลงเป็นข้อความตามภาษาที่เลือก */
 export const MOCK_DAILY_VOLUME = [
-  { date: "29 ก.ย.", count: 6 },
-  { date: "30 ก.ย.", count: 9 },
-  { date: "1 ต.ค.", count: 4 },
-  { date: "2 ต.ค.", count: 11 },
-  { date: "3 ต.ค.", count: 7 },
-  { date: "4 ต.ค.", count: 12 },
-  { date: "5 ต.ค.", count: 5 },
+  { date: "2026-09-29", count: 6 },
+  { date: "2026-09-30", count: 9 },
+  { date: "2026-10-01", count: 4 },
+  { date: "2026-10-02", count: 11 },
+  { date: "2026-10-03", count: 7 },
+  { date: "2026-10-04", count: 12 },
+  { date: "2026-10-05", count: 5 },
 ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { useT } from "@/lib/i18n/context";
+import { useLanguage } from "@/lib/i18n/context";
 import {
   ChartContainer,
   ChartTooltip,
@@ -9,14 +9,22 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
-
-
 export function OrderVolumeChart({
   data,
 }: {
+  /** date เป็น ISO (yyyy-mm-dd) */
   data: { date: string; count: number }[];
 }) {
-  const t = useT();
+  const { lang, t } = useLanguage();
+  // วันที่บนแกนต้องตามภาษาที่เลือก ไม่ใช่ล็อกไว้ที่ไทย
+  const dayFormatter = new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "th-TH", {
+    day: "numeric",
+    month: "short",
+  });
+  const toDate = (iso: string) => new Date(`${iso}T00:00:00`);
+  const formatDay = (iso: string) => dayFormatter.format(toDate(iso));
+  // แกนแสดงแค่วันที่ ไม่งั้นการ์ดแคบแล้วป้ายซ้อนกัน วันเดือนเต็มอยู่ใน tooltip
+  const formatTick = (iso: string) => String(toDate(iso).getDate());
   const config = {
     count: { label: t.dashboard.chartSeries, color: "var(--primary)" },
   } satisfies ChartConfig;
@@ -33,6 +41,7 @@ export function OrderVolumeChart({
           fontSize={12}
           interval={0}
           minTickGap={0}
+          tickFormatter={formatTick}
         />
         <YAxis
           tickLine={false}
@@ -41,7 +50,9 @@ export function OrderVolumeChart({
           fontSize={12}
           allowDecimals={false}
         />
-        <ChartTooltip content={<ChartTooltipContent />} />
+        <ChartTooltip
+          content={<ChartTooltipContent labelFormatter={(value) => formatDay(String(value))} />}
+        />
         {/* ปิด animation: แท่งวิ่งขึ้นไม่ได้สื่อสถานะอะไร และทำให้ภาพที่ capture ได้ไม่ตรง */}
         <Bar
           dataKey="count"
