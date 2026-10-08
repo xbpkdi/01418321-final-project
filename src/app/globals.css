@@ -98,14 +98,15 @@
   --chart-4: #13235e;
   --chart-5: #b9c6f5;
   --radius: 0.75rem;
-  --sidebar: #f4f6fb;
-  --sidebar-foreground: #0b1533;
+  /* sidebar เป็น navy เข้ม ตัดกับเนื้อหาสีอ่อน ให้หน้ามีโครง */
+  --sidebar: #0b1533;
+  --sidebar-foreground: #d9e0f5;
   --sidebar-primary: #2448ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e7ebf7;
-  --sidebar-accent-foreground: #0b1533;
-  --sidebar-border: #0b15331f;
-  --sidebar-ring: #2448ff;
+  --sidebar-accent: #1a2652;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #ffffff14;
+  --sidebar-ring: #6f86ff;
 
   /* สีสถานะ 5 กลุ่ม → ใช้ใน StatusBadge */
   --status-waiting: #4f5b80; /* เทา navy - รอดำเนินการ */
@@ -189,6 +190,13 @@
 
 /* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 @layer components {
+  /* ใน sidebar ตัวอักษรรองและพื้นรองต้องเป็นโทนเข้ม ไม่ใช่ค่าของหน้าสว่าง */
+  [data-sidebar="sidebar"] {
+    --muted: #1a2652;
+    --muted-foreground: #8d98bd;
+    color: var(--sidebar-foreground);
+  }
+
   /* หัวข้อใหญ่แบบ poster: Anton (ละติน) + Kanit 700 (ไทย) */
   .display {
     font-family: var(--font-display);

@@ -54,7 +54,7 @@ export function AppSidebar() {
                 {/* โลโก้ตัวอักษร: R แบบเดียวกับหัวข้อใหญ่ + จุดส้มแบบ "HUB." */}
                 <div
                   aria-hidden
-                  className="bg-navy-deep flex aspect-square size-8 shrink-0 items-end justify-center rounded-lg pb-1 text-white"
+                  className="bg-cobalt flex aspect-square size-8 shrink-0 items-end justify-center rounded-lg pb-1 text-white"
                 >
                   <span className="font-display text-xl leading-none">R</span>
                   <span className="bg-coral mb-0.5 ml-px size-1 rounded-[1px]" />
