@@ -98,12 +98,13 @@ export default function LoginScreen() {
         <LanguageToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1180px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
-        <section className="rise">
+      <main className="mx-auto grid w-full max-w-[1180px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,400px)] lg:gap-16">
+        {/* @container: ขนาดหัวข้อคิดจากความกว้างคอลัมน์นี้ ไม่ใช่ทั้งจอ */}
+        <section className="rise @container">
           <p className="eyebrow">{t.app.company}</p>
           <FlapTitle
             text={t.app.name}
-            className="display mt-4 cursor-default text-[clamp(4.5rem,12vw,11rem)]"
+            className="display mt-4 cursor-default text-[min(11rem,21cqw)]"
             suffix={
               <span
                 aria-hidden
