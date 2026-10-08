@@ -199,6 +199,7 @@
   /* แถบบนสีเข้ม: ปรับ token ที่ breadcrumb, ปุ่ม ghost และเส้นคั่นใช้ ให้เป็นโทนสว่างบนพื้นเข้ม */
   [data-slot="site-header"] {
     --foreground: var(--header-foreground);
+    --muted: #ffffff1f; /* ปุ่ม ghost ใช้ตอน hover */
     --muted-foreground: #ffffffb3;
     --accent: #ffffff1f;
     --accent-foreground: var(--header-foreground);
