@@ -59,6 +59,7 @@ const th = {
     supplier: "ซัพพลายเออร์",
     sellingPrice: "ราคาขาย",
     reorderThreshold: "เกณฑ์เติม",
+    reorderQty: "จำนวนที่สั่ง",
     unitPieces: "ชิ้น",
     items: "รายการ",
     notFound: "ไม่พบข้อมูล",
@@ -156,6 +157,10 @@ const th = {
   },
 
   rslMatch: {
+    searchLabel: "ค้นหา Order",
+    searchPlaceholder: "ค้นหาด้วย Order ID หรือ SKU",
+    emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย Order ID หรือ SKU อีกครั้ง",
     title: "จับคู่ Order กับ RSL",
     description:
       "เทียบ SKU และ Variation ของ Order กับข้อมูลในคลัง RSL ก่อนจัดรูปแบบใบปะสินค้า",
@@ -180,6 +185,10 @@ const th = {
   },
 
   cancel: {
+    searchLabel: "ค้นหา Order",
+    searchPlaceholder: "ค้นหาด้วย Order ID, SKU หรือชื่อสินค้า",
+    emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย Order ID, SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ยกเลิก Order",
     description:
       "ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมคืนสต๊อกกลับเข้าคลังอัตโนมัติ",
@@ -202,6 +211,10 @@ const th = {
   },
 
   products: {
+    searchLabel: "ค้นหาสินค้า",
+    searchPlaceholder: "ค้นหาด้วย SKU, ชื่อสินค้า หรือซัพพลายเออร์",
+    emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย SKU, ชื่อสินค้า หรือชื่อซัพพลายเออร์อีกครั้ง",
     title: "ตั้งกฎ SKU และข้อมูลสินค้า",
     description:
       "ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ",
@@ -226,6 +239,10 @@ const th = {
   },
 
   stock: {
+    searchLabel: "ค้นหาสินค้า",
+    searchPlaceholder: "ค้นหาด้วย SKU หรือชื่อสินค้า",
+    emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ตรวจสอบสต๊อก",
     description:
       "ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU",
@@ -274,6 +291,10 @@ const th = {
   },
 
   reorder: {
+    searchLabel: "ค้นหาสินค้า",
+    searchPlaceholder: "ค้นหาด้วย SKU หรือชื่อสินค้า",
+    emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ตัดสินใจสั่งซื้อสินค้าเพิ่ม",
     description:
       "ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์",
@@ -323,6 +344,10 @@ const th = {
   },
 
   shipping: {
+    searchLabel: "ค้นหา Order",
+    searchPlaceholder: "ค้นหาด้วย Order ID หรือชื่อสินค้า",
+    emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย Order ID หรือชื่อสินค้าอีกครั้ง",
     title: "จัดส่งสินค้าให้ลูกค้า",
     description:
       "ส่งมอบพัสดุที่พิมพ์ใบปะสินค้าแล้วให้ผู้ให้บริการขนส่ง และติดตามสถานะจนถึงมือลูกค้า",
@@ -344,6 +369,10 @@ const th = {
   },
 
   label: {
+    searchLabel: "ค้นหา Order",
+    searchPlaceholder: "ค้นหาด้วย Order ID หรือที่อยู่จัดส่ง",
+    emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย Order ID หรือที่อยู่จัดส่งอีกครั้ง",
     title: "พิมพ์ใบปะสินค้า",
     description: "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่กำหนดวิธีจัดส่งเรียบร้อยแล้ว",
     printAll: "พิมพ์ใบปะสินค้าทั้งหมด",
@@ -460,6 +489,7 @@ const en: typeof th = {
     supplier: "Supplier",
     sellingPrice: "Selling price",
     reorderThreshold: "Reorder point",
+    reorderQty: "Reorder qty",
     unitPieces: "pcs",
     items: "items",
     notFound: "No data found",
@@ -558,6 +588,10 @@ const en: typeof th = {
   },
 
   rslMatch: {
+    searchLabel: "Search orders",
+    searchPlaceholder: "Search by order ID or SKU",
+    emptySearchTitle: "No order matches your search",
+    emptySearchHint: "Try searching by order ID or SKU again",
     title: "RSL matching",
     description:
       "Compare the order SKU and variation against RSL warehouse data before formatting the label",
@@ -582,6 +616,10 @@ const en: typeof th = {
   },
 
   cancel: {
+    searchLabel: "Search orders",
+    searchPlaceholder: "Search by order ID, SKU or product name",
+    emptySearchTitle: "No order matches your search",
+    emptySearchHint: "Try searching by order ID, SKU or product name again",
     title: "Cancel order",
     description:
       "Cancel problem orders or customer cancellations, returning stock to the warehouse automatically",
@@ -604,6 +642,10 @@ const en: typeof th = {
   },
 
   products: {
+    searchLabel: "Search products",
+    searchPlaceholder: "Search by SKU, product name or supplier",
+    emptySearchTitle: "No product matches your search",
+    emptySearchHint: "Try searching by SKU, product name or supplier again",
     title: "SKU rules and product data",
     description:
       "This data links orders, stock and cost calculations, so it must match across every system",
@@ -629,6 +671,10 @@ const en: typeof th = {
   },
 
   stock: {
+    searchLabel: "Search products",
+    searchPlaceholder: "Search by SKU or product name",
+    emptySearchTitle: "No product matches your search",
+    emptySearchHint: "Try searching by SKU or product name again",
     title: "Stock levels",
     description:
       "Totals combine in-house and RSL stock, then compare against each SKU's reorder point",
@@ -677,6 +723,10 @@ const en: typeof th = {
   },
 
   reorder: {
+    searchLabel: "Search products",
+    searchPlaceholder: "Search by SKU or product name",
+    emptySearchTitle: "No product matches your search",
+    emptySearchHint: "Try searching by SKU or product name again",
     title: "Reorder decisions",
     description:
       "Compare real cost against the selling price, then send the purchase order to the supplier",
@@ -726,6 +776,10 @@ const en: typeof th = {
   },
 
   shipping: {
+    searchLabel: "Search orders",
+    searchPlaceholder: "Search by order ID or product name",
+    emptySearchTitle: "No order matches your search",
+    emptySearchHint: "Try searching by order ID or product name again",
     title: "Customer delivery",
     description:
       "Hand printed parcels to the carrier and track them through to the customer",
@@ -746,6 +800,10 @@ const en: typeof th = {
   },
 
   label: {
+    searchLabel: "Search orders",
+    searchPlaceholder: "Search by order ID or shipping address",
+    emptySearchTitle: "No order matches your search",
+    emptySearchHint: "Try searching by order ID or shipping address again",
     title: "Shipping labels",
     description: "Print parcel labels for orders with a shipping method set",
     printAll: "Print all labels",
