@@ -323,12 +323,12 @@
     mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 100%);
   }
 
-  /* แสงฟ้าจางๆ ตามเมาส์บนพื้นหลังทั้งหน้า */
+  /* แสงส้มคอรัลจางๆ ตามเมาส์บนพื้นหลังทั้งหน้า */
   .cursor-glow {
     background:
       radial-gradient(
         640px circle at var(--gx, 70%) var(--gy, 30%),
-        color-mix(in srgb, var(--sky) 22%, transparent),
+        color-mix(in srgb, var(--coral) 16%, transparent),
         transparent 60%
       ),
       var(--background);
