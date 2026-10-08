@@ -140,7 +140,7 @@ export default function CostCalculatorScreen() {
       <PageHeader title={t.cost.title} description={t.cost.description} />
 
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
-        <Card className="self-start">
+        <Card className="min-w-0 self-start">
           <CardContent className="grid gap-3">
             <TableSearch
               value={keyword}
@@ -155,13 +155,14 @@ export default function CostCalculatorScreen() {
                 {visible.map((p) => (
                   <li
                     key={p.sku}
-                    className={`flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${p.sku === sku ? "bg-sidebar-selected" : ""}`}
+                    // ชื่อสินค้าไว้บน ปุ่มไว้ล่าง — คอลัมน์แคบ วางแถวเดียวกันแล้วปุ่มล้นการ์ด
+                    className={`grid gap-2 rounded-md px-2 py-2 ${p.sku === sku ? "bg-sidebar-selected" : ""}`}
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{p.sku}</p>
                       <p className="text-muted-foreground truncate text-xs">{p.product_name}</p>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => select(p.sku)}>
+                    <Button size="sm" variant="outline" className="w-fit" onClick={() => select(p.sku)}>
                       {t.cost.startCalc}
                     </Button>
                   </li>
