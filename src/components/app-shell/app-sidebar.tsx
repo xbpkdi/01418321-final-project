@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Boxes, ChevronsUpDown, LogOut, UserRound } from "lucide-react";
+import { ChevronsUpDown, LogOut, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -51,8 +51,13 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="from-cobalt to-sky flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br text-white">
-                  <Boxes className="size-4" />
+                {/* โลโก้ตัวอักษร: R แบบเดียวกับหัวข้อใหญ่ + จุดส้มแบบ "HUB." */}
+                <div
+                  aria-hidden
+                  className="bg-navy-deep flex aspect-square size-8 shrink-0 items-end justify-center rounded-lg pb-1 text-white"
+                >
+                  <span className="font-display text-xl leading-none">R</span>
+                  <span className="bg-coral mb-0.5 ml-px size-1 rounded-[1px]" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
                   <span className="display truncate text-lg">
