@@ -58,7 +58,10 @@ export default function DashboardScreen() {
   })).filter((x) => x.count > 0);
   const issues = state.orders
     .map((o) => ({ order: o, issue: issueOf(o, t) }))
-    .filter((x): x is { order: typeof x.order; issue: NonNullable<typeof x.issue> } => x.issue !== null);
+    .filter(
+      (x): x is { order: typeof x.order; issue: NonNullable<typeof x.issue> } =>
+        x.issue !== null,
+    );
   const lowStock = state.products
     .filter((p) => p.active)
     .map((p) => ({ product: p, stock: stockTotal(state, p.sku) }))
@@ -86,18 +89,26 @@ export default function DashboardScreen() {
         toast.error(t.dashboard.connectionFailed(state.connection.channel));
         return;
       }
-      if (result.imported === 0 && result.incomplete === 0 && result.duplicates === 0) {
+      if (
+        result.imported === 0 &&
+        result.incomplete === 0 &&
+        result.duplicates === 0
+      ) {
         toast.info(t.dashboard.importNone);
       } else {
         toast.success(t.dashboard.importOk(result.imported), {
           description:
-            result.duplicates > 0 ? t.dashboard.importDuplicates(result.duplicates) : undefined,
+            result.duplicates > 0
+              ? t.dashboard.importDuplicates(result.duplicates)
+              : undefined,
         });
       }
       if (result.incomplete > 0) toast.error(t.dashboard.importIncomplete);
       if (result.unregistered > 0) toast.error(t.dashboard.importUnregistered);
       if (result.cancelRequested.length > 0) {
-        toast.warning(t.dashboard.importCancelRequest(result.cancelRequested.join(", ")));
+        toast.warning(
+          t.dashboard.importCancelRequest(result.cancelRequested.join(", ")),
+        );
       }
     }, 500);
   }
@@ -117,7 +128,12 @@ export default function DashboardScreen() {
               {t.dashboard.description}
             </p>
           </div>
-          <Button size="lg" className="h-11" onClick={handleImport} disabled={importing}>
+          <Button
+            size="lg"
+            className="h-11"
+            onClick={handleImport}
+            disabled={importing}
+          >
             {importing ? <Spinner /> : <DownloadCloud />}
             {t.dashboard.importOrders}
           </Button>
@@ -191,7 +207,9 @@ export default function DashboardScreen() {
             </CardHeader>
             <CardContent className="grid gap-2">
               {issues.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t.dashboard.noIssues}</p>
+                <p className="text-muted-foreground text-sm">
+                  {t.dashboard.noIssues}
+                </p>
               ) : (
                 issues.map(({ order, issue }) => (
                   <Link
@@ -234,9 +252,13 @@ export default function DashboardScreen() {
             <CardContent>
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{state.connection.channel}</p>
+                  <p className="truncate text-sm font-medium">
+                    {state.connection.channel}
+                  </p>
                   <p className="text-muted-foreground text-xs">
-                    {t.dashboard.lastSync(formatDateTime(state.connection.last_sync, lang))}
+                    {t.dashboard.lastSync(
+                      formatDateTime(state.connection.last_sync, lang),
+                    )}
                   </p>
                 </div>
                 <Badge
@@ -247,7 +269,9 @@ export default function DashboardScreen() {
                       : "bg-status-cancelled-bg text-status-cancelled"
                   }
                 >
-                  {state.connection.connected ? t.dashboard.connected : t.dashboard.disconnected}
+                  {state.connection.connected
+                    ? t.dashboard.connected
+                    : t.dashboard.disconnected}
                 </Badge>
               </div>
             </CardContent>
@@ -260,15 +284,27 @@ export default function DashboardScreen() {
             </CardHeader>
             <CardContent className="grid gap-3">
               {lowStock.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t.dashboard.noLowStock}</p>
+                <p className="text-muted-foreground text-sm">
+                  {t.dashboard.noLowStock}
+                </p>
               ) : (
                 lowStock.map(({ product, stock }) => (
-                  <div key={product.sku} className="flex items-center justify-between gap-3">
+                  <div
+                    key={product.sku}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{product.sku}</p>
-                      <p className="text-muted-foreground truncate text-xs">{product.product_name}</p>
+                      <p className="truncate text-sm font-medium">
+                        {product.sku}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {product.product_name}
+                      </p>
                     </div>
-                    <span data-numeric className="text-status-cancelled text-sm font-medium">
+                    <span
+                      data-numeric
+                      className="text-status-cancelled text-sm font-medium"
+                    >
                       {stock!.total} / {product.reorder_threshold}
                     </span>
                   </div>
@@ -276,7 +312,10 @@ export default function DashboardScreen() {
               )}
             </CardContent>
             <CardFooter>
-              <Link href="/products/stock" className="text-muted-foreground hover:text-foreground text-xs">
+              <Link
+                href="/products/stock"
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
                 {t.dashboard.viewAllStock}
               </Link>
             </CardFooter>
@@ -288,10 +327,15 @@ export default function DashboardScreen() {
             </CardHeader>
             <CardContent className="grid gap-3">
               {purchaseOrders.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t.dashboard.noPurchaseOrders}</p>
+                <p className="text-muted-foreground text-sm">
+                  {t.dashboard.noPurchaseOrders}
+                </p>
               ) : (
                 purchaseOrders.map((po) => (
-                  <div key={po.po_id} className="flex items-center justify-between gap-3">
+                  <div
+                    key={po.po_id}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
                         {po.po_id} · {po.sku}
@@ -308,7 +352,10 @@ export default function DashboardScreen() {
               )}
             </CardContent>
             <CardFooter>
-              <Link href="/products/reorder" className="text-muted-foreground hover:text-foreground text-xs">
+              <Link
+                href="/products/reorder"
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
                 {t.dashboard.viewList}
               </Link>
             </CardFooter>
@@ -321,11 +368,18 @@ export default function DashboardScreen() {
             </CardHeader>
             <CardContent className="grid gap-3">
               {unitCosts.map(({ product, cost }) => {
-                const over = product.selling_price !== null && cost! > product.selling_price;
+                const over =
+                  product.selling_price !== null &&
+                  cost! > product.selling_price;
                 return (
-                  <div key={product.sku} className="flex items-center justify-between gap-3">
+                  <div
+                    key={product.sku}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{product.sku}</p>
+                      <p className="truncate text-sm font-medium">
+                        {product.sku}
+                      </p>
                       <p className="text-muted-foreground truncate text-xs">
                         {t.common.sellingPrice}{" "}
                         {product.selling_price === null
@@ -344,7 +398,10 @@ export default function DashboardScreen() {
               })}
             </CardContent>
             <CardFooter>
-              <Link href="/products/cost" className="text-muted-foreground hover:text-foreground text-xs">
+              <Link
+                href="/products/cost"
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
                 {t.dashboard.viewList}
               </Link>
             </CardFooter>

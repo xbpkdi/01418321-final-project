@@ -9,7 +9,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
@@ -49,15 +55,23 @@ export default function DataCleanupScreen() {
   const [mode, setMode] = useState<"range" | "closed">("range");
   const [types, setTypes] = useState<CleanupType[]>([]);
   const [cutoff, setCutoff] = useState("");
-  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(
+    null,
+  );
   const [plan, setPlan] = useState<CleanupPlan | null>(null);
 
   const closedPreview = planClosedCleanup(state);
-  const closedOrders = closedPreview.items.filter((i) => i.data_type === "order").length;
-  const closedLabels = closedPreview.items.filter((i) => i.data_type === "label").length;
+  const closedOrders = closedPreview.items.filter(
+    (i) => i.data_type === "order",
+  ).length;
+  const closedLabels = closedPreview.items.filter(
+    (i) => i.data_type === "label",
+  ).length;
 
   function toggleType(key: CleanupType) {
-    setTypes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setTypes((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
     setError(null);
   }
 
@@ -98,7 +112,9 @@ export default function DataCleanupScreen() {
   // ดาวน์โหลดไฟล์สำรองของรายการที่จะลบก่อน
   function backup() {
     if (!plan) return;
-    const blob = new Blob([cleanupCsv(state, plan)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([cleanupCsv(state, plan)], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -122,7 +138,11 @@ export default function DataCleanupScreen() {
     }
     const total = plan.items.length;
     if (mode === "closed") {
-      toast.success(t.cleanup.okDeletedClosed(plan.items.filter((i) => i.data_type === "order").length));
+      toast.success(
+        t.cleanup.okDeletedClosed(
+          plan.items.filter((i) => i.data_type === "order").length,
+        ),
+      );
     } else {
       toast.success(t.cleanup.okDeleted(total), {
         description: summary(plan),
@@ -153,7 +173,9 @@ export default function DataCleanupScreen() {
       {error && (
         <SectionMessage appearance="error">
           {error.message}
-          {error.hint && <span className="text-muted-foreground block">{error.hint}</span>}
+          {error.hint && (
+            <span className="text-muted-foreground block">{error.hint}</span>
+          )}
         </SectionMessage>
       )}
 
@@ -176,7 +198,9 @@ export default function DataCleanupScreen() {
             <CardContent>
               <FieldGroup>
                 <FieldSet>
-                  <FieldLegend variant="label">{t.cleanup.dataTypes}</FieldLegend>
+                  <FieldLegend variant="label">
+                    {t.cleanup.dataTypes}
+                  </FieldLegend>
                   <FieldGroup className="grid gap-2 sm:grid-cols-2">
                     {DATA_TYPES.map((type) => (
                       <FieldLabel key={type} htmlFor={`data_type_${type}`}>
@@ -194,7 +218,9 @@ export default function DataCleanupScreen() {
                 </FieldSet>
 
                 <Field>
-                  <FieldLabel htmlFor="cutoff_date">{t.cleanup.cutoffLabel}</FieldLabel>
+                  <FieldLabel htmlFor="cutoff_date">
+                    {t.cleanup.cutoffLabel}
+                  </FieldLabel>
                   <Input
                     id="cutoff_date"
                     type="date"
@@ -219,8 +245,12 @@ export default function DataCleanupScreen() {
         <TabsContent value="closed" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-normal">{t.cleanup.closedTitle}</CardTitle>
-              <CardDescription>{t.cleanup.closedSummary(closedOrders, closedLabels)}</CardDescription>
+              <CardTitle className="text-base font-normal">
+                {t.cleanup.closedTitle}
+              </CardTitle>
+              <CardDescription>
+                {t.cleanup.closedSummary(closedOrders, closedLabels)}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={reviewClosed}>
@@ -238,10 +268,13 @@ export default function DataCleanupScreen() {
           <DialogHeader>
             <DialogTitle>{t.cleanup.reviewTitle}</DialogTitle>
             <DialogDescription>
-              {plan && (mode === "closed" ? t.cleanup.closedSummary(
-                plan.items.filter((i) => i.data_type === "order").length,
-                plan.items.filter((i) => i.data_type === "label").length,
-              ) : summary(plan))}
+              {plan &&
+                (mode === "closed"
+                  ? t.cleanup.closedSummary(
+                      plan.items.filter((i) => i.data_type === "order").length,
+                      plan.items.filter((i) => i.data_type === "label").length,
+                    )
+                  : summary(plan))}
               {" · "}
               {t.cleanup.irreversible}
             </DialogDescription>
@@ -252,7 +285,8 @@ export default function DataCleanupScreen() {
               <p className="font-medium">{t.cleanup.blockedTitle}</p>
               {plan.blocked.map((b) => (
                 <p key={`${b.data_type}-${b.record_id}`}>
-                  {t.cleanup.typeLabel[b.data_type]} {b.record_id} · {t.cleanup.errReferenced}
+                  {t.cleanup.typeLabel[b.data_type]} {b.record_id} ·{" "}
+                  {t.cleanup.errReferenced}
                 </p>
               ))}
             </SectionMessage>

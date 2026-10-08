@@ -7,7 +7,13 @@
 import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PageHeader } from "@/components/shared/page-header";
@@ -34,7 +40,9 @@ export default function DevToolsScreen() {
                 id={`fault_${key}`}
                 checked={state.faults[key]}
                 onCheckedChange={(v) => {
-                  run((s) => ({ state: { ...s, faults: { ...s.faults, [key]: v === true } } }));
+                  run((s) => ({
+                    state: { ...s, faults: { ...s.faults, [key]: v === true } },
+                  }));
                 }}
               />
               <FieldLabel htmlFor={`fault_${key}`} className="font-normal">

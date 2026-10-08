@@ -11,14 +11,21 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/lib/i18n/context";
 import type { Dict } from "@/lib/i18n/dict";
-import { createSeed, runAutomation, type AppState, type AutoEvent } from "@/lib/workflow";
+import {
+  createSeed,
+  runAutomation,
+  type AppState,
+  type AutoEvent,
+} from "@/lib/workflow";
 
 const STORAGE_KEY = "rsl-hub-state-v1";
 
 type StoreValue = {
   state: AppState;
   /** รัน action แล้วต่อด้วยงานอัตโนมัติ คืนผลลัพธ์ของ action ให้หน้าจอแสดงข้อความ */
-  run: <R extends object = Record<never, never>>(fn: (s: AppState) => { state: AppState } & R) => R;
+  run: <R extends object = Record<never, never>>(
+    fn: (s: AppState) => { state: AppState } & R,
+  ) => R;
   reset: () => void;
   /** งานที่ยังไม่ได้บันทึก — ใช้ถามยืนยันก่อนออกจากระบบ (1A ขั้นตอนที่ 4) */
   setDirty: (key: string, dirty: boolean) => void;
@@ -71,7 +78,11 @@ function getServerSnapshot(): AppState | null {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const t = useT();
-  const state = React.useSyncExternalStore<AppState | null>(subscribe, getSnapshot, getServerSnapshot);
+  const state = React.useSyncExternalStore<AppState | null>(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
   const dirty = React.useRef(new Set<string>());
   const tRef = React.useRef(t);
   React.useEffect(() => {
@@ -87,7 +98,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const run = React.useCallback(
-    <R extends object = Record<never, never>>(fn: (s: AppState) => { state: AppState } & R): R => {
+    <R extends object = Record<never, never>>(
+      fn: (s: AppState) => { state: AppState } & R,
+    ): R => {
       const current = getSnapshot();
       const { state: next, ...result } = fn(current);
       if (next !== current) commit(next);
@@ -176,7 +189,9 @@ function announce(t: Dict, events: AutoEvent[]) {
         toast.success(a.stockDeducted, { description: a.orderRef(e.orderId) });
         break;
       case "stock-insufficient":
-        toast.error(a.stockInsufficient, { description: a.orderRef(e.orderId) });
+        toast.error(a.stockInsufficient, {
+          description: a.orderRef(e.orderId),
+        });
         break;
       case "stock-sync":
         toast.error(a.stockSync, { description: a.orderRef(e.orderId) });

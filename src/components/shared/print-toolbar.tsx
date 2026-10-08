@@ -7,7 +7,13 @@ import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { useT } from "@/lib/i18n/context";
 
 /** แถบเครื่องมือของหน้ารายงาน — ซ่อนตอนสั่งพิมพ์ด้วย .no-print */
-export function PrintToolbar({ title, backHref }: { title: string; backHref: string }) {
+export function PrintToolbar({
+  title,
+  backHref,
+}: {
+  title: string;
+  backHref: string;
+}) {
   const t = useT();
   return (
     <div className="no-print mx-auto mb-6 flex w-[148mm] max-w-[calc(100%-2rem)] items-center justify-between gap-4">

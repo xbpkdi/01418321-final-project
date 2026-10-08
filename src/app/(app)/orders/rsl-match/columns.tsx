@@ -12,7 +12,11 @@ import type { Order } from "@/types/order";
 const col = createColumnHelper<AppTableFeatures, Order>();
 
 /** ตารางรอจับคู่ — รวม Order ที่หา SKU ใน RSL ไม่เจอ (รอดำเนินการด้วยตนเอง) ให้ลองใหม่ได้ */
-export function queueColumns(t: Dict, onMatch: (order: Order) => void, workingId: string | null) {
+export function queueColumns(
+  t: Dict,
+  onMatch: (order: Order) => void,
+  workingId: string | null,
+) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -22,12 +26,16 @@ export function queueColumns(t: Dict, onMatch: (order: Order) => void, workingId
     col.accessor("sku", {
       header: "SKU",
       meta: { label: "SKU" },
-      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">{ctx.getValue()}</span>
+      ),
     }),
     col.accessor("variation", {
       header: "Variation",
       meta: { label: "Variation" },
-      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">{ctx.getValue()}</span>
+      ),
     }),
     col.accessor("order_status", {
       header: t.common.status,
@@ -73,7 +81,9 @@ export function matchedColumns(t: Dict, onUnmatch: (orderId: string) => void) {
     col.accessor("rsl_reference_id", {
       header: t.rslMatch.rslReference,
       meta: { label: t.rslMatch.rslReference },
-      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">{ctx.getValue()}</span>
+      ),
     }),
     col.accessor("order_status", {
       header: t.common.status,
@@ -84,7 +94,11 @@ export function matchedColumns(t: Dict, onUnmatch: (orderId: string) => void) {
       id: "actions",
       cell: (ctx) => (
         <div className="text-right">
-          <Button size="sm" variant="ghost" onClick={() => onUnmatch(ctx.row.original.order_id)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onUnmatch(ctx.row.original.order_id)}
+          >
             <Link2Off />
             {t.rslMatch.unmatch}
           </Button>

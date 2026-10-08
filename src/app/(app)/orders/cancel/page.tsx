@@ -37,7 +37,12 @@ import { useLanguage } from "@/lib/i18n/context";
 import { useStore, useUnsavedChanges } from "@/lib/store";
 import { issueOf } from "@/lib/issues";
 import { formatDateTime } from "@/lib/format";
-import { cancelOrder, checkCancel, findOrder, type CancelCheck } from "@/lib/workflow";
+import {
+  cancelOrder,
+  checkCancel,
+  findOrder,
+  type CancelCheck,
+} from "@/lib/workflow";
 import { ORDER_STATUSES } from "@/lib/order-status";
 import type { Order } from "@/types/order";
 
@@ -47,7 +52,10 @@ function CancelOrderContent() {
   const searchParams = useSearchParams();
   const { lang, t } = useLanguage();
   const { state, run } = useStore();
-  const [target, setTarget] = useState<{ orderId: string; check: CancelCheck } | null>(null);
+  const [target, setTarget] = useState<{
+    orderId: string;
+    check: CancelCheck;
+  } | null>(null);
   const [reason, setReason] = useState("");
   const [alsoCancelPo, setAlsoCancelPo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +73,9 @@ function CancelOrderContent() {
       }
       // ทางเลือก #4: กดยกเลิกซ้ำ
       if (check.kind === "already") {
-        toast.error(t.cancel.errAlready(check.at ? formatDateTime(check.at, lang) : "—"));
+        toast.error(
+          t.cancel.errAlready(check.at ? formatDateTime(check.at, lang) : "—"),
+        );
         return;
       }
       setTarget({ orderId: order.order_id, check });
@@ -89,7 +99,9 @@ function CancelOrderContent() {
         return;
       case "in-transit": // ทางเลือก #1
         setTarget(null);
-        toast.error(t.cancel.errInTransit, { description: t.cancel.specialRecorded });
+        toast.error(t.cancel.errInTransit, {
+          description: t.cancel.specialRecorded,
+        });
         return;
       case "closed":
         setTarget(null);
@@ -97,7 +109,11 @@ function CancelOrderContent() {
         return;
       case "already":
         setTarget(null);
-        toast.error(t.cancel.errAlready(result.at ? formatDateTime(result.at, lang) : "—"));
+        toast.error(
+          t.cancel.errAlready(
+            result.at ? formatDateTime(result.at, lang) : "—",
+          ),
+        );
         return;
       case "ok": {
         setTarget(null);
@@ -106,7 +122,9 @@ function CancelOrderContent() {
           result.restocked > 0 ? t.cancel.restocked(result.restocked) : null,
           result.poCancelled ? t.cancel.poCancelled : null,
         ].filter(Boolean);
-        toast.success(t.cancel.okCancelled, { description: notes.join(" · ") || undefined });
+        toast.success(t.cancel.okCancelled, {
+          description: notes.join(" · ") || undefined,
+        });
       }
     }
   }
@@ -151,7 +169,10 @@ function CancelOrderContent() {
               placeholder={t.cancel.searchPlaceholder}
             />
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger aria-label={t.cancel.statusFilter} className="w-56">
+              <SelectTrigger
+                aria-label={t.cancel.statusFilter}
+                className="w-56"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -174,27 +195,41 @@ function CancelOrderContent() {
         }
       />
 
-      <Dialog open={target !== null} onOpenChange={(o) => !o && setTarget(null)}>
+      <Dialog
+        open={target !== null}
+        onOpenChange={(o) => !o && setTarget(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t.cancel.dialogTitle(target?.orderId ?? "")}</DialogTitle>
+            <DialogTitle>
+              {t.cancel.dialogTitle(target?.orderId ?? "")}
+            </DialogTitle>
             <DialogDescription>
-              {order?.product_name} · {t.common.qty} {order?.qty} {t.common.unitPieces}
+              {order?.product_name} · {t.common.qty} {order?.qty}{" "}
+              {t.common.unitPieces}
             </DialogDescription>
           </DialogHeader>
 
           {check?.kind === "in-transit" && (
-            <SectionMessage appearance="error">{t.cancel.errInTransit}</SectionMessage>
+            <SectionMessage appearance="error">
+              {t.cancel.errInTransit}
+            </SectionMessage>
           )}
           {check?.kind === "ok" && check.labelPrinted && (
-            <SectionMessage appearance="warning">{t.cancel.labelWarning}</SectionMessage>
+            <SectionMessage appearance="warning">
+              {t.cancel.labelWarning}
+            </SectionMessage>
           )}
           {order?.customer_cancel_request && (
-            <SectionMessage appearance="warning">{t.cancel.customerRequest}</SectionMessage>
+            <SectionMessage appearance="warning">
+              {t.cancel.customerRequest}
+            </SectionMessage>
           )}
 
           <Field data-invalid={error ? true : undefined}>
-            <FieldLabel htmlFor="cancel_reason">{t.cancel.reasonLabel}</FieldLabel>
+            <FieldLabel htmlFor="cancel_reason">
+              {t.cancel.reasonLabel}
+            </FieldLabel>
             <Textarea
               id="cancel_reason"
               rows={3}
@@ -208,7 +243,9 @@ function CancelOrderContent() {
           {/* ทางเลือก #2: มีคำสั่งซื้อเติมสต๊อกที่ผูกกับ Order นี้ ให้ Admin ตัดสินใจ */}
           {check?.kind === "ok" && check.linkedPo && (
             <div className="grid gap-2 rounded-md border p-3">
-              <p className="text-sm">{t.cancel.linkedPo(check.linkedPo.po_id)}</p>
+              <p className="text-sm">
+                {t.cancel.linkedPo(check.linkedPo.po_id)}
+              </p>
               <FieldLabel htmlFor="also_cancel_po" className="font-normal">
                 <Checkbox
                   id="also_cancel_po"

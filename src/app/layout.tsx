@@ -14,8 +14,16 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 // Display: Anton ไม่มีอักษรไทย จึงจับคู่กับ Kanit 700 ที่หนักและแคบใกล้เคียงกัน
-const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: "400" });
-const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai"], weight: "700" });
+const anton = Anton({
+  variable: "--font-anton",
+  subsets: ["latin"],
+  weight: "400",
+});
+const kanit = Kanit({
+  variable: "--font-kanit",
+  subsets: ["thai"],
+  weight: "700",
+});
 
 export const metadata: Metadata = {
   title: "RSL Fulfillment Hub",
@@ -25,7 +33,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="th" className={`${archivo.variable} ${notoSansThai.variable} ${anton.variable} ${kanit.variable} h-full antialiased`}>
+    <html
+      lang="th"
+      className={`${archivo.variable} ${notoSansThai.variable} ${anton.variable} ${kanit.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
           <StoreProvider>{children}</StoreProvider>

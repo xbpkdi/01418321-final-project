@@ -18,10 +18,7 @@ export default function SiteMapScreen() {
 
   return (
     <div className="grid gap-6 p-6">
-      <PageHeader
-        title={t.sitemap.title}
-        description={t.sitemap.description}
-      />
+      <PageHeader title={t.sitemap.title} description={t.sitemap.description} />
 
       <section className="rounded-lg border p-6">
         <div className="flex items-center gap-2.5">

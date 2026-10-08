@@ -6,7 +6,7 @@ export type Lang = "th" | "en";
 
 /**
  * ค่าฝั่ง th ที่เป็นข้อความแจ้งเตือน/สำเร็จ/ชื่อปุ่ม/ชื่อสถานะ ลอกมาจาก
- * 00-use-case-descriptions.md ตรงตัวอักษรต่อตัวอักษร (คอมเมนต์ "UC" กำกับไว้)
+ * 00-use-case-descriptions.md ตรงตัวอักษรต่อตัวอักษร
  * ห้ามเรียบเรียงใหม่ ถ้าต้องเปลี่ยนให้ไปแก้ที่ use case description ก่อน
  * ข้อความที่ UC ไม่ได้กำหนด (หัวข้อหน้า คำอธิบาย ช่องว่าง) เขียนเองให้สอดคล้องกัน
  *
@@ -21,9 +21,9 @@ const th = {
     switchLanguage: "สลับภาษา",
     langLabel: "ไทย",
     admin: "Admin",
-    logout: "ออกจากระบบ", // UC 1A
-    logoutConfirm: "ต้องการออกจากระบบหรือไม่", // UC 1A
-    logoutDone: "ออกจากระบบแล้ว", // UC 1A
+    logout: "ออกจากระบบ",
+    logoutConfirm: "ต้องการออกจากระบบหรือไม่",
+    logoutDone: "ออกจากระบบแล้ว",
   },
 
   nav: {
@@ -88,7 +88,6 @@ const th = {
     lastPage: "ไปหน้าสุดท้าย",
   },
 
-  // UC: ชื่อสถานะทุกตัว
   statusLabel: {
     รอตรวจสอบคำสั่งซื้อ: "รอตรวจสอบคำสั่งซื้อ",
     "รอจับคู่กฎ SKU": "รอจับคู่กฎ SKU",
@@ -114,13 +113,14 @@ const th = {
     รอดำเนินการพิเศษ: "รอดำเนินการพิเศษ",
   } as Record<OrderStatus, string>,
 
-  // UC: ข้อความที่ทำให้ Order ตกไปอยู่ "รอดำเนินการด้วยตนเอง"
+  // สาเหตุที่ Order ตกไปอยู่ "รอดำเนินการด้วยตนเอง"
   manualReason: {
     incomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ",
     "sku-unregistered": "พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ",
     "sku-rule": "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน",
     rsl: "ไม่พบสินค้านี้ในระบบ RSL",
-    template: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
+    template:
+      "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
     address: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้",
     price: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
     supplier: "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
@@ -137,20 +137,22 @@ const th = {
   // งานของ System (Auto)
   auto: {
     orderRef: (id: string) => `Order ${id}`,
-    skuMatched: (n: number) => `จับคู่กฎ SKU สำเร็จ ${n} รายการ`, // UC 2S
-    skuMissing: "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน", // UC 2S
-    skuMultiple: "พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง", // UC 2S
-    skuDb: "ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง", // UC 2S
+    skuMatched: (n: number) => `จับคู่กฎ SKU สำเร็จ ${n} รายการ`,
+    skuMissing: "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน",
+    skuMultiple: "พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง",
+    skuDb: "ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง",
     stockEnough: (id: string) => `${id} สต๊อกเพียงพอ ส่งต่อไปจับคู่กับ RSL`,
     stockLow: (id: string) =>
       `${id} สต๊อกไม่เพียงพอ ส่งต่อไปคำนวณต้นทุนและรอ Admin ตัดสินใจสั่งซื้อ`,
-    labelCreated: (n: number) => `สร้างใบปะสินค้าสำเร็จ ${n} ใบ`, // UC 6S
-    labelNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้", // UC 6S
-    labelNoTemplate: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน", // UC 6S
-    labelService: "ไม่สามารถสร้างใบปะสินค้าได้ กรุณาลองใหม่ภายหลัง", // UC 6S
-    stockDeducted: "ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ", // UC 7S
-    stockInsufficient: "ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ", // UC 7S
-    stockSync: "ไม่สามารถอัปเดตจำนวนสินค้าใน Rakuten Ichiba ได้ กรุณาลองใหม่ภายหลัง", // UC 7S
+    labelCreated: (n: number) => `สร้างใบปะสินค้าสำเร็จ ${n} ใบ`,
+    labelNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้",
+    labelNoTemplate:
+      "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
+    labelService: "ไม่สามารถสร้างใบปะสินค้าได้ กรุณาลองใหม่ภายหลัง",
+    stockDeducted: "ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ",
+    stockInsufficient: "ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ",
+    stockSync:
+      "ไม่สามารถอัปเดตจำนวนสินค้าใน Rakuten Ichiba ได้ กรุณาลองใหม่ภายหลัง",
   },
 
   login: {
@@ -158,14 +160,14 @@ const th = {
     description: "ใช้บัญชีผู้ดูแลที่ลงทะเบียนไว้กับระบบ",
     email: "อีเมล",
     password: "รหัสผ่าน",
-    submit: "เข้าสู่ระบบ", // UC 1A
+    submit: "เข้าสู่ระบบ",
     footer: "Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น",
-    errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ", // UC 1A
-    errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง", // UC 1A
+    errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ",
+    errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง",
     errTooManyAttempts:
-      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง", // UC 1A
-    errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง", // UC 1A
-    okLogin: "เข้าสู่ระบบสำเร็จ", // UC 1A
+      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
+    errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    okLogin: "เข้าสู่ระบบสำเร็จ",
     // ประโยคเดียวกับ description ใน metadata ของ layout
     tagline:
       "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่าน Rakuten Ichiba เชื่อมต่อกับ RSL",
@@ -173,17 +175,19 @@ const th = {
 
   dashboard: {
     title: "ภาพรวมระบบ",
-    description: "สรุปงานที่ค้างอยู่ ข้อผิดพลาดที่ต้องแก้ และสถานะการเชื่อมต่อ Rakuten RMS",
-    importOrders: "นำเข้า Order", // UC 4A
+    description:
+      "สรุปงานที่ค้างอยู่ ข้อผิดพลาดที่ต้องแก้ และสถานะการเชื่อมต่อ Rakuten RMS",
+    importOrders: "นำเข้า Order",
     importOk: (n: number) => `นำเข้า Order สำเร็จ ${n} รายการ`,
     importNone: "ไม่มี Order ใหม่ใน Rakuten RMS",
-    importDuplicates: (n: number) => `ข้ามรายการที่ซ้ำกับที่มีอยู่แล้ว ${n} รายการ`,
-    importIncomplete: "ข้อมูล Order ไม่ครบถ้วน กรุณาตรวจสอบ", // UC 4A
-    importUnregistered: "พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ", // UC 4A
+    importDuplicates: (n: number) =>
+      `ข้ามรายการที่ซ้ำกับที่มีอยู่แล้ว ${n} รายการ`,
+    importIncomplete: "ข้อมูล Order ไม่ครบถ้วน กรุณาตรวจสอบ",
+    importUnregistered: "พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ",
     importCancelRequest: (ids: string) =>
       `ลูกค้ายกเลิก ${ids} ผ่าน Rakuten ระหว่างที่ Order อยู่ระหว่างดำเนินการ กรุณาตรวจสอบที่หน้ายกเลิก Order`,
     connectionFailed: (channel: string) =>
-      `ไม่สามารถเชื่อมต่อกับ ${channel} ได้ กรุณาตรวจสอบการตั้งค่า`, // UC 4A
+      `ไม่สามารถเชื่อมต่อกับ ${channel} ได้ กรุณาตรวจสอบการตั้งค่า`,
     viewList: "ดูรายการ",
     recentOrders: "Order ล่าสุด",
     recentOrdersHint: "รายการที่เพิ่งเข้าระบบและสถานะปัจจุบัน",
@@ -226,14 +230,14 @@ const th = {
     editNote: "ระบบบันทึกผู้แก้ไขและเวลาที่แก้ไขไว้ทุกครั้ง",
     editLog: (by: string, at: string) => `แก้ไขโดย ${by} เมื่อ ${at}`,
     customerCancelBadge: "ลูกค้าขอยกเลิก",
-    submit: "ยืนยันคำสั่งซื้อ", // UC 2A
-    errIncomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ", // UC 2A
-    errQty: "จำนวนสินค้าต้องมากกว่า 0", // UC 2A
-    errAlreadyVerified: "Order นี้ผ่านการตรวจสอบไปแล้ว", // UC 2A
-    errCustomerCancelled: "Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว", // UC 2A
+    submit: "ยืนยันคำสั่งซื้อ",
+    errIncomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ",
+    errQty: "จำนวนสินค้าต้องมากกว่า 0",
+    errAlreadyVerified: "Order นี้ผ่านการตรวจสอบไปแล้ว",
+    errCustomerCancelled: "Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว",
     errMarketplace:
-      "ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้ กรุณาลองใหม่ภายหลัง", // UC 2A
-    okVerified: "ยืนยันคำสั่งซื้อสำเร็จ", // UC 2A
+      "ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้ กรุณาลองใหม่ภายหลัง",
+    okVerified: "ยืนยันคำสั่งซื้อสำเร็จ",
     manualTitle: "รอดำเนินการด้วยตนเอง",
     manualHint:
       "Order ที่ข้อมูลไม่ครบ แก้ข้อมูลใน Rakuten RMS แล้วนำเข้าใหม่ หรือยกเลิก Order",
@@ -249,22 +253,24 @@ const th = {
     title: "จับคู่ Order กับ RSL",
     description:
       "เทียบ SKU และ Variation ของ Order กับข้อมูลในคลัง RSL ก่อนจัดรูปแบบใบปะสินค้า",
-    matchAll: "จับคู่อัตโนมัติทั้งหมด", // UC 1S
-    match: "จับคู่กับ RSL", // UC 1S
-    unmatch: "ยกเลิกการจับคู่", // UC 1S
+    matchAll: "จับคู่อัตโนมัติทั้งหมด",
+    match: "จับคู่กับ RSL",
+    unmatch: "ยกเลิกการจับคู่",
     rslReference: "หมายเลขอ้างอิง RSL",
     queueTitle: "ยังไม่ได้จับคู่",
     matchedTitle: "จับคู่แล้ว รอพิมพ์ใบปะสินค้า",
     emptyTitle: "จับคู่ครบทุก Order แล้ว",
     emptyHint: "Order ที่ตรวจสต๊อกแล้วว่าเพียงพอจะเข้ามารอที่นี่",
-    chooseFor: (orderId: string, sku: string) => `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
+    chooseFor: (orderId: string, sku: string) =>
+      `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
     stockLeft: "คงเหลือในคลัง RSL",
     chooseThis: "เลือกรายการนี้",
-    errNotFound: "ไม่พบสินค้านี้ในระบบ RSL", // UC 1S
-    errMultiple: "พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง", // UC 1S
-    errConnection: "ไม่สามารถเชื่อมต่อกับระบบ RSL ได้ กรุณาลองใหม่ภายหลัง", // UC 1S
-    okMatched: "จับคู่ Order กับ RSL สำเร็จ", // UC 1S
-    okUnmatched: (id: string) => `ยกเลิกการจับคู่ ${id} แล้ว กลับไปอยู่ในสถานะ ยังไม่ได้จับคู่`,
+    errNotFound: "ไม่พบสินค้านี้ในระบบ RSL",
+    errMultiple: "พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง",
+    errConnection: "ไม่สามารถเชื่อมต่อกับระบบ RSL ได้ กรุณาลองใหม่ภายหลัง",
+    okMatched: "จับคู่ Order กับ RSL สำเร็จ",
+    okUnmatched: (id: string) =>
+      `ยกเลิกการจับคู่ ${id} แล้ว กลับไปอยู่ในสถานะ ยังไม่ได้จับคู่`,
     matchAllSummary: (matched: number, multiple: number, notFound: number) =>
       `จับคู่สำเร็จ ${matched} · ต้องเลือกเอง ${multiple} · ไม่พบใน RSL ${notFound}`,
   },
@@ -275,8 +281,9 @@ const th = {
     emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย Order ID, SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ยกเลิก Order",
-    description: "ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมยกเลิกกระบวนการที่เกี่ยวข้อง",
-    action: "ยกเลิก Order", // UC 7A
+    description:
+      "ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมยกเลิกกระบวนการที่เกี่ยวข้อง",
+    action: "ยกเลิก Order",
     emptyTitle: "ไม่มี Order ในสถานะนี้",
     emptyHint: "เลือกสถานะอื่นจากตัวกรองด้านบน",
     statusFilter: "กรองตามสถานะ",
@@ -284,16 +291,19 @@ const th = {
     customerRequest: "ลูกค้าขอยกเลิกผ่าน Rakuten",
     dialogTitle: (orderId: string) => `ยกเลิก ${orderId}`,
     reasonLabel: "เหตุผลการยกเลิก",
-    submit: "ยืนยันการยกเลิก", // UC 7A
-    linkedPo: (po: string) => `มีคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องกับ Order นี้ (${po})`, // UC 7A ทางเลือก #2
+    submit: "ยืนยันการยกเลิก",
+    linkedPo: (po: string) =>
+      `มีคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องกับ Order นี้ (${po})`,
     alsoCancelPo: "ยกเลิกคำสั่งซื้อเติมสต๊อกนี้ด้วย",
-    errClosed: "ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว", // UC 7A
-    errAlready: (at: string) => `Order นี้ถูกยกเลิกไปแล้วเมื่อ ${at}`, // UC 7A
-    errNoReason: "กรุณาระบุเหตุผลการยกเลิก", // UC 7A
+    errClosed:
+      "ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว",
+    errAlready: (at: string) => `Order นี้ถูกยกเลิกไปแล้วเมื่อ ${at}`,
+    errNoReason: "กรุณาระบุเหตุผลการยกเลิก",
     errInTransit:
-      "Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน", // UC 7A
-    okCancelled: "ยกเลิก Order สำเร็จ", // UC 7A
-    labelWarning: "Order นี้พิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ Delivery กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย",
+      "Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน",
+    okCancelled: "ยกเลิก Order สำเร็จ",
+    labelWarning:
+      "Order นี้พิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ Delivery กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย",
     restocked: (qty: number) => `คืนสต๊อก ${qty} ชิ้นกลับเข้าคลังแล้ว`,
     poCancelled: "ยกเลิกคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องแล้ว",
     specialRecorded: "บันทึกคำขอยกเลิกเป็น รอดำเนินการพิเศษ แล้ว",
@@ -305,40 +315,48 @@ const th = {
     emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย SKU, ชื่อสินค้า หรือชื่อซัพพลายเออร์อีกครั้ง",
     title: "ตั้งกฎ SKU และข้อมูลสินค้า",
-    description: "ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ",
-    create: "เพิ่มสินค้าใหม่", // UC 3A
+    description:
+      "ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ",
+    create: "เพิ่มสินค้าใหม่",
     edit: "แก้ไข",
     delete: "ลบสินค้า",
     editTitle: "แก้ไขข้อมูลสินค้า",
     dialogHint: "SKU ที่กรอกจะถูกใช้จับคู่กับ Order สต๊อก และต้นทุนทั้งระบบ",
     emptyTitle: "ยังไม่มีสินค้าในระบบ",
-    emptyHint: "เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้",
+    emptyHint:
+      "เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้",
     productName: "ชื่อสินค้า",
     channelSku: "รหัสสินค้าใน Rakuten (Mapping)",
-    channelSkuHint: "ใช้จับคู่ Order กับกฎ SKU นี้ ต้องตรงกับรหัสหน้าร้านใน Rakuten",
+    channelSkuHint:
+      "ใช้จับคู่ Order กับกฎ SKU นี้ ต้องตรงกับรหัสหน้าร้านใน Rakuten",
     reorderThresholdField: "Reorder Threshold",
     reorderQty: "Reorder Quantity",
     costSection: "องค์ประกอบต้นทุน",
     costSectionHint: "ค่าเริ่มต้นที่ใช้ในหน้าคำนวณต้นทุน",
     active: "เปิดขาย",
-    inactive: "ปิดการขาย", // UC 3A
-    errIncomplete: "กรุณากรอกข้อมูลให้ครบถ้วน", // UC 3A
-    errDuplicateSku: "SKU นี้มีอยู่ในระบบแล้ว", // UC 3A
-    errInvalidNumber: "Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก", // UC 3A
-    errHasRelated: "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่", // UC 3A
+    inactive: "ปิดการขาย",
+    errIncomplete: "กรุณากรอกข้อมูลให้ครบถ้วน",
+    errDuplicateSku: "SKU นี้มีอยู่ในระบบแล้ว",
+    errInvalidNumber:
+      "Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก",
+    errHasRelated:
+      "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่",
     switchToInactive: "เปลี่ยนเป็น ปิดการขาย แทน",
-    okSaved: "บันทึกข้อมูลสินค้าสำเร็จ", // UC 3A
+    okSaved: "บันทึกข้อมูลสินค้าสำเร็จ",
     okDeleted: (sku: string) => `ลบสินค้า ${sku} แล้ว`,
-    requeued: (n: number) => `นำ Order ที่ค้างอยู่ ${n} รายการกลับเข้าสู่กระบวนการอัตโนมัติ`,
+    requeued: (n: number) =>
+      `นำ Order ที่ค้างอยู่ ${n} รายการกลับเข้าสู่กระบวนการอัตโนมัติ`,
     importCsv: "นำเข้าจากไฟล์ CSV",
     importCsvHint:
       "หัวตาราง: sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price",
     importResultTitle: "ผลการนำเข้า",
     importOk: (n: number) => `นำเข้าสำเร็จ ${n} แถว`,
-    importFailed: (n: number) => `นำเข้าไม่สำเร็จ ${n} แถว กรุณาแก้ไขแล้วนำเข้าใหม่`,
+    importFailed: (n: number) =>
+      `นำเข้าไม่สำเร็จ ${n} แถว กรุณาแก้ไขแล้วนำเข้าใหม่`,
     importRow: (row: number) => `แถว ${row}`,
     waitingRuleTitle: "Order ที่รอกฎ SKU",
-    waitingRuleHint: "บันทึกกฎ SKU ที่มีรหัสสินค้าใน Rakuten ตรงกัน แล้วระบบจะจับคู่ใหม่เอง",
+    waitingRuleHint:
+      "บันทึกกฎ SKU ที่มีรหัสสินค้าใน Rakuten ตรงกัน แล้วระบบจะจับคู่ใหม่เอง",
     supplierNone: "ไม่ระบุ",
   },
 
@@ -348,21 +366,22 @@ const th = {
     emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ตรวจสอบสต๊อก",
-    description: "ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU",
+    description:
+      "ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU",
     selectProduct: "เลือกสินค้า",
     selectPlaceholder: "เลือก SKU ที่ต้องการเช็ค",
-    check: "เช็คสต๊อก", // UC 3S
+    check: "เช็คสต๊อก",
     overviewTitle: "ภาพรวมสต๊อกทุกสินค้า",
     inHouse: "คลังบริษัท",
     rsl: "คลัง RSL",
     total: "รวม",
-    low: "สต๊อกต่ำกว่าเกณฑ์", // UC 3S
-    normal: "สต๊อกปกติ", // UC 3S
-    incomplete: "ข้อมูลไม่สมบูรณ์", // UC 3S
+    low: "สต๊อกต่ำกว่าเกณฑ์",
+    normal: "สต๊อกปกติ",
+    incomplete: "ข้อมูลไม่สมบูรณ์",
     partial: "ข้อมูลบางส่วน",
-    errNotFound: "ไม่พบข้อมูลสินค้านี้ในระบบ", // UC 3S
-    errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล", // UC 3S
-    errRsl: "ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง", // UC 3S
+    errNotFound: "ไม่พบข้อมูลสินค้านี้ในระบบ",
+    errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล",
+    errRsl: "ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง",
     partialHint: "แสดงเฉพาะข้อมูลสต๊อกในคลังบริษัท",
   },
 
@@ -374,14 +393,15 @@ const th = {
     searchPlaceholder: "ค้นหาด้วย SKU หรือชื่อสินค้า",
     emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
-    startCalc: "คำนวณต้นทุนเติมสต๊อก", // UC 4S
+    startCalc: "คำนวณต้นทุนเติมสต๊อก",
     noProductTitle: "ยังไม่ได้เลือกสินค้า",
-    noProductHint: "เลือกสินค้าจากรายการ ระบบจะดึงองค์ประกอบต้นทุนที่บันทึกไว้มาให้แก้ไข",
+    noProductHint:
+      "เลือกสินค้าจากรายการ ระบบจะดึงองค์ประกอบต้นทุนที่บันทึกไว้มาให้แก้ไข",
     formTitle: (sku: string) => `องค์ประกอบต้นทุน · ${sku}`,
     resultTitle: "ผลการคำนวณ",
     noResultTitle: "ยังไม่มีผลการคำนวณ",
     noResultHint: "กรอกองค์ประกอบต้นทุนให้ครบแล้วกดคำนวณ",
-    calculate: "คำนวณ", // UC 4S
+    calculate: "คำนวณ",
     unitCost: "ต้นทุนต่อหน่วย",
     currentPrice: "ราคาขายปัจจุบัน",
     marginPerUnit: "กำไรต่อหน่วย",
@@ -403,12 +423,14 @@ const th = {
     dividedBy: (qty: number) => `หารด้วยจำนวนต่อล็อต (${qty})`,
     remember: "บันทึกค่าที่กรอกไว้ใช้ครั้งถัดไป",
     okCalculated: "คำนวณต้นทุนต่อหน่วยแล้ว",
-    errInvalid: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง", // UC 4S
-    errNoRate: "ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง", // UC 4S
-    errOverPrice: "ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน", // UC 4S
-    warnStaleRate: "อัตราแลกเปลี่ยนอาจไม่เป็นปัจจุบัน กรุณาตรวจสอบก่อนคำนวณ", // UC 4S
+    errInvalid: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง",
+    errNoRate: "ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง",
+    errOverPrice:
+      "ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน",
+    warnStaleRate: "อัตราแลกเปลี่ยนอาจไม่เป็นปัจจุบัน กรุณาตรวจสอบก่อนคำนวณ",
     compareTitle: "เปรียบเทียบซัพพลายเออร์",
-    compareHint: "ใช้องค์ประกอบอื่นเท่าเดิม ต่างกันที่ราคาซื้อและค่าขนส่งระหว่างประเทศ",
+    compareHint:
+      "ใช้องค์ประกอบอื่นเท่าเดิม ต่างกันที่ราคาซื้อและค่าขนส่งระหว่างประเทศ",
     compareNone: "ยังไม่มีราคาจากซัพพลายเออร์ทางเลือกสำหรับสินค้านี้",
     compareCurrent: "ปัจจุบัน",
     historyTitle: "ประวัติการคำนวณ",
@@ -418,12 +440,14 @@ const th = {
 
   reorder: {
     title: "ตัดสินใจสั่งซื้อสินค้าเพิ่ม",
-    description: "ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์",
+    description:
+      "ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์",
     tabDecide: (n: number) => `รอตัดสินใจ (${n})`,
-    tabPurchase: (n: number) => `รอสั่งซื้อเติมสต๊อก (${n})`, // UC 6A
+    tabPurchase: (n: number) => `รอสั่งซื้อเติมสต๊อก (${n})`,
     tabOrdered: (n: number) => `คำสั่งซื้อ (${n})`,
     emptyDecideTitle: "ไม่มีรายการรอตัดสินใจ",
-    emptyDecideHint: "Order ที่สต๊อกไม่พอและคำนวณต้นทุนแล้วจะเข้ามารอการตัดสินใจที่นี่",
+    emptyDecideHint:
+      "Order ที่สต๊อกไม่พอและคำนวณต้นทุนแล้วจะเข้ามารอการตัดสินใจที่นี่",
     emptyPurchaseTitle: "ไม่มีรายการรอสั่งซื้อ",
     emptyPurchaseHint:
       "SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์ และ Order ที่ตัดสินใจว่าคุ้มค่าจะเข้ามาที่นี่",
@@ -436,35 +460,39 @@ const th = {
     cannotCompute: "คำนวณไม่ได้",
     goCost: "ไปหน้าคำนวณต้นทุน",
     goProducts: "ไปหน้าตั้งกฎ SKU",
-    pendingPo: "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่", // UC 5A, 6A
+    pendingPo: "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่",
     pendingPoEta: (eta: string) => `ล็อตเดิมคาดว่าจะได้รับ ${eta}`,
-    approve: "คุ้มค่า - สั่งซื้อเพิ่ม", // UC 5A
-    reject: "ไม่คุ้มค่า - ยกเลิก", // UC 5A
+    approve: "คุ้มค่า - สั่งซื้อเพิ่ม",
+    reject: "ไม่คุ้มค่า - ยกเลิก",
     stockVsThreshold: "คงเหลือ / เกณฑ์",
     qtyToOrder: "จำนวนที่จะสั่ง",
     linkedOrders: "Order ที่รอ",
     notConfigured: "ยังไม่ได้ตั้งค่า",
-    purchase: "สั่งซื้อ", // UC 6A
+    purchase: "สั่งซื้อ",
     confirmTitle: (decision: string) => `ยืนยันผลการตัดสินใจ: ${decision}`,
     confirmApprove: "Order จะถูกส่งเข้าสู่การสั่งซื้อจาก Supplier",
     confirmReject: "Order จะถูกส่งเข้าสู่การยกเลิก Order",
     orderQtyLabel: "จำนวนที่จะสั่งซื้อ",
-    orderQtyHint: "ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบ Reorder Quantity ที่ตั้งไว้ในกฎ SKU",
+    orderQtyHint:
+      "ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบ Reorder Quantity ที่ตั้งไว้ในกฎ SKU",
     recalculated: (cost: string) => `ต้นทุนต่อหน่วยตามจำนวนนี้ ${cost}`,
     purchaseTitle: (sku: string) => `สั่งซื้อ ${sku}`,
     purchaseHint: (supplier: string, days: number) =>
       `ส่งคำสั่งซื้อทางอีเมลไปยัง ${supplier} · Lead Time ${days} วัน`,
-    errDecided: "Order นี้ได้รับการตัดสินใจไปแล้ว", // UC 5A
-    errDb: "ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง", // UC 5A
-    errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ", // UC 5A
-    errNoCost: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง", // UC 4S
-    errNotConfigured: "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ", // UC 6A
-    errSendFailed: "ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่", // UC 6A
-    okDecided: "บันทึกผลการตัดสินใจสำเร็จ", // UC 5A
+    errDecided: "Order นี้ได้รับการตัดสินใจไปแล้ว",
+    errDb: "ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง",
+    errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
+    errNoCost: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง",
+    errNotConfigured:
+      "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
+    errSendFailed: "ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่",
+    okDecided: "บันทึกผลการตัดสินใจสำเร็จ",
     okDecidedApprove: "ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier",
     okDecidedReject: "ส่ง Order เข้าสู่การยกเลิก Order",
-    okPurchased: (sku: string, supplier: string) => `ส่งคำสั่งซื้อ ${sku} ไปยัง ${supplier} แล้ว`,
-    okPurchasedHint: (eta: string) => `สถานะ สั่งซื้อแล้ว · คาดว่าจะได้รับสินค้า ${eta}`,
+    okPurchased: (sku: string, supplier: string) =>
+      `ส่งคำสั่งซื้อ ${sku} ไปยัง ${supplier} แล้ว`,
+    okPurchasedHint: (eta: string) =>
+      `สถานะ สั่งซื้อแล้ว · คาดว่าจะได้รับสินค้า ${eta}`,
     decisionApprove: "คุ้มค่า",
     decisionReject: "ไม่คุ้มค่า",
     retry: "ส่งไม่สำเร็จครั้งก่อน",
@@ -483,7 +511,7 @@ const th = {
       "ส่งมอบพัสดุที่พิมพ์ใบปะสินค้าแล้วให้ผู้ให้บริการขนส่ง และติดตามสถานะจนถึงมือลูกค้า",
     waitingTitle: "รอส่งมอบให้ Delivery",
     shippedTitle: "ส่งมอบแล้ว",
-    dispatch: "ส่งมอบให้ Delivery", // UC 8A
+    dispatch: "ส่งมอบให้ Delivery",
     dispatchSelected: (n: number) => `ส่งมอบให้ Delivery (${n})`,
     confirmTitle: "ยืนยันรายการพัสดุที่ส่งมอบ",
     confirmHint: "ตรวจนับพัสดุให้ตรงกับรายการก่อนยืนยัน",
@@ -492,27 +520,30 @@ const th = {
     carrier: "ผู้ให้บริการขนส่ง",
     carrierStatus: "สถานะจากขนส่ง",
     notifyStatus: "แจ้งลูกค้า",
-    notify: "ส่งเลขติดตามให้ลูกค้า", // UC 5S
+    notify: "ส่งเลขติดตามให้ลูกค้า",
     notified: "แจ้งแล้ว",
     notNotified: "ยังไม่แจ้ง",
-    syncPending: "รอซิงค์", // UC 7S
-    resendTitle: "Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่", // UC 5S
+    syncPending: "รอซิงค์",
+    resendTitle: "Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่",
     resendHint: "ระบบจะบันทึก Log การส่งซ้ำพร้อมเวลาและผู้ดำเนินการ",
     resendConfirm: "ยืนยันส่งซ้ำ",
     emptyTitle: "ไม่มีพัสดุรอส่งมอบ",
     emptyHint: "Order ที่พิมพ์ใบปะสินค้าแล้วจะเข้ามารอส่งมอบที่นี่",
-    errNotPrinted: "Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้", // UC 8A
-    errNoTracking: "ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง", // UC 8A
-    errCarrier: "ไม่สามารถดึงสถานะจากผู้ให้บริการขนส่งได้ กรุณาลองใหม่ภายหลัง", // UC 8A
+    errNotPrinted: "Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้",
+    errNoTracking: "ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง",
+    errCarrier: "ไม่สามารถดึงสถานะจากผู้ให้บริการขนส่งได้ กรุณาลองใหม่ภายหลัง",
     deliveryFailed: (id: string) =>
       `${id} จัดส่งไม่สำเร็จ กรุณาตรวจสอบและดำเนินการแก้ไข เช่น ติดต่อลูกค้าหรือส่งใหม่`,
     returned: (id: string, qty: number) =>
-      qty > 0 ? `${id} ตีกลับ/คืนสินค้า · คืนสต๊อก ${qty} ชิ้นแล้ว` : `${id} ตีกลับ/คืนสินค้า`,
-    okDispatched: (orderId: string, carrier: string) => `ส่งมอบ ${orderId} ให้ ${carrier} แล้ว`,
+      qty > 0
+        ? `${id} ตีกลับ/คืนสินค้า · คืนสต๊อก ${qty} ชิ้นแล้ว`
+        : `${id} ตีกลับ/คืนสินค้า`,
+    okDispatched: (orderId: string, carrier: string) =>
+      `ส่งมอบ ${orderId} ให้ ${carrier} แล้ว`,
     okDispatchedHint: (tracking: string) => `หมายเลขติดตามพัสดุ ${tracking}`,
-    errNotifyIncomplete: "ข้อมูลหมายเลขติดตามไม่ครบถ้วน ไม่สามารถแจ้งลูกค้าได้", // UC 5S
-    errNotifyFailed: "ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง", // UC 5S
-    okNotified: "แจ้งเลขติดตามให้ลูกค้าสำเร็จ", // UC 5S
+    errNotifyIncomplete: "ข้อมูลหมายเลขติดตามไม่ครบถ้วน ไม่สามารถแจ้งลูกค้าได้",
+    errNotifyFailed: "ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง",
+    okNotified: "แจ้งเลขติดตามให้ลูกค้าสำเร็จ",
   },
 
   label: {
@@ -521,43 +552,55 @@ const th = {
     emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย Order ID หรือที่อยู่จัดส่งอีกครั้ง",
     title: "พิมพ์ใบปะสินค้า",
-    description: "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จับคู่ RSL และจัดรูปแบบใบปะสินค้าแล้ว",
-    printAll: "พิมพ์ใบปะสินค้าทั้งหมด", // UC 9A
-    print: "พิมพ์ใบปะสินค้า", // UC 9A
+    description:
+      "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จับคู่ RSL และจัดรูปแบบใบปะสินค้าแล้ว",
+    printAll: "พิมพ์ใบปะสินค้าทั้งหมด",
+    print: "พิมพ์ใบปะสินค้า",
     reprint: "พิมพ์ซ้ำ",
     viewLabel: "ดูใบปะสินค้า",
     queueTitle: "รอพิมพ์",
     printedTitle: "พิมพ์แล้ว",
     parcels: "จำนวนกล่อง",
     emptyTitle: "ไม่มี Order ที่รอพิมพ์",
-    emptyHint: "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
-    reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่", // UC 9A
+    emptyHint:
+      "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
+    reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่",
     reprintHint: "ระบบจะบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ",
     reprintConfirm: "ยืนยันพิมพ์ซ้ำ",
-    errNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้", // UC 9A
-    errNoTemplate: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน", // UC 9A
-    errPrinter: "พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์", // UC 9A
-    okPrinted: (orderId: string) => `ส่งใบปะสินค้า ${orderId} ไปยังเครื่องพิมพ์แล้ว`,
-    okPrintedHint: (template: string, parcels: number) => `รูปแบบ ${template} · ${parcels} ใบ`,
+    errNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้",
+    errNoTemplate:
+      "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
+    errPrinter: "พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์",
+    okPrinted: (orderId: string) =>
+      `ส่งใบปะสินค้า ${orderId} ไปยังเครื่องพิมพ์แล้ว`,
+    okPrintedHint: (template: string, parcels: number) =>
+      `รูปแบบ ${template} · ${parcels} ใบ`,
     okReprinted: (orderId: string) => `พิมพ์ใบปะสินค้า ${orderId} ซ้ำแล้ว`,
-    printAllSummary: (ok: number, failed: number) => `พิมพ์สำเร็จ ${ok} · ไม่สำเร็จ ${failed}`,
+    printAllSummary: (ok: number, failed: number) =>
+      `พิมพ์สำเร็จ ${ok} · ไม่สำเร็จ ${failed}`,
   },
 
   cleanup: {
     title: "ลบข้อมูลเก่า",
     description:
       "ลบข้อมูลที่สิ้นสุดแล้วออกจากระบบเพื่อลดปริมาณข้อมูลสะสม ระบบบันทึก Log การลบทุกครั้ง",
-    tabRange: "ลบตามช่วงวันที่", // UC 10A
-    tabClosed: "ลบ Order ที่ปิดแล้ว", // UC 10A
+    tabRange: "ลบตามช่วงวันที่",
+    tabClosed: "ลบ Order ที่ปิดแล้ว",
     dataTypes: "ประเภทข้อมูล",
-    typeLabel: { order: "Order", cost: "Cost", label: "Label", reorder: "Reorder" },
+    typeLabel: {
+      order: "Order",
+      cost: "Cost",
+      label: "Label",
+      reorder: "Reorder",
+    },
     cutoffLabel: "ลบข้อมูลที่เก่ากว่าวันที่",
     cutoffHint: "ลบได้เฉพาะข้อมูลที่เก่ากว่า 12 เดือนขึ้นไป",
-    closedOption: "ลบ Order ที่ปิดแล้วทั้งหมด", // UC 10A
-    submit: "ยืนยันการลบข้อมูล", // UC 10A
+    closedOption: "ลบ Order ที่ปิดแล้วทั้งหมด",
+    submit: "ยืนยันการลบข้อมูล",
     backup: "ดาวน์โหลดไฟล์สำรองก่อนลบ",
     backupDone: "ดาวน์โหลดไฟล์สำรองแล้ว",
-    closedTitle: "ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด โดยไม่ต้องกำหนดช่วงวันที่",
+    closedTitle:
+      "ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด โดยไม่ต้องกำหนดช่วงวันที่",
     review: "ตรวจทานรายการ",
     reviewTitle: "ตรวจทานก่อนลบ",
     countByType: (type: string, n: number) => `${type} ${n} รายการ`,
@@ -565,20 +608,22 @@ const th = {
       `Order ที่ปิดแล้ว ${orders} รายการ · ใบปะสินค้าที่เกี่ยวข้อง ${labels} รายการ`,
     blockedTitle: "รายการที่ลบไม่ได้",
     irreversible: "การลบนี้ย้อนกลับไม่ได้",
-    errNoType: "กรุณาเลือกประเภทข้อมูลที่ต้องการลบ", // UC 10A
-    errCutoff: "สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น", // UC 10A
-    errNoData: "ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก", // UC 10A
+    errNoType: "กรุณาเลือกประเภทข้อมูลที่ต้องการลบ",
+    errCutoff: "สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น",
+    errNoData: "ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก",
     errNoDataHint: "ลองปรับช่วงวันที่ใหม่",
-    errNoClosed: "ไม่พบ Order ที่ปิดแล้วให้ลบ", // UC 10A
-    errReferenced: "ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่", // UC 10A
-    errFailed: "ลบข้อมูลไม่สำเร็จ กรุณาลองใหม่ภายหลัง", // UC 10A
-    okDeleted: (n: number) => `ลบข้อมูลสำเร็จ ${n} รายการ`, // UC 10A
-    okDeletedClosed: (n: number) => `ลบ Order ที่ปิดแล้วสำเร็จ ${n} รายการ`, // UC 10A
+    errNoClosed: "ไม่พบ Order ที่ปิดแล้วให้ลบ",
+    errReferenced:
+      "ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่",
+    errFailed: "ลบข้อมูลไม่สำเร็จ กรุณาลองใหม่ภายหลัง",
+    okDeleted: (n: number) => `ลบข้อมูลสำเร็จ ${n} รายการ`,
+    okDeletedClosed: (n: number) => `ลบ Order ที่ปิดแล้วสำเร็จ ${n} รายการ`,
   },
 
   sitemap: {
     title: "ผังโครงสร้างหน้าจอ",
-    description: "โครงสร้างทั้งระบบของ actor เดียวคือ Admin โดยเริ่มจากหน้าเข้าสู่ระบบ",
+    description:
+      "โครงสร้างทั้งระบบของ actor เดียวคือ Admin โดยเริ่มจากหน้าเข้าสู่ระบบ",
     rootHint: "UC 1A เข้าสู่ระบบ · root ของผัง",
     reports: "รายงาน",
     reportLabel: "ใบปะสินค้า",
@@ -595,7 +640,8 @@ const th = {
     parcel: "ลำดับกล่อง",
     recipient: "ผู้รับ",
     items: "รายการสินค้า",
-    printedFrom: (template: string) => `พิมพ์จากระบบ RSL Fulfillment Hub · รูปแบบ ${template}`,
+    printedFrom: (template: string) =>
+      `พิมพ์จากระบบ RSL Fulfillment Hub · รูปแบบ ${template}`,
     labelStatus: "สถานะใบปะ",
     createdAt: "สร้างเมื่อ",
     noLabel: "Order นี้ยังไม่มีใบปะสินค้า",
@@ -617,7 +663,7 @@ const th = {
   dev: {
     title: "เครื่องมือทดสอบ",
     description:
-      "ใช้จำลองข้อผิดพลาดจากระบบภายนอกตาม \"ทางเลือก\" ของแต่ละ UC เพื่อทดสอบและ capture รูปลงรายงาน (rubric ข้อ 33) — ไม่ใช่หน้าจอของระบบจริง",
+      'ใช้จำลองข้อผิดพลาดจากระบบภายนอกตาม "ทางเลือก" ของแต่ละ UC เพื่อทดสอบและ capture รูปลงรายงาน (rubric ข้อ 33) — ไม่ใช่หน้าจอของระบบจริง',
     faultsTitle: "จำลองข้อผิดพลาด",
     reset: "รีเซ็ตข้อมูลตัวอย่าง",
     resetHint: "ล้างทุกอย่างที่ทำไว้ กลับไปเป็นข้อมูลตั้งต้น",
@@ -636,7 +682,8 @@ const th = {
       db: "5A / 10A · ฐานข้อมูลบันทึกไม่สำเร็จ",
     } as Record<FaultKey, string>,
     accounts: "บัญชีทดสอบ",
-    accountsHint: "admin@colorado.jp / demo1234 · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+    accountsHint:
+      "admin@colorado.jp / demo1234 · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
   },
 };
 
@@ -743,12 +790,15 @@ const en: typeof th = {
   manualReason: {
     incomplete: "Order data is incomplete. Please check",
     "sku-unregistered": "Found a SKU that is not registered in the system",
-    "sku-rule": "No SKU rule matches this product. Please set up the SKU rule first",
+    "sku-rule":
+      "No SKU rule matches this product. Please set up the SKU rule first",
     rsl: "This product was not found in RSL",
-    template: "No suitable label template found. Please set up the label template first",
+    template:
+      "No suitable label template found. Please set up the label template first",
     address: "Shipping address is incomplete. Cannot create the shipping label",
     price: "No selling price found for this product. Please check",
-    supplier: "Supplier or order quantity not found. Please configure before ordering",
+    supplier:
+      "Supplier or order quantity not found. Please configure before ordering",
     "stock-deduct": "Not enough stock to deduct. Please check",
   } as Record<ManualReason, string>,
 
@@ -762,19 +812,24 @@ const en: typeof th = {
   auto: {
     orderRef: (id: string) => `Order ${id}`,
     skuMatched: (n: number) => `${n} orders matched to SKU rules`,
-    skuMissing: "No SKU rule matches this product. Please set up the SKU rule first",
+    skuMissing:
+      "No SKU rule matches this product. Please set up the SKU rule first",
     skuMultiple: "More than one SKU rule matches. Please choose manually",
     skuDb: "Cannot read SKU rules. Please try again later",
-    stockEnough: (id: string) => `${id} has enough stock and moves on to RSL matching`,
+    stockEnough: (id: string) =>
+      `${id} has enough stock and moves on to RSL matching`,
     stockLow: (id: string) =>
       `${id} does not have enough stock and moves on to unit cost and the purchase decision`,
     labelCreated: (n: number) => `${n} shipping labels created`,
-    labelNoAddress: "Shipping address is incomplete. Cannot create the shipping label",
-    labelNoTemplate: "No suitable label template found. Please set up the label template first",
+    labelNoAddress:
+      "Shipping address is incomplete. Cannot create the shipping label",
+    labelNoTemplate:
+      "No suitable label template found. Please set up the label template first",
     labelService: "Cannot create the shipping label. Please try again later",
     stockDeducted: "Stock deducted and product quantity updated",
     stockInsufficient: "Not enough stock to deduct. Please check",
-    stockSync: "Cannot update product quantity on Rakuten Ichiba. Please try again later",
+    stockSync:
+      "Cannot update product quantity on Rakuten Ichiba. Please try again later",
   },
 
   login: {
@@ -786,15 +841,18 @@ const en: typeof th = {
     footer: "Colorado Co., Ltd. · Internal system for administrators only",
     errIncomplete: "Required fields are missing",
     errEmailFormat: "The email format is not valid",
-    errTooManyAttempts: "Too many sign-in attempts. Please wait a moment before trying again",
+    errTooManyAttempts:
+      "Too many sign-in attempts. Please wait a moment before trying again",
     errWrongCredentials: "Incorrect email or password",
     okLogin: "Signed in successfully",
-    tagline: "Order and shipping management for Rakuten Ichiba, connected to RSL",
+    tagline:
+      "Order and shipping management for Rakuten Ichiba, connected to RSL",
   },
 
   dashboard: {
     title: "Dashboard",
-    description: "Outstanding work, errors to fix and the Rakuten RMS connection",
+    description:
+      "Outstanding work, errors to fix and the Rakuten RMS connection",
     importOrders: "Import orders",
     importOk: (n: number) => `${n} orders imported`,
     importNone: "No new orders in Rakuten RMS",
@@ -814,13 +872,15 @@ const en: typeof th = {
     connected: "Connected",
     disconnected: "Disconnected",
     lowStock: "Below reorder point",
-    lowStockHint: "SKUs whose in-house plus RSL stock has reached the reorder point",
+    lowStockHint:
+      "SKUs whose in-house plus RSL stock has reached the reorder point",
     noLowStock: "No SKUs below the reorder point",
     viewAllStock: "View all stock",
     weeklyVolume: "Orders imported in the last 7 days",
     chartSeries: "Orders",
     issues: "Errors to fix",
-    issuesHint: "Orders the system cannot continue on its own. Open one to fix it",
+    issuesHint:
+      "Orders the system cannot continue on its own. Open one to fix it",
     noIssues: "Nothing to fix",
     unitCosts: "Unit cost",
     unitCostsHint: "Calculated from each product's latest cost components",
@@ -832,16 +892,19 @@ const en: typeof th = {
 
   verify: {
     title: "Order review",
-    description: "Check each order's details before it moves on to SKU rule matching",
+    description:
+      "Check each order's details before it moves on to SKU rule matching",
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID, SKU or sales channel",
     emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID, SKU or sales channel again",
     emptyTitle: "No orders awaiting review",
-    emptyHint: "New orders arrive here after you import orders from the dashboard",
+    emptyHint:
+      "New orders arrive here after you import orders from the dashboard",
     detailTitle: "Order details",
     noSelectionTitle: "No order selected",
-    noSelectionHint: "Select an order from the table to review its details before confirming",
+    noSelectionHint:
+      "Select an order from the table to review its details before confirming",
     marketplaceOrderId: "Rakuten order number",
     channelSku: "Rakuten item code",
     editNote: "The system logs who made each edit and when",
@@ -852,7 +915,8 @@ const en: typeof th = {
     errQty: "Quantity must be greater than 0",
     errAlreadyVerified: "This order has already been reviewed",
     errCustomerCancelled: "This order was cancelled by the customer",
-    errMarketplace: "Cannot check the latest data from the marketplace. Please try again later",
+    errMarketplace:
+      "Cannot check the latest data from the marketplace. Please try again later",
     okVerified: "Order confirmed",
     manualTitle: "Manual review",
     manualHint:
@@ -867,7 +931,8 @@ const en: typeof th = {
     emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or SKU again",
     title: "RSL matching",
-    description: "Compare each order's SKU and variation with RSL inventory before the label is formatted",
+    description:
+      "Compare each order's SKU and variation with RSL inventory before the label is formatted",
     matchAll: "Auto-match all",
     match: "Match with RSL",
     unmatch: "Undo match",
@@ -876,14 +941,16 @@ const en: typeof th = {
     matchedTitle: "Matched, awaiting label print",
     emptyTitle: "Every order is matched",
     emptyHint: "Orders with enough stock wait here",
-    chooseFor: (orderId: string, sku: string) => `Choose an RSL record for ${orderId} · ${sku}`,
+    chooseFor: (orderId: string, sku: string) =>
+      `Choose an RSL record for ${orderId} · ${sku}`,
     stockLeft: "Left in RSL",
     chooseThis: "Choose this record",
     errNotFound: "This product was not found in RSL",
     errMultiple: "More than one RSL record matches. Please choose manually",
     errConnection: "Cannot connect to RSL. Please try again later",
     okMatched: "Order matched with RSL",
-    okUnmatched: (id: string) => `Match undone for ${id}; it is back to Not matched`,
+    okUnmatched: (id: string) =>
+      `Match undone for ${id}; it is back to Not matched`,
     matchAllSummary: (matched: number, multiple: number, notFound: number) =>
       `Matched ${matched} · Choose manually ${multiple} · Not in RSL ${notFound}`,
   },
@@ -894,7 +961,8 @@ const en: typeof th = {
     emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID, SKU or product name again",
     title: "Cancel order",
-    description: "Cancel problem orders or customer cancellations, including related processes",
+    description:
+      "Cancel problem orders or customer cancellations, including related processes",
     action: "Cancel order",
     emptyTitle: "No orders with this status",
     emptyHint: "Pick another status from the filter above",
@@ -904,9 +972,11 @@ const en: typeof th = {
     dialogTitle: (orderId: string) => `Cancel ${orderId}`,
     reasonLabel: "Cancellation reason",
     submit: "Confirm cancellation",
-    linkedPo: (po: string) => `A reorder purchase order is linked to this order (${po})`,
+    linkedPo: (po: string) =>
+      `A reorder purchase order is linked to this order (${po})`,
     alsoCancelPo: "Cancel that purchase order too",
-    errClosed: "This order cannot be cancelled because it was delivered or already cancelled",
+    errClosed:
+      "This order cannot be cancelled because it was delivered or already cancelled",
     errAlready: (at: string) => `This order was already cancelled on ${at}`,
     errNoReason: "Please enter a cancellation reason",
     errInTransit:
@@ -916,7 +986,8 @@ const en: typeof th = {
       "This order's label was printed but not handed to Delivery. Please also cancel the label with the carrier",
     restocked: (qty: number) => `${qty} pcs returned to stock`,
     poCancelled: "The related purchase order was cancelled",
-    specialRecorded: "The cancellation request was recorded as Needs special handling",
+    specialRecorded:
+      "The cancellation request was recorded as Needs special handling",
   },
 
   products: {
@@ -925,17 +996,20 @@ const en: typeof th = {
     emptySearchTitle: "No products match your search",
     emptySearchHint: "Try searching by SKU, product name or supplier again",
     title: "SKU rules & products",
-    description: "This data is used to match orders, stock and unit cost, and must agree everywhere",
+    description:
+      "This data is used to match orders, stock and unit cost, and must agree everywhere",
     create: "Add product",
     edit: "Edit",
     delete: "Delete product",
     editTitle: "Edit product",
-    dialogHint: "The SKU you enter is used for orders, stock and cost across the system",
+    dialogHint:
+      "The SKU you enter is used for orders, stock and cost across the system",
     emptyTitle: "No products yet",
     emptyHint: "Add products and SKUs first so imported orders can be matched",
     productName: "Product name",
     channelSku: "Rakuten item code (mapping)",
-    channelSkuHint: "Used to match orders to this SKU rule. Must match the Rakuten item code",
+    channelSkuHint:
+      "Used to match orders to this SKU rule. Must match the Rakuten item code",
     reorderThresholdField: "Reorder Threshold",
     reorderQty: "Reorder Quantity",
     costSection: "Cost components",
@@ -944,12 +1018,15 @@ const en: typeof th = {
     inactive: "Off sale",
     errIncomplete: "Please fill in all required fields",
     errDuplicateSku: "This SKU already exists",
-    errInvalidNumber: "Reorder Threshold and Reorder Quantity must be positive whole numbers",
-    errHasRelated: "This product cannot be deleted because it still has related records",
+    errInvalidNumber:
+      "Reorder Threshold and Reorder Quantity must be positive whole numbers",
+    errHasRelated:
+      "This product cannot be deleted because it still has related records",
     switchToInactive: "Set it to Off sale instead",
     okSaved: "Product saved",
     okDeleted: (sku: string) => `Product ${sku} deleted`,
-    requeued: (n: number) => `${n} waiting orders went back into automatic processing`,
+    requeued: (n: number) =>
+      `${n} waiting orders went back into automatic processing`,
     importCsv: "Import CSV",
     importCsvHint:
       "Header: sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price",
@@ -958,7 +1035,8 @@ const en: typeof th = {
     importFailed: (n: number) => `${n} rows failed. Fix them and import again`,
     importRow: (row: number) => `Row ${row}`,
     waitingRuleTitle: "Orders waiting for a SKU rule",
-    waitingRuleHint: "Save a SKU rule with the matching Rakuten item code and the system will match again",
+    waitingRuleHint:
+      "Save a SKU rule with the matching Rakuten item code and the system will match again",
     supplierNone: "None",
   },
 
@@ -968,7 +1046,8 @@ const en: typeof th = {
     emptySearchTitle: "No products match your search",
     emptySearchHint: "Try searching by SKU or product name again",
     title: "Stock levels",
-    description: "Total is in-house plus RSL stock, compared with each SKU's reorder point",
+    description:
+      "Total is in-house plus RSL stock, compared with each SKU's reorder point",
     selectProduct: "Product",
     selectPlaceholder: "Choose a SKU to check",
     check: "Check stock",
@@ -988,14 +1067,16 @@ const en: typeof th = {
 
   cost: {
     title: "Unit cost",
-    description: "Combine purchase price, exchange rate, freight, duty and every fee into the true cost per piece",
+    description:
+      "Combine purchase price, exchange rate, freight, duty and every fee into the true cost per piece",
     searchLabel: "Search products",
     searchPlaceholder: "Search by SKU or product name",
     emptySearchTitle: "No products match your search",
     emptySearchHint: "Try searching by SKU or product name again",
     startCalc: "Calculate restock cost",
     noProductTitle: "No product selected",
-    noProductHint: "Pick a product from the list to load its saved cost components",
+    noProductHint:
+      "Pick a product from the list to load its saved cost components",
     formTitle: (sku: string) => `Cost components · ${sku}`,
     resultTitle: "Result",
     noResultTitle: "No result yet",
@@ -1024,10 +1105,13 @@ const en: typeof th = {
     okCalculated: "Unit cost calculated",
     errInvalid: "Please enter complete and valid cost data",
     errNoRate: "No current exchange rate found. Please enter it manually",
-    errOverPrice: "Unit cost is higher than the selling price. Please check the price or cost components",
-    warnStaleRate: "The exchange rate may be out of date. Please check before calculating",
+    errOverPrice:
+      "Unit cost is higher than the selling price. Please check the price or cost components",
+    warnStaleRate:
+      "The exchange rate may be out of date. Please check before calculating",
     compareTitle: "Compare suppliers",
-    compareHint: "Other components stay the same; only purchase price and freight differ",
+    compareHint:
+      "Other components stay the same; only purchase price and freight differ",
     compareNone: "No alternative supplier quotes for this product yet",
     compareCurrent: "Current",
     historyTitle: "Calculation history",
@@ -1037,14 +1121,17 @@ const en: typeof th = {
 
   reorder: {
     title: "Reorder decisions",
-    description: "Compare true cost with selling price before deciding, then send the order to the supplier",
+    description:
+      "Compare true cost with selling price before deciding, then send the order to the supplier",
     tabDecide: (n: number) => `To decide (${n})`,
     tabPurchase: (n: number) => `To reorder (${n})`,
     tabOrdered: (n: number) => `Purchase orders (${n})`,
     emptyDecideTitle: "Nothing to decide",
-    emptyDecideHint: "Orders without enough stock and with a calculated cost wait here for a decision",
+    emptyDecideHint:
+      "Orders without enough stock and with a calculated cost wait here for a decision",
     emptyPurchaseTitle: "Nothing to reorder",
-    emptyPurchaseHint: "SKUs below the reorder point and orders judged worth it arrive here",
+    emptyPurchaseHint:
+      "SKUs below the reorder point and orders judged worth it arrive here",
     emptyOrderedTitle: "No purchase orders yet",
     leadTime: "Lead time",
     unitCost: "Unit cost",
@@ -1054,7 +1141,8 @@ const en: typeof th = {
     cannotCompute: "Cannot calculate",
     goCost: "Go to Unit cost",
     goProducts: "Go to SKU rules",
-    pendingPo: "There is already an open order for this SKU. Do you want to order more?",
+    pendingPo:
+      "There is already an open order for this SKU. Do you want to order more?",
     pendingPoEta: (eta: string) => `The earlier lot is expected ${eta}`,
     approve: "Worth it - order more",
     reject: "Not worth it - cancel",
@@ -1067,20 +1155,25 @@ const en: typeof th = {
     confirmApprove: "The order moves on to supplier ordering",
     confirmReject: "The order moves on to cancellation",
     orderQtyLabel: "Quantity to order",
-    orderQtyHint: "This value applies to this order only and does not change the Reorder Quantity in the SKU rule",
+    orderQtyHint:
+      "This value applies to this order only and does not change the Reorder Quantity in the SKU rule",
     recalculated: (cost: string) => `Unit cost at this quantity: ${cost}`,
     purchaseTitle: (sku: string) => `Order ${sku}`,
-    purchaseHint: (supplier: string, days: number) => `Email the order to ${supplier} · Lead time ${days} days`,
+    purchaseHint: (supplier: string, days: number) =>
+      `Email the order to ${supplier} · Lead time ${days} days`,
     errDecided: "A decision has already been made for this order",
     errDb: "Cannot save the decision. Please try again later",
     errNoPrice: "No selling price found for this product. Please check",
     errNoCost: "Please enter complete and valid cost data",
-    errNotConfigured: "Supplier or order quantity not found. Please configure before ordering",
-    errSendFailed: "Failed to send the purchase order. Please check and try again",
+    errNotConfigured:
+      "Supplier or order quantity not found. Please configure before ordering",
+    errSendFailed:
+      "Failed to send the purchase order. Please check and try again",
     okDecided: "Decision saved",
     okDecidedApprove: "The order moved on to supplier ordering",
     okDecidedReject: "The order moved on to cancellation",
-    okPurchased: (sku: string, supplier: string) => `Order for ${sku} sent to ${supplier}`,
+    okPurchased: (sku: string, supplier: string) =>
+      `Order for ${sku} sent to ${supplier}`,
     okPurchasedHint: (eta: string) => `Status Ordered · expected ${eta}`,
     decisionApprove: "Worth it",
     decisionReject: "Not worth it",
@@ -1096,7 +1189,8 @@ const en: typeof th = {
     emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or product name again",
     title: "Customer delivery",
-    description: "Hand printed parcels to the carrier and track them until they reach the customer",
+    description:
+      "Hand printed parcels to the carrier and track them until they reach the customer",
     waitingTitle: "Awaiting handover to Delivery",
     shippedTitle: "Handed over",
     dispatch: "Hand over to Delivery",
@@ -1117,16 +1211,21 @@ const en: typeof th = {
     resendConfirm: "Confirm resend",
     emptyTitle: "No parcels awaiting handover",
     emptyHint: "Orders with printed labels wait here for handover",
-    errNotPrinted: "This order's label has not been printed, so it cannot be handed over",
+    errNotPrinted:
+      "This order's label has not been printed, so it cannot be handed over",
     errNoTracking: "No tracking number found. Please check with the carrier",
     errCarrier: "Cannot fetch status from the carrier. Please try again later",
     deliveryFailed: (id: string) =>
       `${id} could not be delivered. Please check and fix it, for example contact the customer or resend`,
     returned: (id: string, qty: number) =>
-      qty > 0 ? `${id} was returned · ${qty} pcs back in stock` : `${id} was returned`,
-    okDispatched: (orderId: string, carrier: string) => `${orderId} handed to ${carrier}`,
+      qty > 0
+        ? `${id} was returned · ${qty} pcs back in stock`
+        : `${id} was returned`,
+    okDispatched: (orderId: string, carrier: string) =>
+      `${orderId} handed to ${carrier}`,
     okDispatchedHint: (tracking: string) => `Tracking number ${tracking}`,
-    errNotifyIncomplete: "Tracking data is incomplete, so the customer cannot be notified",
+    errNotifyIncomplete:
+      "Tracking data is incomplete, so the customer cannot be notified",
     errNotifyFailed: "Failed to send tracking. Please try again later",
     okNotified: "Tracking sent to the customer",
   },
@@ -1137,7 +1236,8 @@ const en: typeof th = {
     emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or shipping address again",
     title: "Shipping labels",
-    description: "Print parcel labels for orders that are matched with RSL and formatted",
+    description:
+      "Print parcel labels for orders that are matched with RSL and formatted",
     printAll: "Print all labels",
     print: "Print label",
     reprint: "Reprint",
@@ -1150,29 +1250,40 @@ const en: typeof th = {
     reprintTitle: "This order's label was already printed. Print it again?",
     reprintHint: "The system logs the reprint with time and operator",
     reprintConfirm: "Confirm reprint",
-    errNoAddress: "Shipping address is incomplete. Cannot print the shipping label",
-    errNoTemplate: "No suitable label template found. Please set up the label template first",
+    errNoAddress:
+      "Shipping address is incomplete. Cannot print the shipping label",
+    errNoTemplate:
+      "No suitable label template found. Please set up the label template first",
     errPrinter: "Failed to print the shipping label. Please check the printer",
     okPrinted: (orderId: string) => `Label for ${orderId} sent to the printer`,
-    okPrintedHint: (template: string, parcels: number) => `Template ${template} · ${parcels} labels`,
+    okPrintedHint: (template: string, parcels: number) =>
+      `Template ${template} · ${parcels} labels`,
     okReprinted: (orderId: string) => `Label for ${orderId} reprinted`,
-    printAllSummary: (ok: number, failed: number) => `Printed ${ok} · Failed ${failed}`,
+    printAllSummary: (ok: number, failed: number) =>
+      `Printed ${ok} · Failed ${failed}`,
   },
 
   cleanup: {
     title: "Data cleanup",
-    description: "Remove finished data to keep the system lean. Every deletion is logged",
+    description:
+      "Remove finished data to keep the system lean. Every deletion is logged",
     tabRange: "Delete by date range",
     tabClosed: "Delete closed orders",
     dataTypes: "Data types",
-    typeLabel: { order: "Order", cost: "Cost", label: "Label", reorder: "Reorder" },
+    typeLabel: {
+      order: "Order",
+      cost: "Cost",
+      label: "Label",
+      reorder: "Reorder",
+    },
     cutoffLabel: "Delete data older than",
     cutoffHint: "Only data older than 12 months can be deleted",
     closedOption: "Delete all closed orders",
     submit: "Confirm deletion",
     backup: "Download backup before deleting",
     backupDone: "Backup downloaded",
-    closedTitle: "Delete every delivered or cancelled order without choosing a date range",
+    closedTitle:
+      "Delete every delivered or cancelled order without choosing a date range",
     review: "Review items",
     reviewTitle: "Review before deleting",
     countByType: (type: string, n: number) => `${type} ${n} items`,
@@ -1185,7 +1296,8 @@ const en: typeof th = {
     errNoData: "No deletable data in the selected period",
     errNoDataHint: "Try a different date range",
     errNoClosed: "No closed orders to delete",
-    errReferenced: "This data cannot be deleted because it still has related records",
+    errReferenced:
+      "This data cannot be deleted because it still has related records",
     errFailed: "Deletion failed. Please try again later",
     okDeleted: (n: number) => `${n} items deleted`,
     okDeletedClosed: (n: number) => `${n} closed orders deleted`,
@@ -1193,7 +1305,8 @@ const en: typeof th = {
 
   sitemap: {
     title: "Site map",
-    description: "The full structure for the single actor, Admin, starting from the sign-in screen",
+    description:
+      "The full structure for the single actor, Admin, starting from the sign-in screen",
     rootHint: "UC 1A Sign in · root of the map",
     reports: "Reports",
     reportLabel: "Shipping label",
@@ -1210,7 +1323,8 @@ const en: typeof th = {
     parcel: "Parcel",
     recipient: "Recipient",
     items: "Items",
-    printedFrom: (template: string) => `Printed from RSL Fulfillment Hub · Template ${template}`,
+    printedFrom: (template: string) =>
+      `Printed from RSL Fulfillment Hub · Template ${template}`,
     labelStatus: "Label status",
     createdAt: "Created",
     noLabel: "This order has no shipping label yet",
@@ -1251,7 +1365,8 @@ const en: typeof th = {
       db: "5A / 10A · Database write fails",
     } as Record<FaultKey, string>,
     accounts: "Test accounts",
-    accountsHint: "admin@colorado.jp / demo1234 · locked@colorado.jp tests too many sign-in attempts",
+    accountsHint:
+      "admin@colorado.jp / demo1234 · locked@colorado.jp tests too many sign-in attempts",
   },
 };
 

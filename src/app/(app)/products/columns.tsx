@@ -31,7 +31,9 @@ export function productColumns(
       cell: (ctx) => (
         <div>
           <p className="font-medium">{ctx.getValue()}</p>
-          <p className="text-muted-foreground text-xs">{ctx.row.original.channel_sku}</p>
+          <p className="text-muted-foreground text-xs">
+            {ctx.row.original.channel_sku}
+          </p>
         </div>
       ),
     }),
@@ -52,14 +54,20 @@ export function productColumns(
       meta: { label: t.common.supplier },
       cell: (ctx) =>
         ctx.getValue() ? (
-          <span className="text-muted-foreground">{supplierName(ctx.getValue())}</span>
+          <span className="text-muted-foreground">
+            {supplierName(ctx.getValue())}
+          </span>
         ) : (
-          <span className="text-status-attention">{t.reorder.notConfigured}</span>
+          <span className="text-status-attention">
+            {t.reorder.notConfigured}
+          </span>
         ),
     }),
     col.display({
       id: "reorder",
-      header: () => <div className="text-right">{t.common.reorderThreshold}</div>,
+      header: () => (
+        <div className="text-right">{t.common.reorderThreshold}</div>
+      ),
       cell: (ctx) => (
         <div data-numeric className="text-right">
           {ctx.row.original.reorder_threshold} / {ctx.row.original.reorder_qty}
@@ -102,21 +110,37 @@ export function productColumns(
       id: "actions",
       cell: (ctx) => (
         <div className="flex justify-end gap-1">
-          <Button size="sm" variant="ghost" onClick={() => onEdit(ctx.row.original)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onEdit(ctx.row.original)}
+          >
             <Pencil />
             {t.products.edit}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="size-8" aria-label={t.common.moreActions}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8"
+                aria-label={t.common.moreActions}
+              >
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onToggleActive(ctx.row.original)}>
-                {ctx.row.original.active ? t.products.inactive : t.products.active}
+              <DropdownMenuItem
+                onClick={() => onToggleActive(ctx.row.original)}
+              >
+                {ctx.row.original.active
+                  ? t.products.inactive
+                  : t.products.active}
               </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onClick={() => onDelete(ctx.row.original)}>
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => onDelete(ctx.row.original)}
+              >
                 {t.products.delete}
               </DropdownMenuItem>
             </DropdownMenuContent>

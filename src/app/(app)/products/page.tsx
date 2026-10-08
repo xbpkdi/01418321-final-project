@@ -31,7 +31,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SectionMessage } from "@/components/shared/section-message";
@@ -91,7 +97,9 @@ export default function ProductScreen() {
   const waiting = state.orders.filter(
     (o) =>
       o.order_status === "รอดำเนินการด้วยตนเอง" &&
-      (o.manual_reason === "sku-rule" || o.manual_reason === "sku-unregistered" || o.manual_reason === "price"),
+      (o.manual_reason === "sku-rule" ||
+        o.manual_reason === "sku-unregistered" ||
+        o.manual_reason === "price"),
   );
 
   // ขั้นตอนที่ 2: แสดงฟอร์มข้อมูลสินค้า
@@ -104,7 +112,12 @@ export default function ProductScreen() {
 
   function openEdit(product: Product) {
     setDraft({ ...product });
-    setCostDraft(costToForm(state.costs.find((c) => c.sku === product.sku), product.sku));
+    setCostDraft(
+      costToForm(
+        state.costs.find((c) => c.sku === product.sku),
+        product.sku,
+      ),
+    );
     setEditingSku(product.sku);
     setError(null);
   }
@@ -116,8 +129,11 @@ export default function ProductScreen() {
       const r = saveProduct(s, draft, editingSku);
       if (r.result !== "ok") return r;
       // องค์ประกอบต้นทุนที่กรอกในฟอร์มนี้เป็นค่าตั้งต้นของหน้าคำนวณต้นทุน
-      const num = (v: string) => (v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v));
-      const old = r.state.costs.find((c) => c.sku === (editingSku ?? draft.sku));
+      const num = (v: string) =>
+        v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v);
+      const old = r.state.costs.find(
+        (c) => c.sku === (editingSku ?? draft.sku),
+      );
       const cost = {
         sku: draft.sku.trim(),
         currency: costDraft.currency || "CNY",
@@ -129,7 +145,9 @@ export default function ProductScreen() {
               : new Date().toISOString(),
         ...Object.fromEntries(COST_KEYS.map((k) => [k, num(costDraft[k])])),
       } as (typeof r.state.costs)[number];
-      const others = r.state.costs.filter((c) => c.sku !== (editingSku ?? draft.sku));
+      const others = r.state.costs.filter(
+        (c) => c.sku !== (editingSku ?? draft.sku),
+      );
       return { ...r, state: { ...r.state, costs: [...others, cost] } };
     });
     if (result !== "ok") {
@@ -155,7 +173,10 @@ export default function ProductScreen() {
     if (result === "has-related") {
       toast.error(t.products.errHasRelated, {
         action: product.active
-          ? { label: t.products.switchToInactive, onClick: () => toggleActive(product) }
+          ? {
+              label: t.products.switchToInactive,
+              onClick: () => toggleActive(product),
+            }
           : undefined,
       });
       return;
@@ -173,7 +194,8 @@ export default function ProductScreen() {
     setCsvRows(rows);
     const ok = rows.filter((r) => r.result === "ok").length;
     if (ok > 0) toast.success(t.products.importOk(ok));
-    if (ok < rows.length) toast.error(t.products.importFailed(rows.length - ok));
+    if (ok < rows.length)
+      toast.error(t.products.importFailed(rows.length - ok));
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -193,7 +215,9 @@ export default function ProductScreen() {
       (p) =>
         p.sku.toLowerCase().includes(q) ||
         p.product_name.toLowerCase().includes(q) ||
-        (findSupplier(state, p.supplier_id)?.supplier_name ?? "").toLowerCase().includes(q),
+        (findSupplier(state, p.supplier_id)?.supplier_name ?? "")
+          .toLowerCase()
+          .includes(q),
     );
   }, [state, keyword]);
 
@@ -220,7 +244,9 @@ export default function ProductScreen() {
               type="file"
               accept=".csv,text/csv"
               className="hidden"
-              onChange={(e) => e.target.files?.[0] && importCsv(e.target.files[0])}
+              onChange={(e) =>
+                e.target.files?.[0] && importCsv(e.target.files[0])
+              }
             />
             <Button variant="outline" onClick={() => fileRef.current?.click()}>
               <FileUp />
@@ -234,12 +260,17 @@ export default function ProductScreen() {
       {waiting.length > 0 && (
         <Card className="border-status-attention/30 bg-status-attention-bg/40">
           <CardHeader>
-            <CardTitle className="text-sm">{t.products.waitingRuleTitle}</CardTitle>
+            <CardTitle className="text-sm">
+              {t.products.waitingRuleTitle}
+            </CardTitle>
             <CardDescription>{t.products.waitingRuleHint}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2">
             {waiting.map((o) => (
-              <div key={o.order_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <div
+                key={o.order_id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+              >
                 <span className="font-medium">{o.order_id}</span>
                 <StatusBadge status={o.order_status} />
                 <span className="text-muted-foreground">
@@ -257,12 +288,17 @@ export default function ProductScreen() {
       {csvRows && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">{t.products.importResultTitle}</CardTitle>
+            <CardTitle className="text-sm">
+              {t.products.importResultTitle}
+            </CardTitle>
             <CardDescription>{t.products.importCsvHint}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-1 text-sm">
             {csvRows.map((r) => (
-              <p key={r.row} className={r.result === "ok" ? "" : "text-status-cancelled"}>
+              <p
+                key={r.row}
+                className={r.result === "ok" ? "" : "text-status-cancelled"}
+              >
                 {t.products.importRow(r.row)} · {r.sku || "—"} ·{" "}
                 {r.result === "ok" ? t.products.okSaved : MESSAGE[r.result]}
               </p>
@@ -286,9 +322,15 @@ export default function ProductScreen() {
         emptyState={
           <EmptyState
             icon={Package}
-            title={keyword ? t.products.emptySearchTitle : t.products.emptyTitle}
+            title={
+              keyword ? t.products.emptySearchTitle : t.products.emptyTitle
+            }
             hint={keyword ? t.products.emptySearchHint : t.products.emptyHint}
-            action={keyword ? undefined : <Button onClick={openCreate}>{t.products.create}</Button>}
+            action={
+              keyword ? undefined : (
+                <Button onClick={openCreate}>{t.products.create}</Button>
+              )
+            }
           />
         }
       />
@@ -296,18 +338,24 @@ export default function ProductScreen() {
       <Dialog open={draft !== null} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingSku ? t.products.editTitle : t.products.create}</DialogTitle>
+            <DialogTitle>
+              {editingSku ? t.products.editTitle : t.products.create}
+            </DialogTitle>
             <DialogDescription>{t.products.dialogHint}</DialogDescription>
           </DialogHeader>
 
           {draft && costDraft && (
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="product_name">{t.products.productName}</FieldLabel>
+                <FieldLabel htmlFor="product_name">
+                  {t.products.productName}
+                </FieldLabel>
                 <Input
                   id="product_name"
                   value={draft.product_name}
-                  onChange={(e) => setDraft({ ...draft, product_name: e.target.value })}
+                  onChange={(e) =>
+                    setDraft({ ...draft, product_name: e.target.value })
+                  }
                 />
               </Field>
 
@@ -317,7 +365,9 @@ export default function ProductScreen() {
                   <Input
                     id="sku"
                     value={draft.sku}
-                    onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, sku: e.target.value })
+                    }
                   />
                 </Field>
                 <Field>
@@ -325,40 +375,63 @@ export default function ProductScreen() {
                   <Input
                     id="variation"
                     value={draft.variation}
-                    onChange={(e) => setDraft({ ...draft, variation: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, variation: e.target.value })
+                    }
                   />
                 </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="sales_channel">{t.common.salesChannel}</FieldLabel>
-                  <Input id="sales_channel" value={draft.sales_channel} disabled />
+                  <FieldLabel htmlFor="sales_channel">
+                    {t.common.salesChannel}
+                  </FieldLabel>
+                  <Input
+                    id="sales_channel"
+                    value={draft.sales_channel}
+                    disabled
+                  />
                 </Field>
                 {/* ทางเลือก #3: Mapping ระหว่าง SKU ภายในกับรหัสสินค้าของ Rakuten */}
                 <Field>
-                  <FieldLabel htmlFor="channel_sku">{t.products.channelSku}</FieldLabel>
+                  <FieldLabel htmlFor="channel_sku">
+                    {t.products.channelSku}
+                  </FieldLabel>
                   <Input
                     id="channel_sku"
                     value={draft.channel_sku}
-                    onChange={(e) => setDraft({ ...draft, channel_sku: e.target.value })}
+                    onChange={(e) =>
+                      setDraft({ ...draft, channel_sku: e.target.value })
+                    }
                   />
-                  <FieldDescription>{t.products.channelSkuHint}</FieldDescription>
+                  <FieldDescription>
+                    {t.products.channelSkuHint}
+                  </FieldDescription>
                 </Field>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="supplier_id">{t.common.supplier}</FieldLabel>
+                  <FieldLabel htmlFor="supplier_id">
+                    {t.common.supplier}
+                  </FieldLabel>
                   <Select
                     value={draft.supplier_id || NO_SUPPLIER}
-                    onValueChange={(v) => setDraft({ ...draft, supplier_id: v === NO_SUPPLIER ? "" : v })}
+                    onValueChange={(v) =>
+                      setDraft({
+                        ...draft,
+                        supplier_id: v === NO_SUPPLIER ? "" : v,
+                      })
+                    }
                   >
                     <SelectTrigger id="supplier_id">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={NO_SUPPLIER}>{t.products.supplierNone}</SelectItem>
+                      <SelectItem value={NO_SUPPLIER}>
+                        {t.products.supplierNone}
+                      </SelectItem>
                       {state.suppliers.map((s) => (
                         <SelectItem key={s.supplier_id} value={s.supplier_id}>
                           {s.supplier_name}
@@ -368,7 +441,9 @@ export default function ProductScreen() {
                   </Select>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="selling_price">{t.common.sellingPrice}</FieldLabel>
+                  <FieldLabel htmlFor="selling_price">
+                    {t.common.sellingPrice}
+                  </FieldLabel>
                   <Input
                     id="selling_price"
                     type="number"
@@ -377,7 +452,8 @@ export default function ProductScreen() {
                     onChange={(e) =>
                       setDraft({
                         ...draft,
-                        selling_price: e.target.value === "" ? null : Number(e.target.value),
+                        selling_price:
+                          e.target.value === "" ? null : Number(e.target.value),
                       })
                     }
                   />
@@ -386,56 +462,87 @@ export default function ProductScreen() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field>
-                  <FieldLabel htmlFor="reorder_threshold">{t.products.reorderThresholdField}</FieldLabel>
+                  <FieldLabel htmlFor="reorder_threshold">
+                    {t.products.reorderThresholdField}
+                  </FieldLabel>
                   <Input
                     id="reorder_threshold"
                     type="number"
                     min={1}
                     value={draft.reorder_threshold}
-                    onChange={(e) => setDraft({ ...draft, reorder_threshold: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        reorder_threshold: Number(e.target.value),
+                      })
+                    }
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="reorder_qty">{t.products.reorderQty}</FieldLabel>
+                  <FieldLabel htmlFor="reorder_qty">
+                    {t.products.reorderQty}
+                  </FieldLabel>
                   <Input
                     id="reorder_qty"
                     type="number"
                     min={1}
                     value={draft.reorder_qty}
-                    onChange={(e) => setDraft({ ...draft, reorder_qty: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        reorder_qty: Number(e.target.value),
+                      })
+                    }
                   />
                 </Field>
               </div>
 
               <FieldSet className="border-t pt-4">
-                <FieldLegend variant="label">{t.products.costSection}</FieldLegend>
-                <FieldDescription>{t.products.costSectionHint}</FieldDescription>
+                <FieldLegend variant="label">
+                  {t.products.costSection}
+                </FieldLegend>
+                <FieldDescription>
+                  {t.products.costSectionHint}
+                </FieldDescription>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Field>
-                    <FieldLabel htmlFor="cost_currency">{t.cost.currency}</FieldLabel>
+                    <FieldLabel htmlFor="cost_currency">
+                      {t.cost.currency}
+                    </FieldLabel>
                     <Input
                       id="cost_currency"
                       value={costDraft.currency}
-                      onChange={(e) => setCostDraft({ ...costDraft, currency: e.target.value.toUpperCase() })}
+                      onChange={(e) =>
+                        setCostDraft({
+                          ...costDraft,
+                          currency: e.target.value.toUpperCase(),
+                        })
+                      }
                     />
                   </Field>
                   {COST_KEYS.map((key) => (
                     <Field key={key}>
-                      <FieldLabel htmlFor={`cost_${key}`}>{costLabels[key]}</FieldLabel>
+                      <FieldLabel htmlFor={`cost_${key}`}>
+                        {costLabels[key]}
+                      </FieldLabel>
                       <Input
                         id={`cost_${key}`}
                         type="number"
                         min={0}
                         step="any"
                         value={costDraft[key]}
-                        onChange={(e) => setCostDraft({ ...costDraft, [key]: e.target.value })}
+                        onChange={(e) =>
+                          setCostDraft({ ...costDraft, [key]: e.target.value })
+                        }
                       />
                     </Field>
                   ))}
                 </div>
               </FieldSet>
 
-              {error && <SectionMessage appearance="error">{error}</SectionMessage>}
+              {error && (
+                <SectionMessage appearance="error">{error}</SectionMessage>
+              )}
             </FieldGroup>
           )}
 

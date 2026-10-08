@@ -49,7 +49,9 @@ export function cancelColumns(
       cell: (ctx) => {
         const note = noteOf(ctx.row.original);
         return note ? (
-          <span className="text-status-cancelled block max-w-[36ch] text-xs">{note}</span>
+          <span className="text-status-cancelled block max-w-[36ch] text-xs">
+            {note}
+          </span>
         ) : null;
       },
     }),

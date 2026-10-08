@@ -12,7 +12,10 @@ import type { ChannelConnection, Order } from "@/types/order";
 
 const RK = "Rakuten Ichiba" as const;
 
-function order(o: Omit<Order, "sales_channel" | "fulfill_source"> & Partial<Pick<Order, "fulfill_source">>): Order {
+function order(
+  o: Omit<Order, "sales_channel" | "fulfill_source"> &
+    Partial<Pick<Order, "fulfill_source">>,
+): Order {
   return { sales_channel: RK, fulfill_source: "rsl", ...o };
 }
 

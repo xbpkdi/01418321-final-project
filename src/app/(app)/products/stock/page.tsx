@@ -33,7 +33,9 @@ export default function StockCheckScreen() {
   const rows: StockRow[] = state.products
     .map((p) => {
       const c = checkStock(state, p.sku);
-      return c.found ? { ...c, product_name: p.product_name, variation: p.variation } : null;
+      return c.found
+        ? { ...c, product_name: p.product_name, variation: p.variation }
+        : null;
     })
     .filter((r): r is StockRow => r !== null)
     .sort((a, b) => Number(b.low) - Number(a.low));
@@ -53,7 +55,9 @@ export default function StockCheckScreen() {
       {state.faults.rsl && (
         <SectionMessage appearance="error">
           {t.stock.errRsl}
-          <span className="text-muted-foreground block">{t.stock.partialHint}</span>
+          <span className="text-muted-foreground block">
+            {t.stock.partialHint}
+          </span>
         </SectionMessage>
       )}
 
@@ -95,20 +99,36 @@ export default function StockCheckScreen() {
         {result && (
           <CardContent>
             {!result.found ? (
-              <SectionMessage appearance="error">{t.stock.errNotFound}</SectionMessage>
+              <SectionMessage appearance="error">
+                {t.stock.errNotFound}
+              </SectionMessage>
             ) : (
               <dl className="grid gap-4 rounded-md border p-4 text-sm sm:grid-cols-5">
                 <Metric label={t.stock.inHouse} value={result.in_house_qty} />
-                <Metric label={t.stock.rsl} value={result.rsl_qty} fallback={t.common.notFound} />
+                <Metric
+                  label={t.stock.rsl}
+                  value={result.rsl_qty}
+                  fallback={t.common.notFound}
+                />
                 <Metric label={t.stock.total} value={result.total} strong />
-                <Metric label={t.common.reorderThreshold} value={result.threshold} />
+                <Metric
+                  label={t.common.reorderThreshold}
+                  value={result.threshold}
+                />
                 <div>
-                  <dt className="text-muted-foreground text-xs">{t.common.status}</dt>
+                  <dt className="text-muted-foreground text-xs">
+                    {t.common.status}
+                  </dt>
                   <dd className="mt-1 flex flex-wrap gap-1.5">
                     <StockBadge low={result.low} />
                     {(result.incomplete || result.partial) && (
-                      <Badge variant="secondary" className="bg-status-attention-bg text-status-attention">
-                        {result.incomplete ? t.stock.incomplete : t.stock.partial}
+                      <Badge
+                        variant="secondary"
+                        className="bg-status-attention-bg text-status-attention"
+                      >
+                        {result.incomplete
+                          ? t.stock.incomplete
+                          : t.stock.partial}
                       </Badge>
                     )}
                   </dd>
@@ -145,8 +165,15 @@ function Metric({
   return (
     <div>
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd data-numeric className={`mt-1 text-lg ${strong ? "font-semibold" : ""}`}>
-        {value === null ? <span className="text-muted-foreground text-sm">{fallback}</span> : value}
+      <dd
+        data-numeric
+        className={`mt-1 text-lg ${strong ? "font-semibold" : ""}`}
+      >
+        {value === null ? (
+          <span className="text-muted-foreground text-sm">{fallback}</span>
+        ) : (
+          value
+        )}
       </dd>
     </div>
   );

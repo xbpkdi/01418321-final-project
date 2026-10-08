@@ -12,7 +12,10 @@ import type { PurchaseOrder } from "@/types/product";
 const col = createColumnHelper<AppTableFeatures, PurchaseRow>();
 
 /** 6A ขั้นตอนที่ 2: รายการ SKU ในหน้า "รอสั่งซื้อเติมสต๊อก" */
-export function purchaseColumns(t: Dict, onPurchase: (row: PurchaseRow) => void) {
+export function purchaseColumns(
+  t: Dict,
+  onPurchase: (row: PurchaseRow) => void,
+) {
   return col.columns([
     col.accessor("sku", {
       header: "SKU",
@@ -32,7 +35,9 @@ export function purchaseColumns(t: Dict, onPurchase: (row: PurchaseRow) => void)
       cell: (ctx) => (
         <div>
           <p>{ctx.getValue()}</p>
-          <p className="text-muted-foreground text-xs">{ctx.row.original.variation}</p>
+          <p className="text-muted-foreground text-xs">
+            {ctx.row.original.variation}
+          </p>
         </div>
       ),
     }),
@@ -41,14 +46,20 @@ export function purchaseColumns(t: Dict, onPurchase: (row: PurchaseRow) => void)
       header: t.common.supplier,
       cell: (ctx) =>
         ctx.row.original.supplier ? (
-          <span className="text-muted-foreground">{ctx.row.original.supplier.supplier_name}</span>
+          <span className="text-muted-foreground">
+            {ctx.row.original.supplier.supplier_name}
+          </span>
         ) : (
-          <span className="text-status-attention">{t.reorder.notConfigured}</span>
+          <span className="text-status-attention">
+            {t.reorder.notConfigured}
+          </span>
         ),
     }),
     col.display({
       id: "stock",
-      header: () => <div className="text-right">{t.reorder.stockVsThreshold}</div>,
+      header: () => (
+        <div className="text-right">{t.reorder.stockVsThreshold}</div>
+      ),
       cell: (ctx) => (
         <div
           data-numeric
@@ -80,7 +91,11 @@ export function purchaseColumns(t: Dict, onPurchase: (row: PurchaseRow) => void)
       id: "actions",
       cell: (ctx) => (
         <div className="text-right">
-          <Button size="sm" variant="outline" onClick={() => onPurchase(ctx.row.original)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onPurchase(ctx.row.original)}
+          >
             {t.reorder.purchase}
           </Button>
         </div>
@@ -92,7 +107,11 @@ export function purchaseColumns(t: Dict, onPurchase: (row: PurchaseRow) => void)
 const poCol = createColumnHelper<AppTableFeatures, PurchaseOrder>();
 
 /** ผลการสั่งซื้อที่บันทึกไว้ (Q7.2) */
-export function purchaseOrderColumns(t: Dict, lang: Lang, supplierName: (id: string) => string) {
+export function purchaseOrderColumns(
+  t: Dict,
+  lang: Lang,
+  supplierName: (id: string) => string,
+) {
   return poCol.columns([
     poCol.accessor("po_id", {
       header: t.reorder.poId,
@@ -102,12 +121,18 @@ export function purchaseOrderColumns(t: Dict, lang: Lang, supplierName: (id: str
     poCol.accessor("sku", {
       header: "SKU",
       meta: { label: "SKU" },
-      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">{ctx.getValue()}</span>
+      ),
     }),
     poCol.accessor("supplier_id", {
       header: t.common.supplier,
       meta: { label: t.common.supplier },
-      cell: (ctx) => <span className="text-muted-foreground">{supplierName(ctx.getValue())}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">
+          {supplierName(ctx.getValue())}
+        </span>
+      ),
     }),
     poCol.accessor("order_qty", {
       header: () => <div className="text-right">{t.common.qty}</div>,
@@ -121,13 +146,19 @@ export function purchaseOrderColumns(t: Dict, lang: Lang, supplierName: (id: str
     poCol.accessor("order_date", {
       header: t.reorder.orderDate,
       meta: { label: t.reorder.orderDate },
-      cell: (ctx) => <span className="text-muted-foreground">{formatDate(ctx.getValue(), lang)}</span>,
+      cell: (ctx) => (
+        <span className="text-muted-foreground">
+          {formatDate(ctx.getValue(), lang)}
+        </span>
+      ),
     }),
     poCol.accessor("eta", {
       header: t.reorder.eta,
       meta: { label: t.reorder.eta },
       cell: (ctx) => (
-        <span className="text-muted-foreground">{ctx.getValue() ? formatDate(ctx.getValue(), lang) : "—"}</span>
+        <span className="text-muted-foreground">
+          {ctx.getValue() ? formatDate(ctx.getValue(), lang) : "—"}
+        </span>
       ),
     }),
     poCol.accessor("status", {

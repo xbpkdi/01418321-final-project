@@ -80,9 +80,7 @@ export function AppSidebar() {
                   <span className="bg-coral mb-0.5 ml-px size-1 rounded-[1px]" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="display truncate text-lg">
-                    {t.app.name}
-                  </span>
+                  <span className="display truncate text-lg">{t.app.name}</span>
                   <span className="text-muted-foreground truncate text-xs">
                     {t.app.company}
                   </span>

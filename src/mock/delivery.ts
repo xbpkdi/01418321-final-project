@@ -40,11 +40,17 @@ export const MOCK_CARRIER_TRACKING: Record<
   string,
   { delivery_status: DeliveryStatus; last_location: string }
 > = {
-  "4418-2290-1102": { delivery_status: "in_transit", last_location: "新潟ベース" },
+  "4418-2290-1102": {
+    delivery_status: "in_transit",
+    last_location: "新潟ベース",
+  },
   // ที่อยู่ไม่ถูกต้อง — 8A ทางเลือก #2
   "4418-2290-1103": { delivery_status: "failed", last_location: "札幌ベース" },
   // ลูกค้าปฏิเสธรับ — 8A ทางเลือก #3 และ 7S ทางเลือก #2
-  "4418-2290-1104": { delivery_status: "returned", last_location: "金沢ベース" },
+  "4418-2290-1104": {
+    delivery_status: "returned",
+    last_location: "金沢ベース",
+  },
 };
 
 export function trackCarrier(trackingNumber: string) {
@@ -67,14 +73,25 @@ export const SHIPPING_RULES: {
   label_template: string;
   max_items_per_parcel: number;
 }[] = [
-  { shipping_method: "RSL ปกติ", sales_channel: "Rakuten Ichiba", label_template: "RSL-STD-A6", max_items_per_parcel: 5 },
-  { shipping_method: "RSL ขนาดใหญ่", sales_channel: "Rakuten Ichiba", label_template: "RSL-LARGE-A5", max_items_per_parcel: 1 },
+  {
+    shipping_method: "RSL ปกติ",
+    sales_channel: "Rakuten Ichiba",
+    label_template: "RSL-STD-A6",
+    max_items_per_parcel: 5,
+  },
+  {
+    shipping_method: "RSL ขนาดใหญ่",
+    sales_channel: "Rakuten Ichiba",
+    label_template: "RSL-LARGE-A5",
+    max_items_per_parcel: 1,
+  },
 ];
 
 export const SHIPPING_METHODS = ["RSL ปกติ", "RSL ขนาดใหญ่", "จัดส่งเอง"];
 
 export function findShippingRule(shippingMethod: string, salesChannel: string) {
   return SHIPPING_RULES.find(
-    (r) => r.shipping_method === shippingMethod && r.sales_channel === salesChannel,
+    (r) =>
+      r.shipping_method === shippingMethod && r.sales_channel === salesChannel,
   );
 }

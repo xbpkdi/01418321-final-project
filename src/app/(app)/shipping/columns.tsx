@@ -12,7 +12,11 @@ import type { Order } from "@/types/order";
 const col = createColumnHelper<AppTableFeatures, Order>();
 
 /** ตารางรอส่งมอบ — เลือกหลายรายการแล้วส่งมอบพร้อมกัน (8A ขั้นตอนที่ 2) */
-export function waitingColumns(t: Dict, selected: string[], onToggle: (orderId: string) => void) {
+export function waitingColumns(
+  t: Dict,
+  selected: string[],
+  onToggle: (orderId: string) => void,
+) {
   return col.columns([
     col.display({
       id: "select",
@@ -33,7 +37,9 @@ export function waitingColumns(t: Dict, selected: string[], onToggle: (orderId: 
       header: t.common.product,
       meta: { label: t.common.product },
       cell: (ctx) => (
-        <span className="text-muted-foreground block max-w-[28ch] truncate">{ctx.getValue()}</span>
+        <span className="text-muted-foreground block max-w-[28ch] truncate">
+          {ctx.getValue()}
+        </span>
       ),
     }),
     col.accessor("parcel_total", {
@@ -52,7 +58,9 @@ export function waitingColumns(t: Dict, selected: string[], onToggle: (orderId: 
         <div className="grid gap-1">
           <StatusBadge status={ctx.getValue()} />
           {ctx.getValue() === "รอส่งมอบ" && (
-            <span className="text-status-cancelled text-xs">{t.shipping.errNoTracking}</span>
+            <span className="text-status-cancelled text-xs">
+              {t.shipping.errNoTracking}
+            </span>
           )}
         </div>
       ),
@@ -74,7 +82,9 @@ export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
       cell: (ctx) => (
         <div>
           <p data-numeric>{ctx.getValue()}</p>
-          <p className="text-muted-foreground text-xs">{ctx.row.original.carrier_name}</p>
+          <p className="text-muted-foreground text-xs">
+            {ctx.row.original.carrier_name}
+          </p>
         </div>
       ),
     }),
@@ -93,11 +103,15 @@ export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
       cell: (ctx) => (
         <div className="flex flex-wrap items-center gap-1.5">
           <StatusBadge status={ctx.getValue()} />
-          {ctx.row.original.stock_deducted && ctx.row.original.mp_stock_synced === false && (
-            <Badge variant="secondary" className="bg-status-attention-bg text-status-attention">
-              {t.shipping.syncPending}
-            </Badge>
-          )}
+          {ctx.row.original.stock_deducted &&
+            ctx.row.original.mp_stock_synced === false && (
+              <Badge
+                variant="secondary"
+                className="bg-status-attention-bg text-status-attention"
+              >
+                {t.shipping.syncPending}
+              </Badge>
+            )}
         </div>
       ),
     }),
@@ -106,14 +120,24 @@ export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
       header: t.shipping.notifyStatus,
       cell: (ctx) => {
         const o = ctx.row.original;
-        const canNotify = ["อยู่ระหว่างจัดส่ง", "รอแจ้งเลขติดตาม", "จัดส่งสำเร็จ"].includes(o.order_status);
+        const canNotify = [
+          "อยู่ระหว่างจัดส่ง",
+          "รอแจ้งเลขติดตาม",
+          "จัดส่งสำเร็จ",
+        ].includes(o.order_status);
         return (
           <div className="flex items-center justify-end gap-2">
             <span className="text-muted-foreground text-xs">
-              {o.tracking_notified ? t.shipping.notified : t.shipping.notNotified}
+              {o.tracking_notified
+                ? t.shipping.notified
+                : t.shipping.notNotified}
             </span>
             {canNotify && (
-              <Button size="sm" variant={o.tracking_notified ? "ghost" : "outline"} onClick={() => onNotify(o)}>
+              <Button
+                size="sm"
+                variant={o.tracking_notified ? "ghost" : "outline"}
+                onClick={() => onNotify(o)}
+              >
                 {t.shipping.notify}
               </Button>
             )}

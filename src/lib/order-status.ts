@@ -31,11 +31,7 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 /** กลุ่มสีของ badge ตาม ui-design-brief.md ข้อ 4 */
 export type StatusTone =
-  | "waiting"
-  | "progress"
-  | "success"
-  | "attention"
-  | "cancelled";
+  "waiting" | "progress" | "success" | "attention" | "cancelled";
 
 const TONE_BY_STATUS: Record<OrderStatus, StatusTone> = {
   รอตรวจสอบคำสั่งซื้อ: "waiting",

@@ -10,7 +10,13 @@ import { useMemo, useState } from "react";
 import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -56,8 +62,10 @@ export default function ShipmentScreen() {
       return { state: r.state, events: r.events };
     });
     for (const e of events) {
-      if (e.kind === "connection") toast.error(t.shipping.errCarrier); // ทางเลือก #4
-      else if (e.kind === "failed") toast.error(t.shipping.deliveryFailed(e.orderId)); // ทางเลือก #2
+      if (e.kind === "connection")
+        toast.error(t.shipping.errCarrier); // ทางเลือก #4
+      else if (e.kind === "failed")
+        toast.error(t.shipping.deliveryFailed(e.orderId)); // ทางเลือก #2
       else toast.warning(t.shipping.returned(e.orderId, e.restocked)); // ทางเลือก #3
     }
   }, [run, t]);
@@ -67,12 +75,18 @@ export default function ShipmentScreen() {
     const q = keyword.trim().toLowerCase();
     if (!q) return waiting;
     return waiting.filter(
-      (o) => o.order_id.toLowerCase().includes(q) || o.product_name.toLowerCase().includes(q),
+      (o) =>
+        o.order_id.toLowerCase().includes(q) ||
+        o.product_name.toLowerCase().includes(q),
     );
   }, [waiting, keyword]);
 
   function toggle(orderId: string) {
-    setSelected((prev) => (prev.includes(orderId) ? prev.filter((x) => x !== orderId) : [...prev, orderId]));
+    setSelected((prev) =>
+      prev.includes(orderId)
+        ? prev.filter((x) => x !== orderId)
+        : [...prev, orderId],
+    );
   }
 
   // ขั้นตอนที่ 3: ยืนยันรายการพัสดุที่ส่งมอบ (Q8.1 + Q8.2)
@@ -89,9 +103,13 @@ export default function ShipmentScreen() {
           description: t.shipping.okDispatchedHint(r.tracking!),
         });
       } else if (r.result === "no-tracking") {
-        toast.error(t.shipping.errNoTracking, { description: t.common.orderRef(r.orderId) }); // ทางเลือก #1
+        toast.error(t.shipping.errNoTracking, {
+          description: t.common.orderRef(r.orderId),
+        }); // ทางเลือก #1
       } else {
-        toast.error(t.shipping.errNotPrinted, { description: t.common.orderRef(r.orderId) });
+        toast.error(t.shipping.errNotPrinted, {
+          description: t.common.orderRef(r.orderId),
+        });
       }
     }
   }
@@ -115,7 +133,9 @@ export default function ShipmentScreen() {
         return;
       case "ok":
         setResend(null);
-        toast.success(t.shipping.okNotified, { description: t.common.orderRef(orderId) });
+        toast.success(t.shipping.okNotified, {
+          description: t.common.orderRef(orderId),
+        });
     }
   }
 
@@ -125,10 +145,17 @@ export default function ShipmentScreen() {
 
   return (
     <div className="grid gap-6 p-6">
-      <PageHeader title={t.shipping.title} description={t.shipping.description} />
+      <PageHeader
+        title={t.shipping.title}
+        description={t.shipping.description}
+      />
 
       {/* ทางเลือก #4: คงสถานะล่าสุดที่มีอยู่ไว้ก่อน */}
-      {state.faults.carrier && <SectionMessage appearance="error">{t.shipping.errCarrier}</SectionMessage>}
+      {state.faults.carrier && (
+        <SectionMessage appearance="error">
+          {t.shipping.errCarrier}
+        </SectionMessage>
+      )}
 
       <Card>
         <CardHeader>
@@ -143,7 +170,11 @@ export default function ShipmentScreen() {
               {t.shipping.selectAll}
             </Button>
             {/* ขั้นตอนที่ 2: รวบรวมพัสดุแล้วกด "ส่งมอบให้ Delivery" */}
-            <Button size="sm" onClick={() => setConfirming(true)} disabled={selected.length === 0}>
+            <Button
+              size="sm"
+              onClick={() => setConfirming(true)}
+              disabled={selected.length === 0}
+            >
               {t.shipping.dispatchSelected(selected.length)}
             </Button>
           </CardAction>
@@ -165,8 +196,12 @@ export default function ShipmentScreen() {
             emptyState={
               <EmptyState
                 icon={Truck}
-                title={keyword ? t.shipping.emptySearchTitle : t.shipping.emptyTitle}
-                hint={keyword ? t.shipping.emptySearchHint : t.shipping.emptyHint}
+                title={
+                  keyword ? t.shipping.emptySearchTitle : t.shipping.emptyTitle
+                }
+                hint={
+                  keyword ? t.shipping.emptySearchHint : t.shipping.emptyHint
+                }
               />
             }
           />
@@ -197,7 +232,10 @@ export default function ShipmentScreen() {
           </DialogHeader>
           <ul className="grid gap-1.5 text-sm">
             {selectedOrders.map((o) => (
-              <li key={o.order_id} className="flex justify-between gap-3 rounded-md border px-3 py-2">
+              <li
+                key={o.order_id}
+                className="flex justify-between gap-3 rounded-md border px-3 py-2"
+              >
                 <span className="font-medium">{o.order_id}</span>
                 <span className="text-muted-foreground truncate">
                   {o.product_name} · {t.label.parcels} {o.parcel_total ?? 1}
@@ -214,7 +252,10 @@ export default function ShipmentScreen() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={resend !== null} onOpenChange={(o) => !o && setResend(null)}>
+      <Dialog
+        open={resend !== null}
+        onOpenChange={(o) => !o && setResend(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.shipping.resendTitle}</DialogTitle>
@@ -226,7 +267,9 @@ export default function ShipmentScreen() {
             <Button variant="outline" onClick={() => setResend(null)}>
               {t.common.cancel}
             </Button>
-            <Button onClick={() => resend && notify(resend, true)}>{t.shipping.resendConfirm}</Button>
+            <Button onClick={() => resend && notify(resend, true)}>
+              {t.shipping.resendConfirm}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

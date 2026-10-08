@@ -128,14 +128,49 @@ export const SEED_PRODUCTS: Product[] = [
 ];
 
 export const SEED_STOCK: StockLevel[] = [
-  { sku: "FSH-MLR-240", in_house_qty: 52, rsl_qty: 96, updated_at: "2026-10-05T06:00:00+09:00" },
+  {
+    sku: "FSH-MLR-240",
+    in_house_qty: 52,
+    rsl_qty: 96,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
   // ข้อมูลจาก RSL ขาดหาย — 3S ทางเลือก #1
-  { sku: "YDM-HRB-012", in_house_qty: 118, rsl_qty: null, updated_at: "2026-10-05T06:00:00+09:00" },
-  { sku: "OUT-CHR-003", in_house_qty: 6, rsl_qty: 8, updated_at: "2026-10-05T06:00:00+09:00" },
-  { sku: "HOM-STG-045", in_house_qty: 1, rsl_qty: 0, updated_at: "2026-10-05T06:00:00+09:00" },
-  { sku: "FSH-RDS-180", in_house_qty: 0, rsl_qty: 1, updated_at: "2026-10-05T06:00:00+09:00" },
-  { sku: "OUT-LMP-021", in_house_qty: 30, rsl_qty: 12, updated_at: "2026-10-05T06:00:00+09:00" },
-  { sku: "HOM-KIT-108", in_house_qty: 2, rsl_qty: 3, updated_at: "2026-10-05T06:00:00+09:00" },
+  {
+    sku: "YDM-HRB-012",
+    in_house_qty: 118,
+    rsl_qty: null,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
+  {
+    sku: "OUT-CHR-003",
+    in_house_qty: 6,
+    rsl_qty: 8,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
+  {
+    sku: "HOM-STG-045",
+    in_house_qty: 1,
+    rsl_qty: 0,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
+  {
+    sku: "FSH-RDS-180",
+    in_house_qty: 0,
+    rsl_qty: 1,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
+  {
+    sku: "OUT-LMP-021",
+    in_house_qty: 30,
+    rsl_qty: 12,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
+  {
+    sku: "HOM-KIT-108",
+    in_house_qty: 2,
+    rsl_qty: 3,
+    updated_at: "2026-10-05T06:00:00+09:00",
+  },
 ];
 
 const HOUR = 60 * 60 * 1000;
@@ -257,10 +292,38 @@ export const SEED_SUPPLIER_QUOTES: {
   exchange_rate: number;
   intl_freight: number;
 }[] = [
-  { sku: "FSH-MLR-240", supplier_id: "SUP-03", purchase_price: 8600, currency: "CNY", exchange_rate: 4.92, intl_freight: 10400 },
-  { sku: "FSH-RDS-180", supplier_id: "SUP-03", purchase_price: 15200, currency: "CNY", exchange_rate: 4.92, intl_freight: 7900 },
-  { sku: "OUT-CHR-003", supplier_id: "SUP-04", purchase_price: 30900, currency: "CNY", exchange_rate: 4.92, intl_freight: 12600 },
-  { sku: "HOM-KIT-108", supplier_id: "SUP-04", purchase_price: 2200, currency: "CNY", exchange_rate: 4.92, intl_freight: 2600 },
+  {
+    sku: "FSH-MLR-240",
+    supplier_id: "SUP-03",
+    purchase_price: 8600,
+    currency: "CNY",
+    exchange_rate: 4.92,
+    intl_freight: 10400,
+  },
+  {
+    sku: "FSH-RDS-180",
+    supplier_id: "SUP-03",
+    purchase_price: 15200,
+    currency: "CNY",
+    exchange_rate: 4.92,
+    intl_freight: 7900,
+  },
+  {
+    sku: "OUT-CHR-003",
+    supplier_id: "SUP-04",
+    purchase_price: 30900,
+    currency: "CNY",
+    exchange_rate: 4.92,
+    intl_freight: 12600,
+  },
+  {
+    sku: "HOM-KIT-108",
+    supplier_id: "SUP-04",
+    purchase_price: 2200,
+    currency: "CNY",
+    exchange_rate: 4.92,
+    intl_freight: 2600,
+  },
 ];
 
 /** คำสั่งซื้อที่ค้างอยู่กับ Supplier (Q7.2) — ใช้ทดสอบ "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว" */

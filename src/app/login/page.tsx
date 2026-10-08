@@ -9,7 +9,12 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { LanguageToggle } from "@/components/app-shell/language-toggle";
@@ -120,7 +125,10 @@ export default function LoginScreen() {
         <div className="rise" style={{ animationDelay: "140ms" }}>
           <GlowCard className="px-6 py-7 sm:py-8">
             {/* ขีดสั้นแบบที่คั่นหนังสือ สีคอรัลเข้าชุดกับจุดหลังหัวข้อใหญ่ */}
-            <span aria-hidden className="bg-coral mb-4 block h-1 w-16 rounded-full" />
+            <span
+              aria-hidden
+              className="bg-coral mb-4 block h-1 w-16 rounded-full"
+            />
             <h2 className="display text-4xl">{t.login.title}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
               {t.login.description}
@@ -144,7 +152,9 @@ export default function LoginScreen() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="user_password">{t.login.password}</FieldLabel>
+                  <FieldLabel htmlFor="user_password">
+                    {t.login.password}
+                  </FieldLabel>
                   <Input
                     id="user_password"
                     name="user_password"
@@ -168,7 +178,12 @@ export default function LoginScreen() {
                 )}
 
                 <Field>
-                  <Button type="submit" size="lg" className="h-11" disabled={submitting}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="h-11"
+                    disabled={submitting}
+                  >
                     {submitting && <Spinner />}
                     {t.login.submit}
                   </Button>

@@ -23,7 +23,9 @@ export function queueColumns(t: Dict, onPrint: (order: Order) => void) {
       header: t.common.shippingAddress,
       meta: { label: t.common.shippingAddress },
       cell: (ctx) => (
-        <span className="text-muted-foreground block max-w-[32ch] truncate">{ctx.getValue() || "—"}</span>
+        <span className="text-muted-foreground block max-w-[32ch] truncate">
+          {ctx.getValue() || "—"}
+        </span>
       ),
     }),
     col.accessor("shipping_method", {
@@ -33,7 +35,9 @@ export function queueColumns(t: Dict, onPrint: (order: Order) => void) {
         <div>
           <p className="text-muted-foreground">{ctx.getValue()}</p>
           {ctx.row.original.label_template && (
-            <p className="text-muted-foreground text-xs">{ctx.row.original.label_template}</p>
+            <p className="text-muted-foreground text-xs">
+              {ctx.row.original.label_template}
+            </p>
           )}
         </div>
       ),
@@ -111,7 +115,11 @@ export function printedColumns(t: Dict, onReprint: (order: Order) => void) {
               {t.label.viewLabel}
             </Link>
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onReprint(ctx.row.original)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onReprint(ctx.row.original)}
+          >
             {t.label.reprint}
           </Button>
         </div>

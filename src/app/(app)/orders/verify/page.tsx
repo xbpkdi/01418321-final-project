@@ -19,7 +19,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SectionMessage } from "@/components/shared/section-message";
@@ -52,7 +58,8 @@ export default function OrderVerifyScreen() {
   const manual = state.orders.filter(
     (o) =>
       o.order_status === "รอดำเนินการด้วยตนเอง" &&
-      (o.manual_reason === "incomplete" || o.manual_reason === "sku-unregistered"),
+      (o.manual_reason === "incomplete" ||
+        o.manual_reason === "sku-unregistered"),
   );
 
   // ค้นหาตาม order_id, sku และ sales_channel ตามที่ UC กำหนด
@@ -67,9 +74,12 @@ export default function OrderVerifyScreen() {
     );
   }, [pending, keyword]);
 
-  const selected = selectedId ? findOrder(state, selectedId) ?? null : null;
+  const selected = selectedId ? (findOrder(state, selectedId) ?? null) : null;
   const columns = React.useMemo(() => verifyColumns(t), [t]);
-  useUnsavedChanges("verify", selected !== null && shippingMethod !== selected.shipping_method);
+  useUnsavedChanges(
+    "verify",
+    selected !== null && shippingMethod !== selected.shipping_method,
+  );
 
   // ขั้นตอนที่ 2: เลือก Order แล้วดึงรายละเอียด (Q2A.1)
   function select(order: Order) {
@@ -106,7 +116,9 @@ export default function OrderVerifyScreen() {
       // Order ที่ออกจากคิวไปแล้ว (ไม่ครบ/ลูกค้ายกเลิก) แจ้งด้วย toast เพราะแผงรายละเอียดจะปิด
       if (result === "incomplete" || result === "customer-cancelled") {
         setSelectedId(null);
-        toast.error(MESSAGE[result], { description: t.common.orderRef(orderId) });
+        toast.error(MESSAGE[result], {
+          description: t.common.orderRef(orderId),
+        });
         return;
       }
       setError(MESSAGE[result]);
@@ -157,19 +169,32 @@ export default function OrderVerifyScreen() {
           ) : (
             <CardContent className="grid gap-4">
               {selected.customer_cancel_request && (
-                <Badge variant="secondary" className="bg-status-cancelled-bg text-status-cancelled w-fit">
+                <Badge
+                  variant="secondary"
+                  className="bg-status-cancelled-bg text-status-cancelled w-fit"
+                >
                   {t.verify.customerCancelBadge}
                 </Badge>
               )}
               <dl className="grid gap-3 text-sm">
                 <Row label="Order ID" value={selected.order_id} />
-                <Row label={t.verify.marketplaceOrderId} value={selected.marketplace_order_id} />
-                <Row label={t.common.salesChannel} value={selected.sales_channel} />
+                <Row
+                  label={t.verify.marketplaceOrderId}
+                  value={selected.marketplace_order_id}
+                />
+                <Row
+                  label={t.common.salesChannel}
+                  value={selected.sales_channel}
+                />
                 <Row label={t.verify.channelSku} value={selected.channel_sku} />
                 <Row label="SKU" value={selected.sku || "—"} />
                 <Row label={t.common.product} value={selected.product_name} />
                 <Row label="Variation" value={selected.variation} />
-                <Row label={t.common.qty} value={String(selected.qty)} numeric />
+                <Row
+                  label={t.common.qty}
+                  value={String(selected.qty)}
+                  numeric
+                />
                 <Row
                   label={t.common.shippingAddress}
                   value={selected.shipping_address || "—"}
@@ -185,8 +210,13 @@ export default function OrderVerifyScreen() {
 
               {/* UC อนุญาตให้แก้ไขฟิลด์ที่กำหนดก่อนยืนยัน เช่น shipping_method */}
               <Field className="border-t pt-4">
-                <FieldLabel htmlFor="shipping_method">{t.common.shippingMethod}</FieldLabel>
-                <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                <FieldLabel htmlFor="shipping_method">
+                  {t.common.shippingMethod}
+                </FieldLabel>
+                <Select
+                  value={shippingMethod}
+                  onValueChange={setShippingMethod}
+                >
                   <SelectTrigger id="shipping_method">
                     <SelectValue />
                   </SelectTrigger>
@@ -208,7 +238,9 @@ export default function OrderVerifyScreen() {
                 </FieldDescription>
               </Field>
 
-              {error && <SectionMessage appearance="error">{error}</SectionMessage>}
+              {error && (
+                <SectionMessage appearance="error">{error}</SectionMessage>
+              )}
 
               <Button onClick={confirm} disabled={submitting}>
                 {submitting && <Spinner />}
@@ -266,9 +298,16 @@ function Row({
   multiline?: boolean;
 }) {
   return (
-    <div className={multiline ? "grid gap-1" : "flex items-start justify-between gap-4"}>
+    <div
+      className={
+        multiline ? "grid gap-1" : "flex items-start justify-between gap-4"
+      }
+    >
       <dt className="text-muted-foreground shrink-0">{label}</dt>
-      <dd data-numeric={numeric ? "" : undefined} className={multiline ? "" : "text-right"}>
+      <dd
+        data-numeric={numeric ? "" : undefined}
+        className={multiline ? "" : "text-right"}
+      >
         {value}
       </dd>
     </div>

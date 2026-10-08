@@ -72,7 +72,9 @@ export const COST_KEYS = [
 export type CostKey = (typeof COST_KEYS)[number];
 
 export function isCompleteCost(c: CostComponents): c is CompleteCost {
-  return COST_KEYS.every((k) => c[k] !== null) && c.exchange_rate_updated_at !== null;
+  return (
+    COST_KEYS.every((k) => c[k] !== null) && c.exchange_rate_updated_at !== null
+  );
 }
 
 /** สูตรตาม Q5.2 */

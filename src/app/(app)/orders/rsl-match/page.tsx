@@ -9,7 +9,13 @@ import { Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@/components/ui/item";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { SectionMessage } from "@/components/shared/section-message";
@@ -18,14 +24,24 @@ import { TableSearch } from "@/components/shared/table-search";
 import { matchedColumns, queueColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
-import { findOrder, matchAllRsl, matchRsl, rslMatched, rslQueue, unmatchRsl } from "@/lib/workflow";
+import {
+  findOrder,
+  matchAllRsl,
+  matchRsl,
+  rslMatched,
+  rslQueue,
+  unmatchRsl,
+} from "@/lib/workflow";
 import type { RslShipment } from "@/mock/rsl";
 
 export default function RslMatchScreen() {
   const router = useRouter();
   const t = useT();
   const { state, run } = useStore();
-  const [candidates, setCandidates] = useState<{ orderId: string; options: RslShipment[] } | null>(null);
+  const [candidates, setCandidates] = useState<{
+    orderId: string;
+    options: RslShipment[];
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [working, setWorking] = useState<string | null>(null);
@@ -59,7 +75,10 @@ export default function RslMatchScreen() {
           // Q4.2 แล้วส่งต่อ 6S
           toast.success(t.rslMatch.okMatched, {
             description: `${t.rslMatch.rslReference} ${result.reference}`,
-            action: { label: t.nav.items.label, onClick: () => router.push("/shipping/label") },
+            action: {
+              label: t.nav.items.label,
+              onClick: () => router.push("/shipping/label"),
+            },
           });
           break;
       }
@@ -77,7 +96,13 @@ export default function RslMatchScreen() {
       setError(t.rslMatch.errConnection);
       return;
     }
-    toast.info(t.rslMatch.matchAllSummary(summary.matched, summary.multiple, summary.notFound));
+    toast.info(
+      t.rslMatch.matchAllSummary(
+        summary.matched,
+        summary.multiple,
+        summary.notFound,
+      ),
+    );
   }
 
   // ทางเลือก #3: ยกเลิกการจับคู่ที่ทำไปแล้ว
@@ -94,11 +119,14 @@ export default function RslMatchScreen() {
     const q = keyword.trim().toLowerCase();
     if (!q) return queue;
     return queue.filter(
-      (o) => o.order_id.toLowerCase().includes(q) || o.sku.toLowerCase().includes(q),
+      (o) =>
+        o.order_id.toLowerCase().includes(q) || o.sku.toLowerCase().includes(q),
     );
   }, [queue, keyword]);
 
-  const candidateOrder = candidates ? findOrder(state, candidates.orderId) : undefined;
+  const candidateOrder = candidates
+    ? findOrder(state, candidates.orderId)
+    : undefined;
 
   return (
     <div className="grid gap-6 p-6">
@@ -121,7 +149,10 @@ export default function RslMatchScreen() {
         <Card className="border-status-attention/30 bg-status-attention-bg/40">
           <CardHeader>
             <CardTitle className="text-sm">
-              {t.rslMatch.chooseFor(candidateOrder.order_id, candidateOrder.sku)}
+              {t.rslMatch.chooseFor(
+                candidateOrder.order_id,
+                candidateOrder.sku,
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2">
@@ -130,7 +161,8 @@ export default function RslMatchScreen() {
                 <ItemContent>
                   <ItemTitle>{option.rsl_order_id}</ItemTitle>
                   <ItemDescription>
-                    {t.rslMatch.stockLeft} <span data-numeric>{option.rsl_stock_qty}</span>{" "}
+                    {t.rslMatch.stockLeft}{" "}
+                    <span data-numeric>{option.rsl_stock_qty}</span>{" "}
                     {t.common.unitPieces}
                   </ItemDescription>
                 </ItemContent>
@@ -138,7 +170,9 @@ export default function RslMatchScreen() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => match(candidateOrder.order_id, option.rsl_order_id)}
+                    onClick={() =>
+                      match(candidateOrder.order_id, option.rsl_order_id)
+                    }
                   >
                     {t.rslMatch.chooseThis}
                   </Button>
@@ -170,8 +204,12 @@ export default function RslMatchScreen() {
             emptyState={
               <EmptyState
                 icon={Link2}
-                title={keyword ? t.rslMatch.emptySearchTitle : t.rslMatch.emptyTitle}
-                hint={keyword ? t.rslMatch.emptySearchHint : t.rslMatch.emptyHint}
+                title={
+                  keyword ? t.rslMatch.emptySearchTitle : t.rslMatch.emptyTitle
+                }
+                hint={
+                  keyword ? t.rslMatch.emptySearchHint : t.rslMatch.emptyHint
+                }
               />
             }
           />

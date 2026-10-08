@@ -24,7 +24,12 @@ import { TableSearch } from "@/components/shared/table-search";
 import { printedColumns, queueColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
-import { findOrder, labelQueue, printLabel, type PrintResult } from "@/lib/workflow";
+import {
+  findOrder,
+  labelQueue,
+  printLabel,
+  type PrintResult,
+} from "@/lib/workflow";
 
 export default function LabelPrintScreen() {
   const router = useRouter();
@@ -35,14 +40,18 @@ export default function LabelPrintScreen() {
 
   // ขั้นตอนที่ 1: Order ที่พร้อมพิมพ์ + Order ที่ 6S ทำต่อไม่ได้ (รอดำเนินการด้วยตนเอง)
   const queue = labelQueue(state);
-  const printed = state.orders.filter((o) => o.order_status === "พิมพ์ใบปะสินค้าแล้ว");
+  const printed = state.orders.filter(
+    (o) => o.order_status === "พิมพ์ใบปะสินค้าแล้ว",
+  );
 
   // ค้นด้วย Order ID หรือที่อยู่จัดส่ง เฉพาะคิวรอพิมพ์
   const visibleQueue = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     if (!q) return queue;
     return queue.filter(
-      (o) => o.order_id.toLowerCase().includes(q) || o.shipping_address.toLowerCase().includes(q),
+      (o) =>
+        o.order_id.toLowerCase().includes(q) ||
+        o.shipping_address.toLowerCase().includes(q),
     );
   }, [queue, keyword]);
 
@@ -68,22 +77,28 @@ export default function LabelPrintScreen() {
       return false;
     }
     const order = findOrder(state, orderId);
-    toast.success(isReprint ? t.label.okReprinted(orderId) : t.label.okPrinted(orderId), {
-      description: t.label.okPrintedHint(template!, order?.parcel_total ?? 1),
-      action: {
-        label: t.label.viewLabel,
-        onClick: () => router.push(`/reports/label/${orderId}`),
+    toast.success(
+      isReprint ? t.label.okReprinted(orderId) : t.label.okPrinted(orderId),
+      {
+        description: t.label.okPrintedHint(template!, order?.parcel_total ?? 1),
+        action: {
+          label: t.label.viewLabel,
+          onClick: () => router.push(`/reports/label/${orderId}`),
+        },
       },
-    });
+    );
     return true;
   }
 
   // ขั้นตอนที่ 2: "พิมพ์ใบปะสินค้าทั้งหมด"
   function printAll() {
-    const ids = queue.filter((o) => o.order_status === "รอพิมพ์ใบปะสินค้า").map((o) => o.order_id);
+    const ids = queue
+      .filter((o) => o.order_status === "รอพิมพ์ใบปะสินค้า")
+      .map((o) => o.order_id);
     let ok = 0;
     for (const id of ids) if (print(id)) ok++;
-    if (ids.length > 1) toast.info(t.label.printAllSummary(ok, ids.length - ok));
+    if (ids.length > 1)
+      toast.info(t.label.printAllSummary(ok, ids.length - ok));
   }
 
   const queueCols = queueColumns(t, (o) => print(o.order_id));
@@ -97,7 +112,9 @@ export default function LabelPrintScreen() {
         action={
           <Button
             onClick={printAll}
-            disabled={!queue.some((o) => o.order_status === "รอพิมพ์ใบปะสินค้า")}
+            disabled={
+              !queue.some((o) => o.order_status === "รอพิมพ์ใบปะสินค้า")
+            }
           >
             <Printer />
             {t.label.printAll}
@@ -151,7 +168,10 @@ export default function LabelPrintScreen() {
       )}
 
       {/* ทางเลือก #3: พิมพ์ซ้ำต้องให้ Admin ยืนยันก่อน แล้วบันทึก Log */}
-      <Dialog open={reprint !== null} onOpenChange={(o) => !o && setReprint(null)}>
+      <Dialog
+        open={reprint !== null}
+        onOpenChange={(o) => !o && setReprint(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t.label.reprintTitle}</DialogTitle>

@@ -21,7 +21,11 @@ export function StockBadge({ low }: { low: boolean }) {
   return (
     <Badge
       variant="secondary"
-      className={low ? "bg-status-cancelled-bg text-status-cancelled" : "bg-status-success-bg text-status-success"}
+      className={
+        low
+          ? "bg-status-cancelled-bg text-status-cancelled"
+          : "bg-status-success-bg text-status-success"
+      }
     >
       {low ? t.stock.low : t.stock.normal}
     </Badge>
@@ -41,7 +45,9 @@ export function stockColumns(t: Dict) {
       cell: (ctx) => (
         <div>
           <p>{ctx.getValue()}</p>
-          <p className="text-muted-foreground text-xs">{ctx.row.original.variation}</p>
+          <p className="text-muted-foreground text-xs">
+            {ctx.row.original.variation}
+          </p>
         </div>
       ),
     }),
@@ -77,7 +83,9 @@ export function stockColumns(t: Dict) {
       ),
     }),
     col.accessor("threshold", {
-      header: () => <div className="text-right">{t.common.reorderThreshold}</div>,
+      header: () => (
+        <div className="text-right">{t.common.reorderThreshold}</div>
+      ),
       meta: { label: t.common.reorderThreshold },
       cell: (ctx) => (
         <div data-numeric className="text-muted-foreground text-right">
@@ -92,9 +100,14 @@ export function stockColumns(t: Dict) {
         <div className="flex flex-wrap items-center gap-1.5">
           <StockBadge low={ctx.row.original.low} />
           {(ctx.row.original.incomplete || ctx.row.original.partial) && (
-            <Badge variant="secondary" className="bg-status-attention-bg text-status-attention">
+            <Badge
+              variant="secondary"
+              className="bg-status-attention-bg text-status-attention"
+            >
               <AlertTriangle />
-              {ctx.row.original.incomplete ? t.stock.incomplete : t.stock.partial}
+              {ctx.row.original.incomplete
+                ? t.stock.incomplete
+                : t.stock.partial}
             </Badge>
           )}
         </div>
