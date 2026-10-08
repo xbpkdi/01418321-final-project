@@ -98,7 +98,7 @@ export default function LoginScreen() {
         <LanguageToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1320px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,380px)] lg:gap-10">
+      <main className="mx-auto grid w-full max-w-[1320px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,57rem)_minmax(400px,460px)] lg:justify-center lg:gap-14">
         {/* @container: ขนาดหัวข้อคิดจากความกว้างคอลัมน์นี้ ไม่ใช่ทั้งจอ */}
         <section className="rise @container">
           <p className="eyebrow">{t.app.company}</p>
@@ -112,7 +112,7 @@ export default function LoginScreen() {
               />
             }
           />
-          <p className="text-muted-foreground mt-6 text-base leading-relaxed">
+          <p className="text-muted-foreground mt-6 text-base leading-relaxed text-balance">
             {t.login.tagline}
           </p>
         </section>
