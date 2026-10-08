@@ -15,6 +15,8 @@
   --color-navy: var(--navy);
   --color-navy-deep: var(--navy-deep);
   --color-cobalt: var(--cobalt);
+  --color-sidebar-selected: var(--sidebar-selected);
+  --color-sidebar-selected-foreground: var(--sidebar-selected-foreground);
   --color-sky: var(--sky);
   --color-coral: var(--coral);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -65,60 +67,61 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Palette แนว quark แบบ light: พื้นกระดาษเย็น + หมึก navy + cobalt เป็นสีหลัก
-   ฟ้า (sky) ใช้กับแสง ส่วนส้มคอรัล (coral) เป็นจุดตัดสีเล็กๆ แบบโปสเตอร์ ไม่ใช้เป็นปุ่ม */
+/* Palette จาก Atlassian Design System ธีม light (@atlaskit/tokens, atlassian-light)
+   ชื่อ token ต้นทางกำกับไว้ทุกค่า ห้ามแต่งค่าเอง ยกเว้น --coral ที่มาจากแนว quark */
 :root {
-  --navy: #13235e;
-  --navy-deep: #0b1533;
-  --cobalt: #2448ff;
-  --sky: #38bdf8;
-  --coral: #ff5a36;
+  --navy: #1e1f21; /* สีเงาใน shadow.raised */
+  --navy-deep: #292a2e; /* color.text */
+  --cobalt: #1868db; /* color.background.brand.bold */
+  --sky: #669df1; /* color.background.accent.blue.subtle */
+  --coral: #ff5a36; /* จุดเน้นแนว quark ที่ผู้ใช้เลือก */
 
-  --background: #f4f6fb;
-  --foreground: #0b1533;
-  --card: #ffffff;
-  --card-foreground: #0b1533;
-  --popover: #ffffff;
-  --popover-foreground: #0b1533;
-  --primary: #2448ff;
-  --primary-foreground: #ffffff;
-  --secondary: #e7ebf7;
-  --secondary-foreground: #0b1533;
-  --muted: #edf0f8;
-  --muted-foreground: #4f5b80;
-  --accent: #e7ebf7;
-  --accent-foreground: #0b1533;
-  --destructive: #d42a3a;
-  --border: #0b15331f;
-  --input: #0b153329;
-  --ring: #2448ff;
-  --chart-1: #2448ff;
-  --chart-2: #38bdf8;
-  --chart-3: #ff5a36;
-  --chart-4: #13235e;
-  --chart-5: #b9c6f5;
-  --radius: 0.75rem;
-  /* sidebar เป็น navy เข้ม ตัดกับเนื้อหาสีอ่อน ให้หน้ามีโครง */
-  --sidebar: #0b1533;
-  --sidebar-foreground: #d9e0f5;
-  --sidebar-primary: #2448ff;
+  --background: #f8f8f8; /* elevation.surface.sunken */
+  --foreground: #292a2e; /* color.text */
+  --card: #ffffff; /* elevation.surface.raised */
+  --card-foreground: #292a2e;
+  --popover: #ffffff; /* elevation.surface.overlay */
+  --popover-foreground: #292a2e;
+  --primary: #1868db; /* color.background.brand.bold */
+  --primary-foreground: #ffffff; /* color.text.inverse */
+  --secondary: #0515240f; /* color.background.neutral */
+  --secondary-foreground: #292a2e;
+  --muted: #f0f1f2; /* color.background.accent.gray.subtlest */
+  --muted-foreground: #505258; /* color.text.subtle */
+  --accent: #f0f1f2; /* elevation.surface.hovered */
+  --accent-foreground: #292a2e;
+  --destructive: #ae2e24; /* color.text.danger */
+  --border: #0b120e24; /* color.border */
+  --input: #8c8f97; /* color.border.input */
+  --ring: #4688ec; /* color.border.focused */
+  --chart-1: #357de8; /* chart.categorical.1 */
+  --chart-2: #82b536; /* chart.categorical.2 */
+  --chart-3: #bf63f3; /* chart.categorical.3 */
+  --chart-4: #f68909; /* chart.categorical.4 */
+  --chart-5: #1558bc; /* chart.categorical.5 */
+  --radius: 0.5rem; /* radius.large */
+  --sidebar: #ffffff; /* elevation.surface */
+  --sidebar-foreground: #505258; /* color.text.subtle */
+  --sidebar-primary: #1868db;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a2652;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #ffffff14;
-  --sidebar-ring: #6f86ff;
+  --sidebar-accent: #0515240f; /* color.background.neutral.subtle.hovered */
+  --sidebar-accent-foreground: #292a2e;
+  --sidebar-selected: #e9f2fe; /* color.background.selected */
+  --sidebar-selected-foreground: #1868db; /* color.text.selected */
+  --sidebar-border: #0b120e24; /* color.border */
+  --sidebar-ring: #4688ec;
 
-  /* สีสถานะ 5 กลุ่ม → ใช้ใน StatusBadge */
-  --status-waiting: #4f5b80; /* เทา navy - รอดำเนินการ */
-  --status-waiting-bg: #e7ebf7;
-  --status-progress: #1f3fe0; /* น้ำเงิน - กำลังดำเนินการ */
-  --status-progress-bg: #e0e7ff;
-  --status-success: #1d7f4f; /* เขียว - สำเร็จ */
-  --status-success-bg: #dbf1e5;
-  --status-attention: #a85f00; /* อำพัน - ต้องระวัง/ทำเอง */
-  --status-attention-bg: #fbedd2;
-  --status-cancelled: #b8202b; /* แดง - ยกเลิก */
-  --status-cancelled-bg: #fbe2e3;
+  /* สีสถานะ 5 กลุ่ม → ใช้ใน StatusBadge (Atlassian lozenge: text.* บน background.*) */
+  --status-waiting: #505258; /* color.text.subtle */
+  --status-waiting-bg: #0515240f; /* color.background.neutral */
+  --status-progress: #1558bc; /* color.text.information */
+  --status-progress-bg: #e9f2fe; /* color.background.information */
+  --status-success: #4c6b1f; /* color.text.success */
+  --status-success-bg: #efffd6; /* color.background.success */
+  --status-attention: #9e4c00; /* color.text.warning */
+  --status-attention-bg: #fff5db; /* color.background.warning */
+  --status-cancelled: #ae2e24; /* color.text.danger */
+  --status-cancelled-bg: #ffeceb; /* color.background.danger */
 }
 
 .dark {
@@ -190,10 +193,9 @@
 
 /* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 @layer components {
-  /* ใน sidebar ตัวอักษรรองและพื้นรองต้องเป็นโทนเข้ม ไม่ใช่ค่าของหน้าสว่าง */
+  /* ใน sidebar ตัวอักษรรองจางกว่าในหน้า */
   [data-sidebar="sidebar"] {
-    --muted: #1a2652;
-    --muted-foreground: #8d98bd;
+    --muted-foreground: #6b6e76; /* color.text.subtlest */
     color: var(--sidebar-foreground);
   }
 

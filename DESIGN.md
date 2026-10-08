@@ -6,27 +6,29 @@
 
 ## โทนและสี
 
-แนวทางอ้างอิง team1.quarkhadron.dev แต่เป็น light mode: พื้นกระดาษโทนเย็น ตัวอักษร navy เข้ม
-สีหลักคือน้ำเงิน cobalt ฟ้า (sky) ใช้กับแสง ส่วนส้มคอรัล (coral) เป็นจุดตัดสีเล็กๆ แบบโปสเตอร์
-ห้ามไล่สีจากน้ำเงินไปคอรัลตรงๆ เพราะตรงกลางจะขุ่น ให้ใช้สีทึบตัดขอบ หรือไล่ผ่านสีขาวก่อน
+สีทั้งระบบมาจาก **Atlassian Design System ธีม light** (`@atlaskit/tokens`, ไฟล์ `atlassian-light`)
+ห้ามแต่งค่าสีเอง ทุกค่าใน `globals.css` มีชื่อ token ต้นทางกำกับไว้ ยกเว้น `--coral` ที่มาจากแนว quark
 
-| token | ค่า | ใช้ที่ไหน |
-|---|---|---|
-| `--background` | `#f4f6fb` | พื้นหลังหลัก |
-| `--card` | `#ffffff` | การ์ด, popover |
-| `--muted` | `#edf0f8` | พื้นรอง, หัวตาราง |
-| `--foreground` | `#0b1533` navy-deep | ตัวอักษรหลัก |
-| `--muted-foreground` | `#4f5b80` | ตัวอักษรรอง, helper text |
-| `--primary` / `--cobalt` | `#2448ff` | ปุ่มหลัก, เมนูที่เลือกอยู่, focus ring |
-| `--sky` | `#38bdf8` | แสง ribbon, แสงตามเมาส์, ไล่สีโลโก้ |
-| `--coral` | `#ff5a36` | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสง ribbon (จาง) |
-| `--border` | navy-deep 12% | เส้นคั่น, ขอบ input |
+| token ของเรา | ค่า | token Atlassian | ใช้ที่ไหน |
+|---|---|---|---|
+| `--background` | `#f8f8f8` | `elevation.surface.sunken` | พื้นหลังหน้า |
+| `--card` | `#ffffff` | `elevation.surface.raised` | การ์ด |
+| `--foreground` | `#292a2e` | `color.text` | ตัวอักษรหลัก |
+| `--muted-foreground` | `#505258` | `color.text.subtle` | ตัวอักษรรอง |
+| `--primary` | `#1868db` | `color.background.brand.bold` | ปุ่มหลัก, ลิงก์ |
+| `--border` | `#0b120e24` | `color.border` | เส้นคั่น |
+| `--input` | `#8c8f97` | `color.border.input` | ขอบ input |
+| `--ring` | `#4688ec` | `color.border.focused` | focus ring |
+| `--sidebar-selected` | `#e9f2fe` | `color.background.selected` | เมนูที่เลือกอยู่ (ตัวอักษร `color.text.selected` `#1868db`) |
+| `--sky` | `#669df1` | `color.background.accent.blue.subtle` | แสง ribbon |
+| `--coral` | `#ff5a36` | (แนว quark) | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสงตามเมาส์ |
 
-**ล็อกสี**: ปุ่มและสิ่งที่กดได้ใช้ cobalt เท่านั้น sky/coral ห้ามใช้เป็นปุ่มหรือตัวอักษร
+**ล็อกสี**: ปุ่มและสิ่งที่กดได้ใช้ `--primary` เท่านั้น sky/coral ห้ามใช้เป็นปุ่มหรือตัวอักษร
+ห้ามไล่สีจากน้ำเงินไปคอรัลตรงๆ เพราะตรงกลางจะขุ่น
 
 ### สีสถานะ
 
-5 กลุ่ม แต่ละกลุ่มมีคู่ `--status-*` (ตัวอักษร) และ `--status-*-bg` (พื้น)
+5 กลุ่ม แต่ละกลุ่มมีคู่ `--status-*` (ตัวอักษร) และ `--status-*-bg` (พื้น) ใช้คู่ `color.text.*` กับ `color.background.*` ของ Atlassian (neutral, information, success, warning, danger)
 
 | กลุ่ม | สี | ความหมาย |
 |---|---|---|
@@ -65,13 +67,13 @@
 
 ## รูปทรง
 
-ขอบมนเดียวทั้งระบบ `--radius: 0.75rem` shadow เบาเฉพาะที่ต้องแยกชั้นจริงๆ ไม่ใช่ใส่ทุกกล่อง
+ขอบมนเดียวทั้งระบบ `--radius: 0.5rem` (`radius.large` ของ Atlassian) shadow เบาเฉพาะที่ต้องแยกชั้นจริงๆ ไม่ใช่ใส่ทุกกล่อง
 
 การ์ดใช้เมื่อ elevation สื่อลำดับชั้นจริง กลุ่มข้อมูลธรรมดาแยกด้วยเส้นคั่นหรือระยะห่างพอ
 
 ## Layout
 
-- Sidebar ซ้าย พื้น navy เข้ม `#0b1533` ตัวอักษรสีอ่อน เมนูที่เลือกอยู่เป็น cobalt โลโก้เป็นตัว R บนกล่อง cobalt จัดกลุ่มเมนู 5 หมวด ยุบเป็น drawer ต่ำกว่า 768px
+- Sidebar ซ้าย พื้นขาว `elevation.surface` เมนูที่เลือกอยู่เป็นพื้นฟ้าอ่อนตัวอักษรน้ำเงินแบบ Atlassian โลโก้เป็นตัว R บนกล่องสี primary จัดกลุ่มเมนู 5 หมวด ยุบเป็น drawer ต่ำกว่า 768px
 - Topbar สูง 56px มีชื่อหน้าปัจจุบัน ปุ่มสลับภาษา และผู้ใช้ที่ล็อกอิน
 - เนื้อหาในหน้าใช้ padding 24px ความกว้างเต็ม ไม่จำกัด max-width เพราะตารางต้องใช้พื้นที่
 - หน้า Login และหน้ารายงาน อยู่นอก shell นี้

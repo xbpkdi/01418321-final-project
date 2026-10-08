@@ -86,7 +86,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === item.href}
-                      className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground data-[active=true]:shadow-[0_8px_20px_-10px] data-[active=true]:shadow-primary/70"
+                      className="data-[active=true]:bg-sidebar-selected data-[active=true]:text-sidebar-selected-foreground data-[active=true]:hover:bg-sidebar-selected data-[active=true]:hover:text-sidebar-selected-foreground"
                       tooltip={t.nav.items[item.titleKey]}
                     >
                       <Link href={item.href}>
