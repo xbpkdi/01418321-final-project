@@ -2,7 +2,7 @@
 
 // LoginScreen — UC 1A เข้าสู่ระบบ
 // โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย (split-flap) + การ์ดฟอร์มกระจกขวา
-// ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงจางๆ ตามเมาส์
+// ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงส้มจางๆ ตามเมาส์
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
 
 import { useRef, useState } from "react";
@@ -33,12 +33,19 @@ export default function LoginScreen() {
   const hostRef = useRef<HTMLDivElement>(null);
   const still = usePrefersReducedMotion();
 
-  // ส่งตำแหน่งเมาส์ให้ .cursor-glow
+  const glowFrame = useRef<number | null>(null);
+
+  // ส่งตำแหน่งเมาส์ให้ .cursor-glow ไม่เกินเฟรมละครั้ง เพื่อไม่ให้วาดพื้นหลังใหม่ทุก event
   function trackGlow(e: React.PointerEvent<HTMLDivElement>) {
-    const el = hostRef.current;
-    if (!el || still) return;
-    el.style.setProperty("--gx", `${e.clientX}px`);
-    el.style.setProperty("--gy", `${e.clientY}px`);
+    if (still || glowFrame.current !== null) return;
+    const { clientX, clientY } = e;
+    glowFrame.current = requestAnimationFrame(() => {
+      glowFrame.current = null;
+      const el = hostRef.current;
+      if (!el) return;
+      el.style.setProperty("--gx", `${clientX}px`);
+      el.style.setProperty("--gy", `${clientY}px`);
+    });
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -84,11 +91,12 @@ export default function LoginScreen() {
     <div
       ref={hostRef}
       onPointerMove={trackGlow}
-      className="cursor-glow relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
+      className="bg-background relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
     >
       <div className="grid-paper" aria-hidden />
       <div className="ribbon" aria-hidden />
       <div className="ribbon ribbon-2" aria-hidden />
+      <div className="cursor-glow" aria-hidden />
 
       <header className="flex items-center justify-between gap-4 border-b px-[clamp(16px,4vw,48px)] py-4">
         <span className="display flex items-center gap-2 text-xl">
@@ -98,13 +106,16 @@ export default function LoginScreen() {
         <LanguageToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1320px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[minmax(0,57rem)_minmax(400px,460px)] lg:justify-center lg:gap-14">
-        {/* @container: ขนาดหัวข้อคิดจากความกว้างคอลัมน์นี้ ไม่ใช่ทั้งจอ */}
-        <section className="rise @container">
+      <main className="mx-auto grid w-full max-w-[1320px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[auto_440px] lg:justify-center lg:gap-14">
+        {/* จอเล็ก: ขนาดหัวข้อคิดจากความกว้างคอลัมน์ (@container)
+            จอ lg ขึ้นไป: คิดจากพื้นที่ที่เหลือหลังหักการ์ด 440px, ช่องว่าง 3.5rem และขอบซ้ายขวา
+            คอลัมน์ซ้ายจึงกว้างเท่าตัวหนังสือพอดี การ์ดชิดหัวข้อในระยะคงที่
+            FULFILLMENT กว้างราว 4.69em จึงคูณ 0.212 */}
+        <section className="rise @container lg:[container-type:normal]">
           <p className="eyebrow">{t.app.company}</p>
           <FlapTitle
             text={t.app.name}
-            className="display display-heavy mt-4 cursor-default text-[min(12rem,21cqw)]"
+            className="display display-heavy mt-4 cursor-default text-[min(12rem,21cqw)] lg:text-[min(12rem,calc((min(100vw,1320px)-2*clamp(16px,4vw,48px)-440px-3.5rem)*0.212))]"
             suffix={
               <span
                 aria-hidden
