@@ -7,7 +7,7 @@
 ## โทนและสี
 
 สีทั้งระบบมาจาก **Atlassian Design System ธีม light** (`@atlaskit/tokens`, ไฟล์ `atlassian-light`)
-ห้ามแต่งค่าสีเอง ทุกค่าใน `globals.css` มีชื่อ token ต้นทางกำกับไว้ ยกเว้น `--coral` ที่มาจากแนว quark
+ห้ามแต่งค่าสีเอง ทุกค่าใน `globals.css` มีชื่อ token ต้นทางกำกับไว้ ยกเว้น `--coral` ที่เป็นสีเน้นของแบรนด์
 
 | token ของเรา | ค่า | token Atlassian | ใช้ที่ไหน |
 |---|---|---|---|
@@ -22,7 +22,7 @@
 | `--sidebar-selected` | `#e9f2fe` | `color.background.selected` | เมนูที่เลือกอยู่ (ตัวอักษร `color.text.selected` `#1868db`) |
 | `--header` | `#292a2e` | `color.background.neutral.bold` | แถบบน (ตัวอักษร `color.text.inverse`) |
 | `--sky` | `#669df1` | `color.background.accent.blue.subtle` | แสง ribbon |
-| `--coral` | `#ff5a36` | (แนว quark) | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสงตามเมาส์ |
+| `--coral` | `#ff5a36` | (สีแบรนด์) | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสงตามเมาส์ |
 
 **การ์ดสถิติบน dashboard** พื้นขาว ตัวเลข `color.text` แถบบนสี primary ทุกใบ
 ห้ามใส่สีแยกต่อใบ เพราะสีไม่สื่อความหมายและไปชนกับสีสถานะ

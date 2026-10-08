@@ -68,13 +68,13 @@
 }
 
 /* Palette จาก Atlassian Design System ธีม light (@atlaskit/tokens, atlassian-light)
-   ชื่อ token ต้นทางกำกับไว้ทุกค่า ห้ามแต่งค่าเอง ยกเว้น --coral ที่มาจากแนว quark */
+   ชื่อ token ต้นทางกำกับไว้ทุกค่า ห้ามแต่งค่าเอง ยกเว้น --coral ที่เป็นสีเน้นของแบรนด์ */
 :root {
   --navy: #1e1f21; /* สีเงาใน shadow.raised */
   --navy-deep: #292a2e; /* color.text */
   --cobalt: #1868db; /* color.background.brand.bold */
   --sky: #669df1; /* color.background.accent.blue.subtle */
-  --coral: #ff5a36; /* จุดเน้นแนว quark ที่ผู้ใช้เลือก */
+  --coral: #ff5a36; /* สีเน้นของแบรนด์ */
 
   --background: #f8f8f8; /* elevation.surface.sunken */
   --foreground: #292a2e; /* color.text */
