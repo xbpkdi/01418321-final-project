@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { OrderVolumeChart } from "@/components/shared/order-volume-chart";
 import { CountUp } from "@/components/shared/count-up";
+import { SectionMessage } from "@/components/shared/section-message";
 import { RecentOrdersTable } from "./recent-orders-table";
 import {
   MOCK_CONNECTIONS,
@@ -91,14 +92,12 @@ export default function DashboardScreen() {
 
       {failed.length > 0 && (
         <div className="px-4 lg:px-6">
-          <div
-            role="alert"
-            className="border-status-attention/30 bg-status-attention-bg text-status-attention rounded-lg border px-4 py-3 text-sm"
-          >
+          {/* ปัญหาการเชื่อมต่อเป็น error ตามแนวทาง Atlassian ไม่ใช่ warning */}
+          <SectionMessage appearance="error">
             {t.dashboard.connectionFailed(
               failed.map((c) => c.channel).join(", "),
             )}
-          </div>
+          </SectionMessage>
         </div>
       )}
 
