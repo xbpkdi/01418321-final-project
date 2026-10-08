@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { OrderVolumeChart } from "@/components/shared/order-volume-chart";
+import { CountUp } from "@/components/shared/count-up";
 import { RecentOrdersTable } from "./recent-orders-table";
 import {
   MOCK_CONNECTIONS,
@@ -28,7 +29,7 @@ import {
   MOCK_ORDERS,
 } from "@/mock/orders";
 import { MOCK_STOCK } from "@/mock/products";
-import type { OrderStatus } from "@/lib/order-status";
+import { toneOf, type OrderStatus } from "@/lib/order-status";
 import { useLanguage } from "@/lib/i18n/context";
 
 // ส่ง status ไปกรองปลายทางด้วย ไม่งั้นพอรายการเยอะจะหาไม่เจอว่ากดมาจากใบไหน
@@ -75,7 +76,7 @@ export default function DashboardScreen() {
             <p className="eyebrow">{t.app.company}</p>
             <h1 className="display mt-3 text-[clamp(2.75rem,7vw,6rem)]">
               {t.dashboard.title}
-              <span className="text-red">.</span>
+              <span className="text-amber">.</span>
             </h1>
             <p className="text-muted-foreground mt-3 max-w-prose text-sm">
               {t.dashboard.description}
@@ -105,8 +106,11 @@ export default function DashboardScreen() {
         {counts.map((item, i) => (
           <Card
             key={item.status}
-            className="rise"
-            style={{ animationDelay: `${80 + i * 60}ms` }}
+            className="rise stat-card"
+            style={{
+              animationDelay: `${80 + i * 60}ms`,
+              ["--tone" as string]: `var(--status-${toneOf(item.status)})`,
+            }}
           >
             <CardHeader>
               <CardDescription>
@@ -116,7 +120,7 @@ export default function DashboardScreen() {
                 data-numeric
                 className="font-display mt-2 text-6xl leading-none tabular-nums"
               >
-                {String(item.count).padStart(2, "0")}
+                <CountUp value={item.count} />
               </CardTitle>
             </CardHeader>
             <CardFooter>
