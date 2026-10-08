@@ -323,15 +323,18 @@
     mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 100%);
   }
 
-  /* แสงส้มคอรัลจางๆ ตามเมาส์บนพื้นหลังทั้งหน้า */
+  /* แสงส้มคอรัลจางๆ ตามเมาส์ เป็นชั้นแยกเหนือแถบแสงน้ำเงิน ตำแหน่ง --gx/--gy สืบทอดจาก element แม่
+     ห้ามใช้ mix-blend-mode แบบ lighten/screen: บนพื้นเกือบขาวแสงจะหายไปเลย */
   .cursor-glow {
-    background:
-      radial-gradient(
-        640px circle at var(--gx, 70%) var(--gy, 30%),
-        color-mix(in srgb, var(--coral) 16%, transparent),
-        transparent 60%
-      ),
-      var(--background);
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      640px circle at var(--gx, 70%) var(--gy, 30%),
+      color-mix(in srgb, var(--coral) 16%, transparent),
+      transparent 60%
+    );
   }
 
   /* การ์ดสถิติบน dashboard: แถบสีด้านบน + แสงตามเมาส์ */
