@@ -109,6 +109,18 @@
   --sidebar-selected: #e9f2fe; /* color.background.selected */
   --sidebar-selected-foreground: #1868db; /* color.text.selected */
   --sidebar-border: #0b120e24; /* color.border */
+  --header: #1c2b42; /* color.background.brand.boldest */
+  --header-foreground: #ffffff; /* color.text.inverse */
+
+  /* สีแยกการ์ดสถิติบน dashboard: color.background.accent.*.subtlest (พื้น) / .bolder (ตัวเลข) */
+  --accent-blue-subtlest: #e9f2fe;
+  --accent-blue-bolder: #1868db;
+  --accent-teal-subtlest: #e7f9ff;
+  --accent-teal-bolder: #227d9b;
+  --accent-purple-subtlest: #f8eefe;
+  --accent-purple-bolder: #964ac0;
+  --accent-orange-subtlest: #fff5db;
+  --accent-orange-bolder: #bd5b00;
   --sidebar-ring: #4688ec;
 
   /* สีสถานะ 5 กลุ่ม → ใช้ใน StatusBadge (Atlassian lozenge: text.* บน background.*) */
@@ -193,6 +205,17 @@
 
 /* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 @layer components {
+  /* แถบบนสีเข้ม: ปรับ token ที่ breadcrumb, ปุ่ม ghost และเส้นคั่นใช้ ให้เป็นโทนสว่างบนพื้นเข้ม */
+  [data-slot="site-header"] {
+    --foreground: var(--header-foreground);
+    --muted-foreground: #ffffffb3;
+    --accent: #ffffff1f;
+    --accent-foreground: var(--header-foreground);
+    --border: #ffffff26;
+    background: var(--header);
+    color: var(--header-foreground);
+  }
+
   /* ใน sidebar ตัวอักษรรองจางกว่าในหน้า */
   [data-sidebar="sidebar"] {
     --muted-foreground: #6b6e76; /* color.text.subtlest */

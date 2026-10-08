@@ -31,7 +31,10 @@ export function SiteHeader() {
   const current = group?.items.find((item) => item.href === pathname);
 
   return (
-    <header className="bg-background/80 sticky top-0 z-50 flex w-full items-center border-b backdrop-blur-md">
+    <header
+      data-slot="site-header"
+      className="sticky top-0 z-50 flex w-full items-center"
+    >
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
         <Button
           className="h-8 w-8"

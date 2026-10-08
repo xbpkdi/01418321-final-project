@@ -20,8 +20,15 @@
 | `--input` | `#8c8f97` | `color.border.input` | ขอบ input |
 | `--ring` | `#4688ec` | `color.border.focused` | focus ring |
 | `--sidebar-selected` | `#e9f2fe` | `color.background.selected` | เมนูที่เลือกอยู่ (ตัวอักษร `color.text.selected` `#1868db`) |
+| `--header` | `#1c2b42` | `color.background.brand.boldest` | แถบบน (ตัวอักษร `color.text.inverse`) |
 | `--sky` | `#669df1` | `color.background.accent.blue.subtle` | แสง ribbon |
 | `--coral` | `#ff5a36` | (แนว quark) | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสงตามเมาส์ |
+
+**การ์ดสถิติบน dashboard** ใช้ `color.background.accent.*.subtlest` เป็นพื้นและ `.bolder` เป็นตัวเลข คนละสีต่อใบ
+(blue, teal, purple, orange) ส้มให้ใบ "รอดำเนินการด้วยตนเอง" เพราะเป็นกลุ่ม attention
+
+**ข้อความแจ้งเตือนในหน้า** ใช้ `SectionMessage` ตามแบบ Atlassian: ไอคอน + พื้นสี ไม่มีเส้นขอบ
+ปัญหาการเชื่อมต่อใช้ `error` ไม่ใช่ `warning`
 
 **ล็อกสี**: ปุ่มและสิ่งที่กดได้ใช้ `--primary` เท่านั้น sky/coral ห้ามใช้เป็นปุ่มหรือตัวอักษร
 ห้ามไล่สีจากน้ำเงินไปคอรัลตรงๆ เพราะตรงกลางจะขุ่น
