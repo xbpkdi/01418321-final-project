@@ -3,7 +3,7 @@
 // ProductScreen — UC 3A ตั้งกฎ SKU
 // ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { productColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_PRODUCTS } from "@/mock/products";
@@ -58,6 +59,7 @@ export default function ProductScreen() {
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [draft, setDraft] = useState<Product | null>(null);
   const [editingSku, setEditingSku] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function openCreate() {
@@ -128,6 +130,18 @@ export default function ProductScreen() {
     );
   }
 
+  // ค้นด้วย SKU ชื่อสินค้า หรือซัพพลายเออร์
+  const visible = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.sku.toLowerCase().includes(q) ||
+        p.product_name.toLowerCase().includes(q) ||
+        p.supplier_name.toLowerCase().includes(q),
+    );
+  }, [products, keyword]);
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -137,15 +151,27 @@ export default function ProductScreen() {
       />
 
       <DataTable
-        data={products}
+        data={visible}
         columns={columns}
         getRowId={(row) => row.sku}
+        toolbar={
+          <TableSearch
+            value={keyword}
+            onChange={setKeyword}
+            label={t.products.searchLabel}
+            placeholder={t.products.searchPlaceholder}
+          />
+        }
         emptyState={
           <EmptyState
             icon={Package}
-            title={t.products.emptyTitle}
-            hint={t.products.emptyHint}
-            action={<Button onClick={openCreate}>{t.products.create}</Button>}
+            title={keyword ? t.products.emptySearchTitle : t.products.emptyTitle}
+            hint={keyword ? t.products.emptySearchHint : t.products.emptyHint}
+            action={
+              keyword ? undefined : (
+                <Button onClick={openCreate}>{t.products.create}</Button>
+              )
+            }
           />
         }
       />
