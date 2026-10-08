@@ -197,6 +197,11 @@
     letter-spacing: -0.005em;
     line-height: 0.9;
   }
+  /* Anton มีน้ำหนักเดียว ใช้เส้นขอบสีเดียวกับตัวอักษรช่วยให้หนาขึ้น ใช้กับหัวข้อขนาดใหญ่มากเท่านั้น */
+  .display-heavy {
+    -webkit-text-stroke: 0.022em currentColor;
+    paint-order: stroke fill;
+  }
   /* label เล็กตัวพิมพ์ใหญ่เว้นระยะ ใช้เหนือหัวข้อและหัวกลุ่มเมนู */
   .eyebrow {
     font-size: 0.75rem;

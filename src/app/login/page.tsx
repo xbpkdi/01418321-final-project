@@ -104,7 +104,7 @@ export default function LoginScreen() {
           <p className="eyebrow">{t.app.company}</p>
           <FlapTitle
             text={t.app.name}
-            className="display mt-4 cursor-default text-[min(12rem,21cqw)]"
+            className="display display-heavy mt-4 cursor-default text-[min(12rem,21cqw)]"
             suffix={
               <span
                 aria-hidden

@@ -45,7 +45,8 @@
 | Display | Anton (ละติน) + Kanit 700 (ไทย) | หัวข้อหน้า, ชื่อระบบ, ตัวเลขสรุปบน dashboard |
 | UI | Archivo (ละติน) + Noto Sans Thai (ไทย) | ทุกอย่างที่เหลือ |
 
-- class `.display` = ฟอนต์ display + uppercase + `line-height: .9` ใช้กับหัวข้อหน้าใน `PageHeader`
+- class `.display` = ฟอนต์ display + uppercase + `line-height: .9`
+- class `.display-heavy` = เติมเส้นขอบ `0.022em` ให้ Anton หนาขึ้น ใช้กับหัวข้อหน้า Login เท่านั้น ใช้กับหัวข้อหน้าใน `PageHeader`
 - class `.eyebrow` = 12px, 600, `letter-spacing: .14em`, uppercase ใช้กับข้อความละตินเท่านั้น ห้ามใช้กับไทยเพราะการเว้นระยะตัวอักษรทำให้ไทยอ่านยาก
 - ตัวเลขทุกที่ใช้ `tabular-nums`
 
