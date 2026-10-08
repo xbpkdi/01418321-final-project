@@ -2,7 +2,8 @@
 
 // LoginScreen — UC 1A เข้าสู่ระบบ
 // โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย (split-flap) + การ์ดฟอร์มกระจกขวา
-// ด้านหลังเป็นแถบแสง ribbon โทนน้ำเงินและแสงจางๆ ตามเมาส์
+// ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงจางๆ ตามเมาส์
+// ใต้หัวข้อเป็นป้ายช่องทางขายพร้อมสถานะการเชื่อมต่อ (ข้อมูลเดียวกับ dashboard)
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
 
 import { useRef, useState } from "react";
@@ -14,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { FlapTitle } from "@/components/landing/flap-title";
-import { TiltCard } from "@/components/landing/tilt-card";
+import { GlowCard } from "@/components/landing/glow-card";
+import { MOCK_CONNECTIONS } from "@/mock/orders";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useT } from "@/lib/i18n/context";
@@ -86,6 +88,7 @@ export default function LoginScreen() {
       onPointerMove={trackGlow}
       className="cursor-glow relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
     >
+      <div className="grid-paper" aria-hidden />
       <div className="ribbon" aria-hidden />
       <div className="ribbon ribbon-2" aria-hidden />
 
@@ -110,10 +113,23 @@ export default function LoginScreen() {
               />
             }
           />
+          <ul className="mt-8 flex flex-wrap gap-2">
+            {MOCK_CONNECTIONS.map((c) => (
+              <li
+                key={c.channel}
+                className="bg-card/70 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 ring-foreground/10 backdrop-blur"
+              >
+                <span
+                  className={`size-1.5 rounded-full ${c.connected ? "bg-status-success" : "bg-status-cancelled"}`}
+                />
+                {c.channel}
+              </li>
+            ))}
+          </ul>
         </section>
 
         <div className="rise" style={{ animationDelay: "140ms" }}>
-          <TiltCard className="p-6 sm:p-8">
+          <GlowCard className="p-6 pt-8 sm:p-8 sm:pt-10">
             <h2 className="display text-4xl">{t.login.title}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
               {t.login.description}
@@ -168,7 +184,7 @@ export default function LoginScreen() {
                 </Field>
               </FieldGroup>
             </form>
-          </TiltCard>
+          </GlowCard>
         </div>
       </main>
 

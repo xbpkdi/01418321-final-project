@@ -257,9 +257,13 @@
     animation: rise 0.7s var(--ease-out-expo) both;
   }
 
-  /* ตัวอักษรใน FlapTitle: ชี้แล้วเด้งและเปลี่ยนเป็น cobalt */
+  /* ตัวอักษรใน FlapTitle: พลิกขึ้นมาทีละตัวตอนโหลด ชี้ตัวไหนตัวนั้นเอียงและเป็น cobalt
+     fill-mode เป็น backwards เพื่อไม่ให้ค่าสุดท้ายของ animation ทับ transform ตอน hover */
   .flap-char {
     display: inline-block;
+    transform-origin: 50% 100%;
+    animation: flap-in 0.7s var(--ease-out-expo) backwards;
+    animation-delay: calc(var(--i, 0) * 45ms + 120ms);
     transition:
       transform 0.35s var(--ease-out-expo),
       color 0.2s;
@@ -269,23 +273,18 @@
     color: var(--cobalt);
   }
 
-  /* การ์ดกระจกที่เอียงตามเมาส์ (TiltCard) */
-  .tilt-stage {
-    perspective: 1100px;
-  }
-  .tilt-card {
+  /* การ์ดกระจก (GlowCard): ตัวการ์ดนิ่ง ขอบเรืองแสงตามเมาส์ แถบไล่สีด้านบน */
+  .glow-card {
     position: relative;
+    overflow: hidden;
     border-radius: 1.25rem;
-    background: color-mix(in srgb, #fff 80%, transparent);
+    background: color-mix(in srgb, #fff 82%, transparent);
     backdrop-filter: blur(18px) saturate(1.4);
     box-shadow:
       0 30px 70px -30px color-mix(in srgb, var(--navy) 45%, transparent),
       inset 0 1px 0 #fff;
-    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-    transition: transform 0.6s var(--ease-out-expo);
   }
-  /* ขอบไล่สีตามตำแหน่งเมาส์ */
-  .tilt-card::before {
+  .glow-card::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -304,6 +303,27 @@
       linear-gradient(#000 0 0);
     mask-composite: exclude;
     pointer-events: none;
+  }
+  .glow-card::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: linear-gradient(90deg, var(--cobalt), var(--sky) 60%, var(--amber));
+  }
+
+  /* ตารางเส้นบางแบบกระดาษ blueprint จางลงที่ขอบ */
+  .grid-paper {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--navy) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--navy) 7%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: center;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 30%, transparent 100%);
   }
 
   /* แสงฟ้าจางๆ ตามเมาส์บนพื้นหลังทั้งหน้า */
@@ -347,6 +367,12 @@
     transform: rotate(-14deg) translateX(-8%);
   }
 }
+@keyframes flap-in {
+  from {
+    opacity: 0;
+    transform: perspective(600px) translateY(0.3em) rotateX(-75deg);
+  }
+}
 @keyframes rise {
   from {
     opacity: 0;
@@ -357,10 +383,10 @@
 @media (prefers-reduced-motion: reduce) {
   .ribbon,
   .ribbon-2,
-  .rise {
+  .rise,
+  .flap-char {
     animation: none;
   }
-  .tilt-card,
   .stat-card,
   .flap-char {
     transition: none;
