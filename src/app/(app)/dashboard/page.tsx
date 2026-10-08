@@ -67,19 +67,26 @@ export default function DashboardScreen() {
   );
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 px-4 lg:px-6">
-        <div>
-          <h1 className="text-2xl font-semibold">{t.dashboard.title}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {t.dashboard.description}
-          </p>
+    <div className="@container/main flex flex-1 flex-col gap-4 pb-4 md:gap-6 md:pb-6">
+      <section className="ribbon-host border-b px-4 pt-10 pb-8 lg:px-6 lg:pt-14 lg:pb-10">
+        <div className="ribbon" aria-hidden />
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="rise">
+            <p className="eyebrow">{t.app.company}</p>
+            <h1 className="display mt-3 text-[clamp(2.75rem,7vw,6rem)]">
+              {t.dashboard.title}
+              <span className="text-red">.</span>
+            </h1>
+            <p className="text-muted-foreground mt-3 max-w-prose text-sm">
+              {t.dashboard.description}
+            </p>
+          </div>
+          <Button size="lg" className="h-11">
+            <DownloadCloud />
+            {t.dashboard.importOrders}
+          </Button>
         </div>
-        <Button>
-          <DownloadCloud />
-          {t.dashboard.importOrders}
-        </Button>
-      </div>
+      </section>
 
       {failed.length > 0 && (
         <div className="px-4 lg:px-6">
@@ -95,17 +102,21 @@ export default function DashboardScreen() {
       )}
 
       <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 lg:px-6">
-        {counts.map((item) => (
-          <Card key={item.status}>
+        {counts.map((item, i) => (
+          <Card
+            key={item.status}
+            className="rise"
+            style={{ animationDelay: `${80 + i * 60}ms` }}
+          >
             <CardHeader>
               <CardDescription>
                 <StatusBadge status={item.status} />
               </CardDescription>
               <CardTitle
                 data-numeric
-                className="text-3xl font-semibold tabular-nums"
+                className="font-display mt-2 text-6xl leading-none tabular-nums"
               >
-                {item.count}
+                {String(item.count).padStart(2, "0")}
               </CardTitle>
             </CardHeader>
             <CardFooter>
