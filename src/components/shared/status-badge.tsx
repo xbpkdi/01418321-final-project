@@ -26,8 +26,9 @@ export function StatusBadge({
   return (
     <Badge
       variant="secondary"
-      className={cn(TONE_CLASS[toneOf(status)], className)}
+      className={cn("gap-1.5 rounded-full font-semibold", TONE_CLASS[toneOf(status)], className)}
     >
+      <span aria-hidden className="size-1.5 rounded-full bg-current" />
       {t.statusLabel[status]}
     </Badge>
   );

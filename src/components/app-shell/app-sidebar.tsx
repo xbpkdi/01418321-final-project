@@ -51,11 +51,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="bg-navy flex aspect-square size-8 items-center justify-center rounded-lg text-white">
                   <Boxes className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="display truncate text-lg">
                     {t.app.name}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
@@ -81,6 +81,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === item.href}
+                      className="data-[active=true]:bg-navy data-[active=true]:text-white data-[active=true]:hover:bg-navy data-[active=true]:hover:text-white"
                       tooltip={t.nav.items[item.titleKey]}
                     >
                       <Link href={item.href}>
