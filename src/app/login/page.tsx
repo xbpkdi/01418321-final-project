@@ -3,7 +3,6 @@
 // LoginScreen — UC 1A เข้าสู่ระบบ
 // โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย (split-flap) + การ์ดฟอร์มกระจกขวา
 // ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงจางๆ ตามเมาส์
-// ใต้หัวข้อเป็นป้ายช่องทางขายพร้อมสถานะการเชื่อมต่อ (ข้อมูลเดียวกับ dashboard)
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
 
 import { useRef, useState } from "react";
@@ -16,7 +15,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { FlapTitle } from "@/components/landing/flap-title";
 import { GlowCard } from "@/components/landing/glow-card";
-import { MOCK_CONNECTIONS } from "@/mock/orders";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useT } from "@/lib/i18n/context";
@@ -109,23 +107,10 @@ export default function LoginScreen() {
             suffix={
               <span
                 aria-hidden
-                className="bg-amber ml-[0.08em] inline-block size-[0.14em] rounded-[0.02em]"
+                className="bg-coral ml-[0.08em] inline-block size-[0.14em] rounded-[0.02em]"
               />
             }
           />
-          <ul className="mt-8 flex flex-wrap gap-2">
-            {MOCK_CONNECTIONS.map((c) => (
-              <li
-                key={c.channel}
-                className="bg-card/70 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ring-1 ring-foreground/10 backdrop-blur"
-              >
-                <span
-                  className={`size-1.5 rounded-full ${c.connected ? "bg-status-success" : "bg-status-cancelled"}`}
-                />
-                {c.channel}
-              </li>
-            ))}
-          </ul>
         </section>
 
         <div className="rise" style={{ animationDelay: "140ms" }}>

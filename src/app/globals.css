@@ -16,7 +16,7 @@
   --color-navy-deep: var(--navy-deep);
   --color-cobalt: var(--cobalt);
   --color-sky: var(--sky);
-  --color-amber: var(--amber);
+  --color-coral: var(--coral);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -66,13 +66,13 @@
 }
 
 /* Palette แนว quark แบบ light: พื้นกระดาษเย็น + หมึก navy + cobalt เป็นสีหลัก
-   ผสมฟ้า (sky) กับอำพัน (amber) เป็นสีรองสำหรับแสง/ตกแต่ง ไม่ใช้เป็นปุ่ม */
+   ฟ้า (sky) ใช้กับแสง ส่วนส้มคอรัล (coral) เป็นจุดตัดสีเล็กๆ แบบโปสเตอร์ ไม่ใช้เป็นปุ่ม */
 :root {
   --navy: #13235e;
   --navy-deep: #0b1533;
   --cobalt: #2448ff;
   --sky: #38bdf8;
-  --amber: #ffb020;
+  --coral: #ff5a36;
 
   --background: #f4f6fb;
   --foreground: #0b1533;
@@ -94,7 +94,7 @@
   --ring: #2448ff;
   --chart-1: #2448ff;
   --chart-2: #38bdf8;
-  --chart-3: #ffb020;
+  --chart-3: #ff5a36;
   --chart-4: #13235e;
   --chart-5: #b9c6f5;
   --radius: 0.75rem;
@@ -226,7 +226,7 @@
       color-mix(in srgb, var(--cobalt) 80%, transparent) 14%,
       color-mix(in srgb, var(--sky) 70%, transparent) 34%,
       #ffffff 50%,
-      color-mix(in srgb, var(--amber) 60%, transparent) 66%,
+      color-mix(in srgb, var(--coral) 35%, transparent) 68%,
       color-mix(in srgb, var(--cobalt) 80%, transparent) 86%,
       transparent 100%
     );
@@ -309,7 +309,8 @@
     position: absolute;
     inset: 0 0 auto;
     height: 5px;
-    background: linear-gradient(90deg, var(--cobalt), var(--sky) 60%, var(--amber));
+    /* สีทึบตัดขอบ ไม่ไล่สี: cobalt แล้วจบด้วยคอรัลท่อนสั้น */
+    background: linear-gradient(90deg, var(--cobalt) 0 84%, var(--coral) 84% 100%);
   }
 
   /* ตารางเส้นบางแบบกระดาษ blueprint จางลงที่ขอบ */

@@ -76,7 +76,7 @@ export default function DashboardScreen() {
             <p className="eyebrow">{t.app.company}</p>
             <h1 className="display mt-3 text-[clamp(2.75rem,7vw,6rem)]">
               {t.dashboard.title}
-              <span className="text-amber">.</span>
+              <span className="text-coral">.</span>
             </h1>
             <p className="text-muted-foreground mt-3 max-w-prose text-sm">
               {t.dashboard.description}
