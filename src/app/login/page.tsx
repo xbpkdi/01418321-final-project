@@ -1,24 +1,17 @@
 "use client";
 
 // LoginScreen — UC 1A เข้าสู่ระบบ
-// โครงหน้าอิง shadcn block login-03 (การ์ดกลางจอบนพื้น muted)
+// โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย + แถบแสง ribbon ด้านหลัง + การ์ดฟอร์มขวา
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_USERS } from "@/mock/users";
 
@@ -73,75 +66,88 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="bg-muted flex min-h-[100dvh] flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <div className="flex items-center gap-2 self-center font-medium">
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <Boxes className="size-4" />
-          </div>
-          {t.app.name}
-        </div>
+    <div className="ribbon-host flex min-h-[100dvh] flex-col">
+      <div className="ribbon" aria-hidden />
+      <div className="ribbon ribbon-2" aria-hidden />
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">{t.login.title}</CardTitle>
-            <CardDescription>{t.login.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} noValidate>
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="user_email">{t.login.email}</FieldLabel>
-                  <Input
-                    id="user_email"
-                    name="user_email"
-                    type="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={submitting}
-                    aria-invalid={error !== null}
-                  />
-                </Field>
+      <header className="flex items-center justify-between gap-4 border-b px-[clamp(16px,4vw,48px)] py-4">
+        <span className="display text-xl">{t.app.name}</span>
+        <LanguageToggle />
+      </header>
 
-                <Field>
-                  <FieldLabel htmlFor="user_password">{t.login.password}</FieldLabel>
-                  <Input
-                    id="user_password"
-                    name="user_password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={submitting}
-                    aria-invalid={error !== null}
-                  />
-                </Field>
+      <main className="mx-auto grid w-full max-w-[1180px] flex-1 items-center gap-10 px-[clamp(16px,4vw,48px)] py-10 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
+        <section className="rise">
+          <p className="eyebrow">{t.app.company}</p>
+          <h1 className="display mt-4 text-[clamp(3.25rem,9vw,8rem)]">
+            {t.app.name}
+            <span className="text-red">.</span>
+          </h1>
+        </section>
 
-                {error && (
-                  <p
-                    role="alert"
-                    className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
-                  >
-                    {error}
-                  </p>
-                )}
+        <section
+          className="rise bg-card rounded-2xl p-6 shadow-[0_24px_60px_-28px] shadow-navy/35 ring-1 ring-foreground/10 sm:p-8"
+          style={{ animationDelay: "120ms" }}
+        >
+          <h2 className="display text-4xl">{t.login.title}</h2>
+          <p className="text-muted-foreground mt-2 text-sm">
+            {t.login.description}
+          </p>
 
-                <Field>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting && <Spinner />}
-                    {t.login.submit}
-                  </Button>
-                </Field>
-              </FieldGroup>
-            </form>
-          </CardContent>
-        </Card>
+          <form onSubmit={handleSubmit} noValidate className="mt-6">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="user_email">{t.login.email}</FieldLabel>
+                <Input
+                  id="user_email"
+                  name="user_email"
+                  type="email"
+                  autoComplete="email"
+                  className="h-11"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={submitting}
+                  aria-invalid={error !== null}
+                />
+              </Field>
 
-        <FieldDescription className="text-center">
-          {t.login.footer}
-        </FieldDescription>
-      </div>
+              <Field>
+                <FieldLabel htmlFor="user_password">{t.login.password}</FieldLabel>
+                <Input
+                  id="user_password"
+                  name="user_password"
+                  type="password"
+                  autoComplete="current-password"
+                  className="h-11"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={submitting}
+                  aria-invalid={error !== null}
+                />
+              </Field>
+
+              {error && (
+                <p
+                  role="alert"
+                  className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
+                >
+                  {error}
+                </p>
+              )}
+
+              <Field>
+                <Button type="submit" size="lg" className="h-11" disabled={submitting}>
+                  {submitting && <Spinner />}
+                  {t.login.submit}
+                </Button>
+              </Field>
+            </FieldGroup>
+          </form>
+        </section>
+      </main>
+
+      <footer className="px-[clamp(16px,4vw,48px)] py-5">
+        <FieldDescription>{t.login.footer}</FieldDescription>
+      </footer>
     </div>
   );
 }
