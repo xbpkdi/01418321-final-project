@@ -9,6 +9,7 @@ export type MockUser = {
   user_email: string;
   user_password: string;
   fail_attempts: number;
+  last_login?: string;
 };
 
 export const MOCK_USERS: MockUser[] = [

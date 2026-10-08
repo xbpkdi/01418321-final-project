@@ -8,17 +8,11 @@ import type { AppTableFeatures } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import type { Dict } from "@/lib/i18n/dict";
 import type { Order } from "@/types/order";
-import type { OrderStatus } from "@/lib/order-status";
 
 const col = createColumnHelper<AppTableFeatures, Order>();
 
-/** ตารางรอจับคู่ — สถานะมาจาก state ที่หน้าถืออยู่ ไม่ใช่ค่าใน Order ตรงๆ */
-export function queueColumns(
-  t: Dict,
-  statusOf: (order: Order) => OrderStatus,
-  onMatch: (order: Order) => void,
-  workingId: string | null,
-) {
+/** ตารางรอจับคู่ — รวม Order ที่หา SKU ใน RSL ไม่เจอ (รอดำเนินการด้วยตนเอง) ให้ลองใหม่ได้ */
+export function queueColumns(t: Dict, onMatch: (order: Order) => void, workingId: string | null) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -28,21 +22,26 @@ export function queueColumns(
     col.accessor("sku", {
       header: "SKU",
       meta: { label: "SKU" },
-      cell: (ctx) => (
-        <span className="text-muted-foreground">{ctx.getValue()}</span>
-      ),
+      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
     }),
     col.accessor("variation", {
       header: "Variation",
       meta: { label: "Variation" },
-      cell: (ctx) => (
-        <span className="text-muted-foreground">{ctx.getValue()}</span>
-      ),
+      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
     }),
-    col.display({
-      id: "status",
+    col.accessor("order_status", {
       header: t.common.status,
-      cell: (ctx) => <StatusBadge status={statusOf(ctx.row.original)} />,
+      meta: { label: t.common.status },
+      cell: (ctx) => (
+        <div className="grid gap-1">
+          <StatusBadge status={ctx.getValue()} />
+          {ctx.row.original.manual_reason && (
+            <span className="text-muted-foreground text-xs">
+              {t.manualReason[ctx.row.original.manual_reason]}
+            </span>
+          )}
+        </div>
+      ),
     }),
     col.display({
       id: "actions",
@@ -63,42 +62,29 @@ export function queueColumns(
   ]);
 }
 
-/** ตารางจับคู่แล้ว */
-export function matchedColumns(
-  t: Dict,
-  referenceOf: (order: Order) => string | null,
-  statusOf: (order: Order) => OrderStatus,
-  onUnmatch: (orderId: string) => void,
-) {
+/** ตารางจับคู่แล้ว ยังยกเลิกการจับคู่ได้จนกว่าจะพิมพ์ใบปะสินค้า */
+export function matchedColumns(t: Dict, onUnmatch: (orderId: string) => void) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
       meta: { label: "Order ID" },
       cell: (ctx) => <span className="font-medium">{ctx.getValue()}</span>,
     }),
-    col.display({
-      id: "rsl_reference_id",
+    col.accessor("rsl_reference_id", {
       header: t.rslMatch.rslReference,
-      cell: (ctx) => (
-        <span className="text-muted-foreground">
-          {referenceOf(ctx.row.original)}
-        </span>
-      ),
+      meta: { label: t.rslMatch.rslReference },
+      cell: (ctx) => <span className="text-muted-foreground">{ctx.getValue()}</span>,
     }),
-    col.display({
-      id: "status",
+    col.accessor("order_status", {
       header: t.common.status,
-      cell: (ctx) => <StatusBadge status={statusOf(ctx.row.original)} />,
+      meta: { label: t.common.status },
+      cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
     }),
     col.display({
       id: "actions",
       cell: (ctx) => (
         <div className="text-right">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => onUnmatch(ctx.row.original.order_id)}
-          >
+          <Button size="sm" variant="ghost" onClick={() => onUnmatch(ctx.row.original.order_id)}>
             <Link2Off />
             {t.rslMatch.unmatch}
           </Button>

@@ -1,39 +1,37 @@
-// รายงานที่ 2 — รายงานต้นทุนต่อหน่วย (rubric ข้อ 31)
-// โครงสร้างอิงสูตร Q5.2 และผลที่บันทึกผ่าน Q5.3
+"use client";
 
+// รายงานที่ 2 — รายงานต้นทุนต่อหน่วย (rubric ข้อ 31) · เปิดจาก CostCalculatorScreen
+// โครงสร้างอิงสูตร Q5.2 และผลที่บันทึกผ่าน Q5.3 (cost_calculation_log) ครั้งล่าสุด
+// พร้อมประวัติการคำนวณย้อนหลัง
+
+import { use } from "react";
 import { notFound } from "next/navigation";
-import { MOCK_COSTS, MOCK_PRODUCTS } from "@/mock/products";
-import { calcUnitCost } from "@/types/product";
 import { PrintToolbar } from "@/components/shared/print-toolbar";
+import { useLanguage } from "@/lib/i18n/context";
+import { useStore } from "@/lib/store";
+import { formatBaht, formatDateTime } from "@/lib/format";
+import { findProduct, findSupplier } from "@/lib/workflow";
 
-const baht = new Intl.NumberFormat("th-TH", {
-  style: "currency",
-  currency: "THB",
-  minimumFractionDigits: 2,
-});
+export default function UnitCostReport({ params }: PageProps<"/reports/unit-cost/[sku]">) {
+  const { sku } = use(params);
+  const { lang, t } = useLanguage();
+  const { state } = useStore();
+  const product = findProduct(state, sku);
+  if (!product) notFound();
 
-export default async function UnitCostReport({
-  params,
-}: PageProps<"/reports/unit-cost/[sku]">) {
-  const { sku } = await params;
-  const cost = MOCK_COSTS.find((c) => c.sku === sku);
-  const product = MOCK_PRODUCTS.find((p) => p.sku === sku);
-  if (!cost || !product) notFound();
-
-  const lotTotal =
-    cost.purchase_price * cost.exchange_rate + cost.intl_freight + cost.duty_fee;
-  const perUnitFromLot = lotTotal / cost.order_qty;
-  const unitCost = calcUnitCost(cost);
-  const margin = product.selling_price - unitCost;
+  const r = t.reports;
+  const logs = state.costLog.filter((l) => l.sku === sku);
+  const latest = logs[logs.length - 1];
+  const supplier = findSupplier(state, product.supplier_id);
 
   return (
     <div className="bg-muted min-h-[100dvh] py-8 print:bg-white print:py-0">
-      <PrintToolbar title="รายงานต้นทุนต่อหน่วย" backHref="/products/cost" />
+      <PrintToolbar title={r.costTitle} backHref="/products/cost" />
 
       <article className="mx-auto w-[210mm] max-w-[calc(100%-2rem)] bg-white p-10 shadow-sm print:w-auto print:p-0 print:shadow-none">
         <header className="flex items-start justify-between border-b pb-4">
           <div>
-            <h1 className="text-xl font-bold">รายงานต้นทุนต่อหน่วย</h1>
+            <h1 className="text-xl font-bold">{r.costTitle}</h1>
             <p className="mt-1 text-sm text-neutral-600">
               {product.product_name} · {product.variation}
             </p>
@@ -44,68 +42,98 @@ export default async function UnitCostReport({
           </div>
         </header>
 
-        <section className="grid grid-cols-4 gap-4 border-b py-4 text-sm">
-          <Field label="SKU" value={product.sku} />
-          <Field label="ซัพพลายเออร์" value={product.supplier_name} />
-          <Field label="สกุลเงินที่ซื้อ" value={cost.currency} />
-          <Field
-            label="จำนวนต่อล็อต"
-            value={cost.order_qty.toLocaleString("th-TH")}
-          />
-        </section>
-
-        <section className="py-4">
-          <h2 className="text-sm font-semibold">องค์ประกอบต้นทุน</h2>
-          <table className="mt-3 w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-neutral-600">
-                <th className="py-2 font-medium">รายการ</th>
-                <th className="py-2 text-right font-medium">คิดเป็นเงินบาท</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              <Line
-                label={`ราคาซื้อต่อหน่วย ${cost.purchase_price} ${cost.currency} × อัตราแลกเปลี่ยน ${cost.exchange_rate}`}
-                value={cost.purchase_price * cost.exchange_rate}
+        {!latest ? (
+          <p className="py-6 text-sm text-neutral-600">{r.noCost}</p>
+        ) : (
+          <>
+            <section className="grid grid-cols-2 gap-4 border-b py-4 text-sm sm:grid-cols-4">
+              <Field label="SKU" value={product.sku} />
+              <Field label={t.common.supplier} value={supplier?.supplier_name ?? t.common.notSet} />
+              <Field label={t.cost.calculatedAt} value={formatDateTime(latest.calculated_at, lang)} />
+              <Field
+                label={t.cost.exchangeRate}
+                value={`${latest.components.exchange_rate} (${latest.components.currency} → THB)`}
               />
-              <Line label="ค่าขนส่งระหว่างประเทศ (ทั้งล็อต)" value={cost.intl_freight} />
-              <Line label="ภาษีนำเข้า (ทั้งล็อต)" value={cost.duty_fee} />
-              <tr className="border-t-2 font-medium">
-                <td className="py-2">
-                  รวมต้นทุนล็อต หารด้วย {cost.order_qty} ชิ้น
-                </td>
-                <td className="py-2 text-right">{baht.format(perUnitFromLot)}</td>
-              </tr>
-              <Line label="ค่าธรรมเนียมมาร์เก็ตเพลส (ต่อชิ้น)" value={cost.marketplace_fee} />
-              <Line label="ค่าส่งในประเทศ (ต่อชิ้น)" value={cost.domestic_shipping} />
-              <Line label="ค่าธรรมเนียม RSL (ต่อชิ้น)" value={cost.rsl_charge} />
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-black">
-                <td className="py-3 font-semibold">ต้นทุนต่อหน่วย</td>
-                <td className="py-3 text-right text-lg font-bold">
-                  {baht.format(unitCost)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </section>
+            </section>
 
-        <section className="grid grid-cols-2 gap-4 border-t py-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-neutral-600">ราคาขายปัจจุบัน</span>
-            <span>{baht.format(product.selling_price)}</span>
-          </div>
-          <div className="flex justify-between font-semibold">
-            <span>กำไรต่อหน่วย</span>
-            <span>{baht.format(margin)}</span>
-          </div>
-        </section>
+            <section className="py-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs text-neutral-600">
+                    <th className="py-2 font-medium">{r.costItem}</th>
+                    <th className="py-2 text-right font-medium">{r.costInBaht}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <Line
+                    label={r.purchaseLine(
+                      latest.components.purchase_price,
+                      latest.components.currency,
+                      latest.components.exchange_rate,
+                    )}
+                    value={latest.components.purchase_price * latest.components.exchange_rate}
+                  />
+                  <Line label={`${t.cost.intlFreight} ${r.perLot}`} value={latest.components.intl_freight} />
+                  <Line label={`${t.cost.dutyFee} ${r.perLot}`} value={latest.components.duty_fee} />
+                  <tr className="border-t-2 font-medium">
+                    <td className="py-2">{r.lotSubtotal(latest.components.order_qty)}</td>
+                    <td className="py-2 text-right">
+                      {formatBaht(
+                        (latest.components.purchase_price * latest.components.exchange_rate +
+                          latest.components.intl_freight +
+                          latest.components.duty_fee) /
+                          latest.components.order_qty,
+                      )}
+                    </td>
+                  </tr>
+                  <Line label={`${t.cost.marketplaceFee} ${r.perPiece}`} value={latest.components.marketplace_fee} />
+                  <Line label={`${t.cost.domesticShipping} ${r.perPiece}`} value={latest.components.domestic_shipping} />
+                  <Line label={`${t.cost.rslCharge} ${r.perPiece}`} value={latest.components.rsl_charge} />
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-black">
+                    <td className="py-3 font-semibold">{t.cost.unitCost}</td>
+                    <td className="py-3 text-right text-lg font-bold">{formatBaht(latest.unit_cost)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </section>
 
-        <footer className="border-t pt-3 text-[10px] text-neutral-600">
-          สูตรคำนวณ: ((ราคาซื้อ × อัตราแลกเปลี่ยน) + ค่าขนส่งระหว่างประเทศ + ภาษีนำเข้า)
-          ÷ จำนวนต่อล็อต + ค่าธรรมเนียมมาร์เก็ตเพลส + ค่าส่งในประเทศ + ค่าธรรมเนียม RSL
-        </footer>
+            {product.selling_price !== null && (
+              <section className="grid grid-cols-2 gap-4 border-t py-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-neutral-600">{t.cost.currentPrice}</span>
+                  <span>{formatBaht(product.selling_price)}</span>
+                </div>
+                <div className="flex justify-between font-semibold">
+                  <span>{t.cost.marginPerUnit}</span>
+                  <span>{formatBaht(product.selling_price - latest.unit_cost)}</span>
+                </div>
+              </section>
+            )}
+
+            {logs.length > 1 && (
+              <section className="border-t py-4 text-sm">
+                <h2 className="mb-2 text-xs font-semibold text-neutral-600">{r.history}</h2>
+                <table className="w-full">
+                  <tbody className="divide-y">
+                    {[...logs].reverse().map((l) => (
+                      <tr key={l.calculated_at}>
+                        <td className="py-1.5">{formatDateTime(l.calculated_at, lang)}</td>
+                        <td className="py-1.5 text-neutral-600">
+                          {r.calculatedBy} {l.calculated_by}
+                        </td>
+                        <td className="py-1.5 text-right">{formatBaht(l.unit_cost)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            )}
+          </>
+        )}
+
+        <footer className="border-t pt-3 text-[10px] text-neutral-600">{r.formula}</footer>
       </article>
     </div>
   );
@@ -114,9 +142,7 @@ export default async function UnitCostReport({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] tracking-wide text-neutral-600 uppercase">
-        {label}
-      </p>
+      <p className="text-[10px] tracking-wide text-neutral-600 uppercase">{label}</p>
       <p className="mt-0.5 font-medium">{value}</p>
     </div>
   );
@@ -126,7 +152,7 @@ function Line({ label, value }: { label: string; value: number }) {
   return (
     <tr>
       <td className="py-2">{label}</td>
-      <td className="py-2 text-right">{baht.format(value)}</td>
+      <td className="py-2 text-right">{formatBaht(value)}</td>
     </tr>
   );
 }

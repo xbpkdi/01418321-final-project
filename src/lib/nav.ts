@@ -22,6 +22,8 @@ export type NavItem = {
   titleKey: ItemKey;
   href: string;
   uc: string;
+  /** ปุ่มของ UC อื่นที่ไม่มี Screen object ของตัวเอง แต่วางไว้ในหน้านี้ (4A, 5S) */
+  hostsUc?: string;
   screen: string;
   icon: LucideIcon;
 };
@@ -40,6 +42,7 @@ export const navGroups: NavGroup[] = [
         titleKey: "dashboard",
         href: "/dashboard",
         uc: "—",
+        hostsUc: "4A",
         screen: "DashboardScreen",
         icon: LayoutDashboard,
       },
@@ -111,6 +114,7 @@ export const navGroups: NavGroup[] = [
         titleKey: "shipping",
         href: "/shipping",
         uc: "8A",
+        hostsUc: "5S",
         screen: "ShipmentScreen",
         icon: Truck,
       },

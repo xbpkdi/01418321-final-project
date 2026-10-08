@@ -1,10 +1,14 @@
 import type { OrderStatus } from "@/lib/order-status";
+import type { DeliveryStatus, ManualReason } from "@/types/order";
+import type { FaultKey } from "@/lib/workflow";
 
 export type Lang = "th" | "en";
 
 /**
- * ค่าฝั่ง th ทุกตัวลอกมาจาก 00-use-case-descriptions.md ตรงตัวอักษรต่อตัวอักษร
+ * ค่าฝั่ง th ที่เป็นข้อความแจ้งเตือน/สำเร็จ/ชื่อปุ่ม/ชื่อสถานะ ลอกมาจาก
+ * 00-use-case-descriptions.md ตรงตัวอักษรต่อตัวอักษร (คอมเมนต์ "UC" กำกับไว้)
  * ห้ามเรียบเรียงใหม่ ถ้าต้องเปลี่ยนให้ไปแก้ที่ use case description ก่อน
+ * ข้อความที่ UC ไม่ได้กำหนด (หัวข้อหน้า คำอธิบาย ช่องว่าง) เขียนเองให้สอดคล้องกัน
  *
  * ค่าสถานะใน statusLabel ใช้ค่าภาษาไทยเป็น key เพราะใน order-status.ts
  * ค่านั้นเป็นข้อมูลจริงที่ใช้เทียบเงื่อนไข ไม่ใช่แค่ข้อความแสดงผล
@@ -17,9 +21,9 @@ const th = {
     switchLanguage: "สลับภาษา",
     langLabel: "ไทย",
     admin: "Admin",
-    logout: "ออกจากระบบ",
-    logoutConfirm: "ต้องการออกจากระบบหรือไม่",
-    logoutDone: "ออกจากระบบแล้ว",
+    logout: "ออกจากระบบ", // UC 1A
+    logoutConfirm: "ต้องการออกจากระบบหรือไม่", // UC 1A
+    logoutDone: "ออกจากระบบแล้ว", // UC 1A
   },
 
   nav: {
@@ -50,6 +54,9 @@ const th = {
     cancel: "ยกเลิก",
     save: "บันทึก",
     confirm: "ยืนยัน",
+    close: "ปิด",
+    back: "กลับ",
+    print: "พิมพ์",
     status: "สถานะ",
     product: "สินค้า",
     qty: "จำนวน",
@@ -63,6 +70,11 @@ const th = {
     unitPieces: "ชิ้น",
     items: "รายการ",
     notFound: "ไม่พบข้อมูล",
+    notSet: "ยังไม่ระบุ",
+    allStatuses: "ทุกสถานะ",
+    orderRef: (id: string) => `Order ${id}`,
+    days: "วัน",
+    moreActions: "การทำงานอื่น",
   },
 
   table: {
@@ -76,6 +88,7 @@ const th = {
     lastPage: "ไปหน้าสุดท้าย",
   },
 
+  // UC: ชื่อสถานะทุกตัว
   statusLabel: {
     รอตรวจสอบคำสั่งซื้อ: "รอตรวจสอบคำสั่งซื้อ",
     "รอจับคู่กฎ SKU": "รอจับคู่กฎ SKU",
@@ -83,48 +96,99 @@ const th = {
     "รอ Admin ตัดสินใจสั่งซื้อ": "รอ Admin ตัดสินใจสั่งซื้อ",
     "รอสั่งซื้อจาก Supplier": "รอสั่งซื้อจาก Supplier",
     สั่งซื้อแล้ว: "สั่งซื้อแล้ว",
+    ยังไม่ได้จับคู่: "ยังไม่ได้จับคู่",
     รอจัดรูปแบบใบปะสินค้า: "รอจัดรูปแบบใบปะสินค้า",
     รอพิมพ์ใบปะสินค้า: "รอพิมพ์ใบปะสินค้า",
     พิมพ์ใบปะสินค้าแล้ว: "พิมพ์ใบปะสินค้าแล้ว",
     รอส่งคำสั่งซื้อ: "รอส่งคำสั่งซื้อ",
     รอส่งมอบ: "รอส่งมอบ",
     อยู่ระหว่างจัดส่ง: "อยู่ระหว่างจัดส่ง",
+    รอแจ้งเลขติดตาม: "รอแจ้งเลขติดตาม",
+    แจ้งเลขติดตามแล้ว: "แจ้งเลขติดตามแล้ว",
     จัดส่งสำเร็จ: "จัดส่งสำเร็จ",
+    จัดส่งไม่สำเร็จ: "จัดส่งไม่สำเร็จ",
+    "ตีกลับ/คืนสินค้า": "ตีกลับ/คืนสินค้า",
     "รอยกเลิก Order": "รอยกเลิก Order",
     ยกเลิกแล้ว: "ยกเลิกแล้ว",
     รอดำเนินการด้วยตนเอง: "รอดำเนินการด้วยตนเอง",
     รอดำเนินการพิเศษ: "รอดำเนินการพิเศษ",
   } as Record<OrderStatus, string>,
 
+  // UC: ข้อความที่ทำให้ Order ตกไปอยู่ "รอดำเนินการด้วยตนเอง"
+  manualReason: {
+    incomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ",
+    "sku-unregistered": "พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ",
+    "sku-rule": "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน",
+    rsl: "ไม่พบสินค้านี้ในระบบ RSL",
+    template: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
+    address: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้",
+    price: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
+    supplier: "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
+    "stock-deduct": "ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ",
+  } as Record<ManualReason, string>,
+
+  deliveryStatus: {
+    in_transit: "อยู่ระหว่างทาง",
+    delivered: "ส่งถึงลูกค้าแล้ว",
+    failed: "จัดส่งไม่สำเร็จ",
+    returned: "ตีกลับ/คืนสินค้า",
+  } as Record<DeliveryStatus, string>,
+
+  // งานของ System (Auto)
+  auto: {
+    orderRef: (id: string) => `Order ${id}`,
+    skuMatched: (n: number) => `จับคู่กฎ SKU สำเร็จ ${n} รายการ`, // UC 2S
+    skuMissing: "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน", // UC 2S
+    skuMultiple: "พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง", // UC 2S
+    skuDb: "ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง", // UC 2S
+    stockEnough: (id: string) => `${id} สต๊อกเพียงพอ ส่งต่อไปจับคู่กับ RSL`,
+    stockLow: (id: string) =>
+      `${id} สต๊อกไม่เพียงพอ ส่งต่อไปคำนวณต้นทุนและรอ Admin ตัดสินใจสั่งซื้อ`,
+    labelCreated: (n: number) => `สร้างใบปะสินค้าสำเร็จ ${n} ใบ`, // UC 6S
+    labelNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้", // UC 6S
+    labelNoTemplate: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน", // UC 6S
+    labelService: "ไม่สามารถสร้างใบปะสินค้าได้ กรุณาลองใหม่ภายหลัง", // UC 6S
+    stockDeducted: "ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ", // UC 7S
+    stockInsufficient: "ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ", // UC 7S
+    stockSync: "ไม่สามารถอัปเดตจำนวนสินค้าใน Rakuten Ichiba ได้ กรุณาลองใหม่ภายหลัง", // UC 7S
+  },
+
   login: {
     title: "เข้าสู่ระบบ",
     description: "ใช้บัญชีผู้ดูแลที่ลงทะเบียนไว้กับระบบ",
     email: "อีเมล",
     password: "รหัสผ่าน",
-    submit: "เข้าสู่ระบบ",
+    submit: "เข้าสู่ระบบ", // UC 1A
     footer: "Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น",
-    errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ",
-    errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง",
+    errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ", // UC 1A
+    errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง", // UC 1A
     errTooManyAttempts:
-      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
-    errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
-    okLogin: "เข้าสู่ระบบสำเร็จ",
+      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง", // UC 1A
+    errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง", // UC 1A
+    okLogin: "เข้าสู่ระบบสำเร็จ", // UC 1A
     // ประโยคเดียวกับ description ใน metadata ของ layout
     tagline:
-      "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่านมาร์เก็ตเพลสญี่ปุ่น เชื่อมต่อกับ RSL",
+      "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่าน Rakuten Ichiba เชื่อมต่อกับ RSL",
   },
 
   dashboard: {
     title: "ภาพรวมระบบ",
-    description: "สรุปงานที่ค้างอยู่และสถานะการเชื่อมต่อช่องทางขาย",
-    importOrders: "นำเข้า Order",
-    connectionFailed: (channels: string) =>
-      `ไม่สามารถเชื่อมต่อกับ ${channels} ได้ กรุณาตรวจสอบการตั้งค่า`,
+    description: "สรุปงานที่ค้างอยู่ ข้อผิดพลาดที่ต้องแก้ และสถานะการเชื่อมต่อ Rakuten RMS",
+    importOrders: "นำเข้า Order", // UC 4A
+    importOk: (n: number) => `นำเข้า Order สำเร็จ ${n} รายการ`,
+    importNone: "ไม่มี Order ใหม่ใน Rakuten RMS",
+    importDuplicates: (n: number) => `ข้ามรายการที่ซ้ำกับที่มีอยู่แล้ว ${n} รายการ`,
+    importIncomplete: "ข้อมูล Order ไม่ครบถ้วน กรุณาตรวจสอบ", // UC 4A
+    importUnregistered: "พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ", // UC 4A
+    importCancelRequest: (ids: string) =>
+      `ลูกค้ายกเลิก ${ids} ผ่าน Rakuten ระหว่างที่ Order อยู่ระหว่างดำเนินการ กรุณาตรวจสอบที่หน้ายกเลิก Order`,
+    connectionFailed: (channel: string) =>
+      `ไม่สามารถเชื่อมต่อกับ ${channel} ได้ กรุณาตรวจสอบการตั้งค่า`, // UC 4A
     viewList: "ดูรายการ",
     recentOrders: "Order ล่าสุด",
     recentOrdersHint: "รายการที่เพิ่งเข้าระบบและสถานะปัจจุบัน",
     viewAll: "ดูทั้งหมด",
-    connections: "การเชื่อมต่อช่องทางขาย",
+    connections: "การเชื่อมต่อ Rakuten RMS",
     lastSync: (time: string) => `ซิงก์ล่าสุด ${time}`,
     connected: "เชื่อมต่อแล้ว",
     disconnected: "เชื่อมต่อไม่ได้",
@@ -134,6 +198,15 @@ const th = {
     viewAllStock: "ดูสต๊อกทั้งหมด",
     weeklyVolume: "Order ที่นำเข้า 7 วันล่าสุด",
     chartSeries: "จำนวน Order",
+    issues: "ข้อผิดพลาดที่ต้องแก้ไข",
+    issuesHint: "Order ที่ระบบทำต่อเองไม่ได้ กดเพื่อไปแก้ที่หน้าที่เกี่ยวข้อง",
+    noIssues: "ไม่มีรายการที่ต้องแก้ไข",
+    unitCosts: "ต้นทุนต่อหน่วย",
+    unitCostsHint: "คำนวณจากองค์ประกอบต้นทุนล่าสุดของแต่ละสินค้า",
+    reorderStatus: "สถานะการสั่งซื้อเติมสต๊อก",
+    noPurchaseOrders: "ยังไม่มีคำสั่งซื้อ",
+    eta: (date: string) => `คาดว่าจะได้รับ ${date}`,
+    ticker: "สรุปจำนวน Order ตามสถานะ",
   },
 
   verify: {
@@ -144,19 +217,28 @@ const th = {
     emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย Order ID, SKU หรือชื่อช่องทางขายอีกครั้ง",
     emptyTitle: "ไม่มี Order ที่รอตรวจสอบ",
-    emptyHint:
-      "Order ใหม่จะเข้ามาที่นี่หลังกดนำเข้า Order จากหน้าภาพรวมระบบ",
+    emptyHint: "Order ใหม่จะเข้ามาที่นี่หลังกดนำเข้า Order จากหน้าภาพรวมระบบ",
     detailTitle: "รายละเอียดคำสั่งซื้อ",
     noSelectionTitle: "ยังไม่ได้เลือก Order",
-    noSelectionHint:
-      "เลือกรายการจากตารางด้านซ้ายเพื่อตรวจทานรายละเอียดก่อนยืนยัน",
-    marketplaceOrderId: "เลขคำสั่งซื้อจากช่องทางขาย",
+    noSelectionHint: "เลือกรายการจากตารางเพื่อตรวจทานรายละเอียดก่อนยืนยัน",
+    marketplaceOrderId: "เลขคำสั่งซื้อใน Rakuten",
+    channelSku: "รหัสสินค้าใน Rakuten",
     editNote: "ระบบบันทึกผู้แก้ไขและเวลาที่แก้ไขไว้ทุกครั้ง",
-    submit: "ยืนยันคำสั่งซื้อ",
-    errIncomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ",
-    errQty: "จำนวนสินค้าต้องมากกว่า 0",
-    errAlreadyVerified: "Order นี้ผ่านการตรวจสอบไปแล้ว",
-    okVerified: "ยืนยันคำสั่งซื้อสำเร็จ",
+    editLog: (by: string, at: string) => `แก้ไขโดย ${by} เมื่อ ${at}`,
+    customerCancelBadge: "ลูกค้าขอยกเลิก",
+    submit: "ยืนยันคำสั่งซื้อ", // UC 2A
+    errIncomplete: "ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ", // UC 2A
+    errQty: "จำนวนสินค้าต้องมากกว่า 0", // UC 2A
+    errAlreadyVerified: "Order นี้ผ่านการตรวจสอบไปแล้ว", // UC 2A
+    errCustomerCancelled: "Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว", // UC 2A
+    errMarketplace:
+      "ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้ กรุณาลองใหม่ภายหลัง", // UC 2A
+    okVerified: "ยืนยันคำสั่งซื้อสำเร็จ", // UC 2A
+    manualTitle: "รอดำเนินการด้วยตนเอง",
+    manualHint:
+      "Order ที่ข้อมูลไม่ครบ แก้ข้อมูลใน Rakuten RMS แล้วนำเข้าใหม่ หรือยกเลิก Order",
+    goCancel: "ไปหน้ายกเลิก Order",
+    goProducts: "ไปหน้าตั้งกฎ SKU",
   },
 
   rslMatch: {
@@ -167,24 +249,24 @@ const th = {
     title: "จับคู่ Order กับ RSL",
     description:
       "เทียบ SKU และ Variation ของ Order กับข้อมูลในคลัง RSL ก่อนจัดรูปแบบใบปะสินค้า",
-    matchAll: "จับคู่อัตโนมัติทั้งหมด",
-    match: "จับคู่กับ RSL",
-    unmatch: "ยกเลิกการจับคู่",
+    matchAll: "จับคู่อัตโนมัติทั้งหมด", // UC 1S
+    match: "จับคู่กับ RSL", // UC 1S
+    unmatch: "ยกเลิกการจับคู่", // UC 1S
     rslReference: "หมายเลขอ้างอิง RSL",
-    queueTitle: "รอจับคู่",
-    matchedTitle: "จับคู่แล้ว",
+    queueTitle: "ยังไม่ได้จับคู่",
+    matchedTitle: "จับคู่แล้ว รอพิมพ์ใบปะสินค้า",
     emptyTitle: "จับคู่ครบทุก Order แล้ว",
-    emptyHint:
-      "Order ที่ผ่านการตรวจสอบและจับคู่กฎ SKU แล้วจะเข้ามารอที่นี่",
-    chooseFor: (orderId: string, sku: string) =>
-      `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
+    emptyHint: "Order ที่ตรวจสต๊อกแล้วว่าเพียงพอจะเข้ามารอที่นี่",
+    chooseFor: (orderId: string, sku: string) => `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
     stockLeft: "คงเหลือในคลัง RSL",
     chooseThis: "เลือกรายการนี้",
-    errNotFound: "ไม่พบสินค้านี้ในระบบ RSL",
-    errMultiple:
-      "พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง",
-    okMatched: "จับคู่ Order กับ RSL สำเร็จ",
-    okUnmatched: "ยกเลิกการจับคู่แล้ว",
+    errNotFound: "ไม่พบสินค้านี้ในระบบ RSL", // UC 1S
+    errMultiple: "พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง", // UC 1S
+    errConnection: "ไม่สามารถเชื่อมต่อกับระบบ RSL ได้ กรุณาลองใหม่ภายหลัง", // UC 1S
+    okMatched: "จับคู่ Order กับ RSL สำเร็จ", // UC 1S
+    okUnmatched: (id: string) => `ยกเลิกการจับคู่ ${id} แล้ว กลับไปอยู่ในสถานะ ยังไม่ได้จับคู่`,
+    matchAllSummary: (matched: number, multiple: number, notFound: number) =>
+      `จับคู่สำเร็จ ${matched} · ต้องเลือกเอง ${multiple} · ไม่พบใน RSL ${notFound}`,
   },
 
   cancel: {
@@ -193,24 +275,28 @@ const th = {
     emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย Order ID, SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ยกเลิก Order",
-    description:
-      "ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมคืนสต๊อกกลับเข้าคลังอัตโนมัติ",
-    action: "ยกเลิก Order",
-    emptyTitle: "ไม่มี Order ที่ยกเลิกได้",
-    emptyHint: "Order ที่จัดส่งสำเร็จหรือยกเลิกไปแล้วจะไม่แสดงที่นี่",
+    description: "ยกเลิก Order ที่มีปัญหาหรือลูกค้าขอยกเลิก พร้อมยกเลิกกระบวนการที่เกี่ยวข้อง",
+    action: "ยกเลิก Order", // UC 7A
+    emptyTitle: "ไม่มี Order ในสถานะนี้",
+    emptyHint: "เลือกสถานะอื่นจากตัวกรองด้านบน",
+    statusFilter: "กรองตามสถานะ",
+    note: "หมายเหตุ",
+    customerRequest: "ลูกค้าขอยกเลิกผ่าน Rakuten",
     dialogTitle: (orderId: string) => `ยกเลิก ${orderId}`,
-    alreadyPrinted: " · Order นี้พิมพ์ใบปะสินค้าไปแล้ว",
     reasonLabel: "เหตุผลการยกเลิก",
-    submit: "ยืนยันการยกเลิก",
-    errClosed:
-      "ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว",
-    errNoReason: "กรุณาระบุเหตุผลการยกเลิก",
+    submit: "ยืนยันการยกเลิก", // UC 7A
+    linkedPo: (po: string) => `มีคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องกับ Order นี้ (${po})`, // UC 7A ทางเลือก #2
+    alsoCancelPo: "ยกเลิกคำสั่งซื้อเติมสต๊อกนี้ด้วย",
+    errClosed: "ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว", // UC 7A
+    errAlready: (at: string) => `Order นี้ถูกยกเลิกไปแล้วเมื่อ ${at}`, // UC 7A
+    errNoReason: "กรุณาระบุเหตุผลการยกเลิก", // UC 7A
     errInTransit:
-      "Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน",
-    okCancelled: "ยกเลิก Order สำเร็จ",
-    restockedWithLabel: (qty: number) =>
-      `คืนสต๊อก ${qty} ชิ้นแล้ว · Order นี้พิมพ์ใบปะสินค้าไปแล้ว กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย`,
+      "Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน", // UC 7A
+    okCancelled: "ยกเลิก Order สำเร็จ", // UC 7A
+    labelWarning: "Order นี้พิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ Delivery กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย",
     restocked: (qty: number) => `คืนสต๊อก ${qty} ชิ้นกลับเข้าคลังแล้ว`,
+    poCancelled: "ยกเลิกคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องแล้ว",
+    specialRecorded: "บันทึกคำขอยกเลิกเป็น รอดำเนินการพิเศษ แล้ว",
   },
 
   products: {
@@ -219,26 +305,41 @@ const th = {
     emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย SKU, ชื่อสินค้า หรือชื่อซัพพลายเออร์อีกครั้ง",
     title: "ตั้งกฎ SKU และข้อมูลสินค้า",
-    description:
-      "ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ",
-    create: "เพิ่มสินค้าใหม่",
+    description: "ข้อมูลที่นี่ใช้จับคู่ Order สต๊อก และการคำนวณต้นทุน ต้องตรงกันทุกระบบ",
+    create: "เพิ่มสินค้าใหม่", // UC 3A
     edit: "แก้ไข",
+    delete: "ลบสินค้า",
     editTitle: "แก้ไขข้อมูลสินค้า",
     dialogHint: "SKU ที่กรอกจะถูกใช้จับคู่กับ Order สต๊อก และต้นทุนทั้งระบบ",
     emptyTitle: "ยังไม่มีสินค้าในระบบ",
-    emptyHint:
-      "เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้",
+    emptyHint: "เพิ่มสินค้าและกำหนด SKU ก่อน เพื่อให้ Order ที่ดึงเข้ามาจับคู่ได้",
     productName: "ชื่อสินค้า",
-    reorderThresholdField: "เกณฑ์เติมสต๊อก",
-    reorderQty: "จำนวนที่สั่งเติม",
+    channelSku: "รหัสสินค้าใน Rakuten (Mapping)",
+    channelSkuHint: "ใช้จับคู่ Order กับกฎ SKU นี้ ต้องตรงกับรหัสหน้าร้านใน Rakuten",
+    reorderThresholdField: "Reorder Threshold",
+    reorderQty: "Reorder Quantity",
+    costSection: "องค์ประกอบต้นทุน",
+    costSectionHint: "ค่าเริ่มต้นที่ใช้ในหน้าคำนวณต้นทุน",
     active: "เปิดขาย",
-    inactive: "ปิดการขาย",
-    errIncomplete: "กรุณากรอกข้อมูลให้ครบถ้วน",
-    errDuplicateSku: "SKU นี้มีอยู่ในระบบแล้ว",
-    errHasRelated:
-      "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่",
-    errHasRelatedHint: "เปลี่ยนเป็นสถานะ ปิดการขาย แทน",
-    okSaved: "บันทึกข้อมูลสินค้าสำเร็จ",
+    inactive: "ปิดการขาย", // UC 3A
+    errIncomplete: "กรุณากรอกข้อมูลให้ครบถ้วน", // UC 3A
+    errDuplicateSku: "SKU นี้มีอยู่ในระบบแล้ว", // UC 3A
+    errInvalidNumber: "Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก", // UC 3A
+    errHasRelated: "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่", // UC 3A
+    switchToInactive: "เปลี่ยนเป็น ปิดการขาย แทน",
+    okSaved: "บันทึกข้อมูลสินค้าสำเร็จ", // UC 3A
+    okDeleted: (sku: string) => `ลบสินค้า ${sku} แล้ว`,
+    requeued: (n: number) => `นำ Order ที่ค้างอยู่ ${n} รายการกลับเข้าสู่กระบวนการอัตโนมัติ`,
+    importCsv: "นำเข้าจากไฟล์ CSV",
+    importCsvHint:
+      "หัวตาราง: sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price",
+    importResultTitle: "ผลการนำเข้า",
+    importOk: (n: number) => `นำเข้าสำเร็จ ${n} แถว`,
+    importFailed: (n: number) => `นำเข้าไม่สำเร็จ ${n} แถว กรุณาแก้ไขแล้วนำเข้าใหม่`,
+    importRow: (row: number) => `แถว ${row}`,
+    waitingRuleTitle: "Order ที่รอกฎ SKU",
+    waitingRuleHint: "บันทึกกฎ SKU ที่มีรหัสสินค้าใน Rakuten ตรงกัน แล้วระบบจะจับคู่ใหม่เอง",
+    supplierNone: "ไม่ระบุ",
   },
 
   stock: {
@@ -247,35 +348,46 @@ const th = {
     emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ตรวจสอบสต๊อก",
-    description:
-      "ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU",
+    description: "ยอดรวมคิดจากคลังบริษัทบวกกับคลัง RSL แล้วเทียบกับเกณฑ์เติมสต๊อกของแต่ละ SKU",
+    selectProduct: "เลือกสินค้า",
+    selectPlaceholder: "เลือก SKU ที่ต้องการเช็ค",
+    check: "เช็คสต๊อก", // UC 3S
+    overviewTitle: "ภาพรวมสต๊อกทุกสินค้า",
     inHouse: "คลังบริษัท",
     rsl: "คลัง RSL",
     total: "รวม",
-    low: "สต๊อกต่ำกว่าเกณฑ์",
-    normal: "สต๊อกปกติ",
-    incomplete: "ข้อมูลไม่สมบูรณ์",
-    errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล",
+    low: "สต๊อกต่ำกว่าเกณฑ์", // UC 3S
+    normal: "สต๊อกปกติ", // UC 3S
+    incomplete: "ข้อมูลไม่สมบูรณ์", // UC 3S
+    partial: "ข้อมูลบางส่วน",
+    errNotFound: "ไม่พบข้อมูลสินค้านี้ในระบบ", // UC 3S
+    errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล", // UC 3S
+    errRsl: "ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง", // UC 3S
+    partialHint: "แสดงเฉพาะข้อมูลสต๊อกในคลังบริษัท",
   },
 
   cost: {
     title: "คำนวณต้นทุนต่อหน่วย",
     description:
       "รวมราคาซื้อ อัตราแลกเปลี่ยน ค่าขนส่ง ภาษี และค่าธรรมเนียมทุกตัวเป็นต้นทุนจริงต่อชิ้น",
-    selectProduct: "เลือกสินค้า",
-    selectPlaceholder: "เลือก SKU ที่ต้องการคำนวณ",
+    searchLabel: "ค้นหาสินค้า",
+    searchPlaceholder: "ค้นหาด้วย SKU หรือชื่อสินค้า",
+    emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
+    emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
+    startCalc: "คำนวณต้นทุนเติมสต๊อก", // UC 4S
     noProductTitle: "ยังไม่ได้เลือกสินค้า",
-    noProductHint:
-      "เลือก SKU ด้านบน ระบบจะดึงองค์ประกอบต้นทุนที่เคยบันทึกไว้มาให้แก้ไข",
+    noProductHint: "เลือกสินค้าจากรายการ ระบบจะดึงองค์ประกอบต้นทุนที่บันทึกไว้มาให้แก้ไข",
+    formTitle: (sku: string) => `องค์ประกอบต้นทุน · ${sku}`,
     resultTitle: "ผลการคำนวณ",
     noResultTitle: "ยังไม่มีผลการคำนวณ",
     noResultHint: "กรอกองค์ประกอบต้นทุนให้ครบแล้วกดคำนวณ",
-    calculate: "คำนวณ",
+    calculate: "คำนวณ", // UC 4S
     unitCost: "ต้นทุนต่อหน่วย",
     currentPrice: "ราคาขายปัจจุบัน",
     marginPerUnit: "กำไรต่อหน่วย",
     viewReport: "ดูรายงานต้นทุนต่อหน่วย",
-    purchasePrice: "ราคาซื้อต่อหน่วย",
+    currency: "สกุลเงินที่ซื้อ",
+    purchasePrice: "ราคาซื้อทั้งล็อต",
     exchangeRate: "อัตราแลกเปลี่ยน",
     intlFreight: "ค่าขนส่งระหว่างประเทศ",
     dutyFee: "ภาษีนำเข้า",
@@ -283,67 +395,82 @@ const th = {
     marketplaceFee: "ค่าธรรมเนียมมาร์เก็ตเพลส",
     domesticShipping: "ค่าส่งในประเทศ",
     rslCharge: "ค่าธรรมเนียม RSL",
-    perLot: "ทั้งล็อต",
-    perPiece: "ต่อชิ้น",
+    perLot: "ทั้งล็อต (บาท)",
+    perPiece: "ต่อชิ้น (บาท)",
+    inCurrency: "ตามสกุลเงินที่ซื้อ",
+    rateUpdated: (at: string) => `อัปเดตล่าสุด ${at}`,
     purchaseInBaht: "ราคาซื้อคิดเป็นเงินบาท",
     dividedBy: (qty: number) => `หารด้วยจำนวนต่อล็อต (${qty})`,
+    remember: "บันทึกค่าที่กรอกไว้ใช้ครั้งถัดไป",
     okCalculated: "คำนวณต้นทุนต่อหน่วยแล้ว",
-    errInvalid: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง",
-    errOverPrice:
-      "ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน",
+    errInvalid: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง", // UC 4S
+    errNoRate: "ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง", // UC 4S
+    errOverPrice: "ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน", // UC 4S
+    warnStaleRate: "อัตราแลกเปลี่ยนอาจไม่เป็นปัจจุบัน กรุณาตรวจสอบก่อนคำนวณ", // UC 4S
+    compareTitle: "เปรียบเทียบซัพพลายเออร์",
+    compareHint: "ใช้องค์ประกอบอื่นเท่าเดิม ต่างกันที่ราคาซื้อและค่าขนส่งระหว่างประเทศ",
+    compareNone: "ยังไม่มีราคาจากซัพพลายเออร์ทางเลือกสำหรับสินค้านี้",
+    compareCurrent: "ปัจจุบัน",
+    historyTitle: "ประวัติการคำนวณ",
+    historyEmpty: "ยังไม่เคยคำนวณสินค้านี้",
+    calculatedAt: "วันที่คำนวณ",
   },
 
   reorder: {
-    searchLabel: "ค้นหาสินค้า",
-    searchPlaceholder: "ค้นหาด้วย SKU หรือชื่อสินค้า",
-    emptySearchTitle: "ไม่พบสินค้าที่ตรงกับคำค้นหา",
-    emptySearchHint: "ลองค้นด้วย SKU หรือชื่อสินค้าอีกครั้ง",
     title: "ตัดสินใจสั่งซื้อสินค้าเพิ่ม",
-    description:
-      "ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์",
+    description: "ดูต้นทุนจริงเทียบราคาขายก่อนตัดสินใจ แล้วส่งคำสั่งซื้อไปยังซัพพลายเออร์",
     tabDecide: (n: number) => `รอตัดสินใจ (${n})`,
-    tabPurchase: (n: number) => `รอสั่งซื้อเติมสต๊อก (${n})`,
+    tabPurchase: (n: number) => `รอสั่งซื้อเติมสต๊อก (${n})`, // UC 6A
+    tabOrdered: (n: number) => `คำสั่งซื้อ (${n})`,
     emptyDecideTitle: "ไม่มีรายการรอตัดสินใจ",
-    emptyDecideHint:
-      "Order ที่ระบบคำนวณต้นทุนเสร็จแล้วจะเข้ามารอการตัดสินใจที่นี่",
-    emptyPurchaseTitle: "ไม่มี SKU ที่ต่ำกว่าเกณฑ์",
+    emptyDecideHint: "Order ที่สต๊อกไม่พอและคำนวณต้นทุนแล้วจะเข้ามารอการตัดสินใจที่นี่",
+    emptyPurchaseTitle: "ไม่มีรายการรอสั่งซื้อ",
     emptyPurchaseHint:
-      "ระบบจะดึง SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์เติมขึ้นมาที่นี่ตามรอบเวลาที่ตั้งไว้",
+      "SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์ และ Order ที่ตัดสินใจว่าคุ้มค่าจะเข้ามาที่นี่",
+    emptyOrderedTitle: "ยังไม่มีคำสั่งซื้อ",
     leadTime: "รอของ",
-    days: "วัน",
     unitCost: "ต้นทุนต่อหน่วย",
     currentPrice: "ราคาขายปัจจุบัน",
     expectedMargin: "กำไรต่อหน่วยที่คาดการณ์",
     noPrice: "ไม่พบราคาขาย",
     cannotCompute: "คำนวณไม่ได้",
-    pendingPo: (eta: string) =>
-      `มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่ · ล็อตเดิมคาดว่าได้รับ ${eta}`,
-    approve: "คุ้มค่า - สั่งซื้อเพิ่ม",
-    reject: "ไม่คุ้มค่า - ยกเลิก",
+    goCost: "ไปหน้าคำนวณต้นทุน",
+    goProducts: "ไปหน้าตั้งกฎ SKU",
+    pendingPo: "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่", // UC 5A, 6A
+    pendingPoEta: (eta: string) => `ล็อตเดิมคาดว่าจะได้รับ ${eta}`,
+    approve: "คุ้มค่า - สั่งซื้อเพิ่ม", // UC 5A
+    reject: "ไม่คุ้มค่า - ยกเลิก", // UC 5A
     stockVsThreshold: "คงเหลือ / เกณฑ์",
     qtyToOrder: "จำนวนที่จะสั่ง",
+    linkedOrders: "Order ที่รอ",
     notConfigured: "ยังไม่ได้ตั้งค่า",
-    purchase: "สั่งซื้อ",
+    purchase: "สั่งซื้อ", // UC 6A
     confirmTitle: (decision: string) => `ยืนยันผลการตัดสินใจ: ${decision}`,
     confirmApprove: "Order จะถูกส่งเข้าสู่การสั่งซื้อจาก Supplier",
     confirmReject: "Order จะถูกส่งเข้าสู่การยกเลิก Order",
     orderQtyLabel: "จำนวนที่จะสั่งซื้อ",
-    orderQtyHint:
-      "ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบจำนวนสั่งเติมที่ตั้งไว้ในกฎ SKU",
-    errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
-    errNoPriceHint:
-      "ระบบตั้งสถานะเป็น รอดำเนินการด้วยตนเอง จนกว่าจะระบุราคาขาย",
-    errNotConfigured:
-      "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
-    okDecided: "บันทึกผลการตัดสินใจสำเร็จ",
+    orderQtyHint: "ค่าที่แก้ที่นี่ใช้เฉพาะครั้งนี้ ไม่กระทบ Reorder Quantity ที่ตั้งไว้ในกฎ SKU",
+    recalculated: (cost: string) => `ต้นทุนต่อหน่วยตามจำนวนนี้ ${cost}`,
+    purchaseTitle: (sku: string) => `สั่งซื้อ ${sku}`,
+    purchaseHint: (supplier: string, days: number) =>
+      `ส่งคำสั่งซื้อทางอีเมลไปยัง ${supplier} · Lead Time ${days} วัน`,
+    errDecided: "Order นี้ได้รับการตัดสินใจไปแล้ว", // UC 5A
+    errDb: "ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง", // UC 5A
+    errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ", // UC 5A
+    errNoCost: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง", // UC 4S
+    errNotConfigured: "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ", // UC 6A
+    errSendFailed: "ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่", // UC 6A
+    okDecided: "บันทึกผลการตัดสินใจสำเร็จ", // UC 5A
     okDecidedApprove: "ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier",
     okDecidedReject: "ส่ง Order เข้าสู่การยกเลิก Order",
-    okPurchased: (sku: string, supplier: string) =>
-      `ส่งคำสั่งซื้อ ${sku} ไปยัง ${supplier} แล้ว`,
-    okPurchasedHint:
-      "สถานะเปลี่ยนเป็น สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับสินค้า",
+    okPurchased: (sku: string, supplier: string) => `ส่งคำสั่งซื้อ ${sku} ไปยัง ${supplier} แล้ว`,
+    okPurchasedHint: (eta: string) => `สถานะ สั่งซื้อแล้ว · คาดว่าจะได้รับสินค้า ${eta}`,
     decisionApprove: "คุ้มค่า",
     decisionReject: "ไม่คุ้มค่า",
+    retry: "ส่งไม่สำเร็จครั้งก่อน",
+    poId: "เลขที่คำสั่งซื้อ",
+    orderDate: "วันที่สั่ง",
+    eta: "คาดว่าจะได้รับ",
   },
 
   shipping: {
@@ -354,21 +481,38 @@ const th = {
     title: "จัดส่งสินค้าให้ลูกค้า",
     description:
       "ส่งมอบพัสดุที่พิมพ์ใบปะสินค้าแล้วให้ผู้ให้บริการขนส่ง และติดตามสถานะจนถึงมือลูกค้า",
-    waitingTitle: "รอส่งมอบ",
+    waitingTitle: "รอส่งมอบให้ Delivery",
     shippedTitle: "ส่งมอบแล้ว",
-    dispatch: "ส่งมอบให้ Delivery",
+    dispatch: "ส่งมอบให้ Delivery", // UC 8A
+    dispatchSelected: (n: number) => `ส่งมอบให้ Delivery (${n})`,
+    confirmTitle: "ยืนยันรายการพัสดุที่ส่งมอบ",
+    confirmHint: "ตรวจนับพัสดุให้ตรงกับรายการก่อนยืนยัน",
+    selectAll: "เลือกทั้งหมด",
     trackingNumber: "หมายเลขติดตามพัสดุ",
-    noTrackingYet: "ยังไม่มีหมายเลข",
+    carrier: "ผู้ให้บริการขนส่ง",
+    carrierStatus: "สถานะจากขนส่ง",
+    notifyStatus: "แจ้งลูกค้า",
+    notify: "ส่งเลขติดตามให้ลูกค้า", // UC 5S
+    notified: "แจ้งแล้ว",
+    notNotified: "ยังไม่แจ้ง",
+    syncPending: "รอซิงค์", // UC 7S
+    resendTitle: "Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่", // UC 5S
+    resendHint: "ระบบจะบันทึก Log การส่งซ้ำพร้อมเวลาและผู้ดำเนินการ",
+    resendConfirm: "ยืนยันส่งซ้ำ",
     emptyTitle: "ไม่มีพัสดุรอส่งมอบ",
     emptyHint: "Order ที่พิมพ์ใบปะสินค้าแล้วจะเข้ามารอส่งมอบที่นี่",
-    errNotPrinted: "Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้",
-    errNoTracking:
-      "ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง",
-    errNoTrackingHint: "คง Order ไว้ในสถานะ รอส่งมอบ",
-    okDispatched: (orderId: string, carrier: string) =>
-      `ส่งมอบ ${orderId} ให้ ${carrier} แล้ว`,
-    okDispatchedHint: (tracking: string) =>
-      `หมายเลขติดตามพัสดุ ${tracking}`,
+    errNotPrinted: "Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้", // UC 8A
+    errNoTracking: "ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง", // UC 8A
+    errCarrier: "ไม่สามารถดึงสถานะจากผู้ให้บริการขนส่งได้ กรุณาลองใหม่ภายหลัง", // UC 8A
+    deliveryFailed: (id: string) =>
+      `${id} จัดส่งไม่สำเร็จ กรุณาตรวจสอบและดำเนินการแก้ไข เช่น ติดต่อลูกค้าหรือส่งใหม่`,
+    returned: (id: string, qty: number) =>
+      qty > 0 ? `${id} ตีกลับ/คืนสินค้า · คืนสต๊อก ${qty} ชิ้นแล้ว` : `${id} ตีกลับ/คืนสินค้า`,
+    okDispatched: (orderId: string, carrier: string) => `ส่งมอบ ${orderId} ให้ ${carrier} แล้ว`,
+    okDispatchedHint: (tracking: string) => `หมายเลขติดตามพัสดุ ${tracking}`,
+    errNotifyIncomplete: "ข้อมูลหมายเลขติดตามไม่ครบถ้วน ไม่สามารถแจ้งลูกค้าได้", // UC 5S
+    errNotifyFailed: "ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง", // UC 5S
+    okNotified: "แจ้งเลขติดตามให้ลูกค้าสำเร็จ", // UC 5S
   },
 
   label: {
@@ -377,68 +521,122 @@ const th = {
     emptySearchTitle: "ไม่พบ Order ที่ตรงกับคำค้นหา",
     emptySearchHint: "ลองค้นด้วย Order ID หรือที่อยู่จัดส่งอีกครั้ง",
     title: "พิมพ์ใบปะสินค้า",
-    description: "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่กำหนดวิธีจัดส่งเรียบร้อยแล้ว",
-    printAll: "พิมพ์ใบปะสินค้าทั้งหมด",
-    print: "พิมพ์ใบปะสินค้า",
+    description: "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จับคู่ RSL และจัดรูปแบบใบปะสินค้าแล้ว",
+    printAll: "พิมพ์ใบปะสินค้าทั้งหมด", // UC 9A
+    print: "พิมพ์ใบปะสินค้า", // UC 9A
     reprint: "พิมพ์ซ้ำ",
     viewLabel: "ดูใบปะสินค้า",
     queueTitle: "รอพิมพ์",
     printedTitle: "พิมพ์แล้ว",
+    parcels: "จำนวนกล่อง",
     emptyTitle: "ไม่มี Order ที่รอพิมพ์",
-    emptyHint:
-      "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
-    reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่",
+    emptyHint: "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
+    reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่", // UC 9A
     reprintHint: "ระบบจะบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ",
     reprintConfirm: "ยืนยันพิมพ์ซ้ำ",
-    errNoAddress:
-      "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้",
-    errNoTemplate:
-      "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน",
-    okPrinted: (orderId: string) =>
-      `ส่งใบปะสินค้า ${orderId} ไปยังเครื่องพิมพ์แล้ว`,
-    okPrintedHint: (template: string) => `ใช้รูปแบบ ${template}`,
+    errNoAddress: "ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้", // UC 9A
+    errNoTemplate: "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน", // UC 9A
+    errPrinter: "พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์", // UC 9A
+    okPrinted: (orderId: string) => `ส่งใบปะสินค้า ${orderId} ไปยังเครื่องพิมพ์แล้ว`,
+    okPrintedHint: (template: string, parcels: number) => `รูปแบบ ${template} · ${parcels} ใบ`,
     okReprinted: (orderId: string) => `พิมพ์ใบปะสินค้า ${orderId} ซ้ำแล้ว`,
+    printAllSummary: (ok: number, failed: number) => `พิมพ์สำเร็จ ${ok} · ไม่สำเร็จ ${failed}`,
   },
 
   cleanup: {
     title: "ลบข้อมูลเก่า",
     description:
       "ลบข้อมูลที่สิ้นสุดแล้วออกจากระบบเพื่อลดปริมาณข้อมูลสะสม ระบบบันทึก Log การลบทุกครั้ง",
-    tabRange: "ลบตามช่วงวันที่",
-    tabClosed: "ลบ Order ที่ปิดแล้ว",
+    tabRange: "ลบตามช่วงวันที่", // UC 10A
+    tabClosed: "ลบ Order ที่ปิดแล้ว", // UC 10A
     dataTypes: "ประเภทข้อมูล",
+    typeLabel: { order: "Order", cost: "Cost", label: "Label", reorder: "Reorder" },
     cutoffLabel: "ลบข้อมูลที่เก่ากว่าวันที่",
     cutoffHint: "ลบได้เฉพาะข้อมูลที่เก่ากว่า 12 เดือนขึ้นไป",
-    submit: "ยืนยันการลบข้อมูล",
+    closedOption: "ลบ Order ที่ปิดแล้วทั้งหมด", // UC 10A
+    submit: "ยืนยันการลบข้อมูล", // UC 10A
     backup: "ดาวน์โหลดไฟล์สำรองก่อนลบ",
-    closedTitle:
-      "ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด โดยไม่ต้องกำหนดช่วงวันที่",
-    closedCount: "พบ Order ที่ปิดแล้ว",
-    closedCountSuffix: "รายการ พร้อมใบปะสินค้าที่เกี่ยวข้อง",
-    confirmTitle: "ยืนยันการลบข้อมูล",
-    confirmClosed: (n: number) =>
-      `ระบบจะลบ Order ที่ปิดแล้ว ${n} รายการ พร้อมใบปะสินค้าที่เกี่ยวข้อง`,
-    confirmRange: (types: string, cutoff: string) =>
-      `ระบบจะลบข้อมูลประเภท ${types} ที่เก่ากว่า ${cutoff}`,
+    backupDone: "ดาวน์โหลดไฟล์สำรองแล้ว",
+    closedTitle: "ลบ Order ที่จัดส่งสำเร็จหรือยกเลิกแล้วทั้งหมด โดยไม่ต้องกำหนดช่วงวันที่",
+    review: "ตรวจทานรายการ",
+    reviewTitle: "ตรวจทานก่อนลบ",
+    countByType: (type: string, n: number) => `${type} ${n} รายการ`,
+    closedSummary: (orders: number, labels: number) =>
+      `Order ที่ปิดแล้ว ${orders} รายการ · ใบปะสินค้าที่เกี่ยวข้อง ${labels} รายการ`,
+    blockedTitle: "รายการที่ลบไม่ได้",
     irreversible: "การลบนี้ย้อนกลับไม่ได้",
-    errNoType: "กรุณาเลือกประเภทข้อมูลที่ต้องการลบ",
-    errCutoff: "สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น",
-    errNoData: "ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก",
-    errNoClosed: "ไม่พบ Order ที่ปิดแล้วให้ลบ",
-    okDeletedClosed: (n: number) => `ลบ Order ที่ปิดแล้วสำเร็จ ${n} รายการ`,
-    okDeleted: (n: number) => `ลบข้อมูลสำเร็จ ${n} ประเภท`,
-    okDeletedHint: "ระบบบันทึก Log การลบไว้แล้ว",
+    errNoType: "กรุณาเลือกประเภทข้อมูลที่ต้องการลบ", // UC 10A
+    errCutoff: "สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น", // UC 10A
+    errNoData: "ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก", // UC 10A
+    errNoDataHint: "ลองปรับช่วงวันที่ใหม่",
+    errNoClosed: "ไม่พบ Order ที่ปิดแล้วให้ลบ", // UC 10A
+    errReferenced: "ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่", // UC 10A
+    errFailed: "ลบข้อมูลไม่สำเร็จ กรุณาลองใหม่ภายหลัง", // UC 10A
+    okDeleted: (n: number) => `ลบข้อมูลสำเร็จ ${n} รายการ`, // UC 10A
+    okDeletedClosed: (n: number) => `ลบ Order ที่ปิดแล้วสำเร็จ ${n} รายการ`, // UC 10A
   },
 
   sitemap: {
     title: "ผังโครงสร้างหน้าจอ",
-    description:
-      "โครงสร้างทั้งระบบของ actor เดียวคือ Admin โดยเริ่มจากหน้าเข้าสู่ระบบ",
+    description: "โครงสร้างทั้งระบบของ actor เดียวคือ Admin โดยเริ่มจากหน้าเข้าสู่ระบบ",
     rootHint: "UC 1A เข้าสู่ระบบ · root ของผัง",
     reports: "รายงาน",
     reportLabel: "ใบปะสินค้า",
     reportCost: "รายงานต้นทุนต่อหน่วย",
     openedFrom: (screen: string) => `เปิดจาก ${screen}`,
+    alsoHere: (uc: string) => `มีปุ่มของ UC ${uc} ในหน้านี้`,
+  },
+
+  reports: {
+    labelTitle: "ใบปะสินค้า",
+    labelEyebrow: "Shipping Label",
+    rslReference: "หมายเลขอ้างอิง RSL",
+    marketplaceOrderId: "เลขคำสั่งซื้อใน Rakuten",
+    parcel: "ลำดับกล่อง",
+    recipient: "ผู้รับ",
+    items: "รายการสินค้า",
+    printedFrom: (template: string) => `พิมพ์จากระบบ RSL Fulfillment Hub · รูปแบบ ${template}`,
+    labelStatus: "สถานะใบปะ",
+    createdAt: "สร้างเมื่อ",
+    noLabel: "Order นี้ยังไม่มีใบปะสินค้า",
+    costTitle: "รายงานต้นทุนต่อหน่วย",
+    costItem: "รายการ",
+    costInBaht: "คิดเป็นเงินบาท",
+    purchaseLine: (price: number, currency: string, rate: number) =>
+      `ราคาซื้อทั้งล็อต ${price.toLocaleString("th-TH")} ${currency} × อัตราแลกเปลี่ยน ${rate}`,
+    lotSubtotal: (qty: number) => `รวมต้นทุนล็อต หารด้วย ${qty} ชิ้น`,
+    perLot: "(ทั้งล็อต)",
+    perPiece: "(ต่อชิ้น)",
+    formula:
+      "สูตรคำนวณ: ((ราคาซื้อ × อัตราแลกเปลี่ยน) + ค่าขนส่งระหว่างประเทศ + ภาษีนำเข้า) ÷ จำนวนต่อล็อต + ค่าธรรมเนียมมาร์เก็ตเพลส + ค่าส่งในประเทศ + ค่าธรรมเนียม RSL",
+    noCost: "สินค้านี้ยังไม่มีผลการคำนวณต้นทุน",
+    calculatedBy: "ผู้คำนวณ",
+    history: "ประวัติการคำนวณย้อนหลัง",
+  },
+
+  dev: {
+    title: "เครื่องมือทดสอบ",
+    description:
+      "ใช้จำลองข้อผิดพลาดจากระบบภายนอกตาม \"ทางเลือก\" ของแต่ละ UC เพื่อทดสอบและ capture รูปลงรายงาน (rubric ข้อ 33) — ไม่ใช่หน้าจอของระบบจริง",
+    faultsTitle: "จำลองข้อผิดพลาด",
+    reset: "รีเซ็ตข้อมูลตัวอย่าง",
+    resetHint: "ล้างทุกอย่างที่ทำไว้ กลับไปเป็นข้อมูลตั้งต้น",
+    resetDone: "รีเซ็ตข้อมูลตัวอย่างแล้ว",
+    faults: {
+      rms: "4A · เชื่อมต่อ Rakuten RMS ไม่ได้",
+      marketplaceVerify: "2A · ดึงข้อมูลล่าสุดจาก Marketplace ไม่ได้",
+      skuRuleDb: "2S · อ่านข้อมูลกฎ SKU ไม่ได้",
+      rsl: "1S / 3S · เชื่อมต่อระบบ RSL ไม่ได้",
+      labelService: "6S · สร้างไฟล์ใบปะสินค้าไม่ได้",
+      printer: "9A · เครื่องพิมพ์ไม่พร้อมใช้งาน",
+      carrier: "8A · ดึงสถานะจากผู้ให้บริการขนส่งไม่ได้",
+      trackingNotify: "5S · ส่งเลขติดตามไปยัง Rakuten ไม่สำเร็จ",
+      mpStockSync: "7S · อัปเดตจำนวนสินค้าใน Rakuten ไม่สำเร็จ",
+      supplierSend: "6A · ส่งคำสั่งซื้อไปยัง Supplier ไม่สำเร็จ",
+      db: "5A / 10A · ฐานข้อมูลบันทึกไม่สำเร็จ",
+    } as Record<FaultKey, string>,
+    accounts: "บัญชีทดสอบ",
+    accountsHint: "admin@colorado.jp / demo1234 · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
   },
 };
 
@@ -483,6 +681,9 @@ const en: typeof th = {
     cancel: "Cancel",
     save: "Save",
     confirm: "Confirm",
+    close: "Close",
+    back: "Back",
+    print: "Print",
     status: "Status",
     product: "Product",
     qty: "Qty",
@@ -496,6 +697,11 @@ const en: typeof th = {
     unitPieces: "pcs",
     items: "items",
     notFound: "No data found",
+    notSet: "Not set",
+    allStatuses: "All statuses",
+    orderRef: (id: string) => `Order ${id}`,
+    days: "days",
+    moreActions: "More actions",
   },
 
   table: {
@@ -516,18 +722,60 @@ const en: typeof th = {
     "รอ Admin ตัดสินใจสั่งซื้อ": "Awaiting purchase decision",
     "รอสั่งซื้อจาก Supplier": "Awaiting supplier order",
     สั่งซื้อแล้ว: "Ordered",
+    ยังไม่ได้จับคู่: "Not matched",
     รอจัดรูปแบบใบปะสินค้า: "Awaiting label formatting",
     รอพิมพ์ใบปะสินค้า: "Awaiting label print",
     พิมพ์ใบปะสินค้าแล้ว: "Label printed",
     รอส่งคำสั่งซื้อ: "Awaiting PO dispatch",
     รอส่งมอบ: "Awaiting handover",
     อยู่ระหว่างจัดส่ง: "In transit",
+    รอแจ้งเลขติดตาม: "Awaiting tracking notice",
+    แจ้งเลขติดตามแล้ว: "Tracking notified",
     จัดส่งสำเร็จ: "Delivered",
+    จัดส่งไม่สำเร็จ: "Delivery failed",
+    "ตีกลับ/คืนสินค้า": "Returned",
     "รอยกเลิก Order": "Awaiting cancellation",
     ยกเลิกแล้ว: "Cancelled",
     รอดำเนินการด้วยตนเอง: "Manual review",
     รอดำเนินการพิเศษ: "Needs special handling",
   } as Record<OrderStatus, string>,
+
+  manualReason: {
+    incomplete: "Order data is incomplete. Please check",
+    "sku-unregistered": "Found a SKU that is not registered in the system",
+    "sku-rule": "No SKU rule matches this product. Please set up the SKU rule first",
+    rsl: "This product was not found in RSL",
+    template: "No suitable label template found. Please set up the label template first",
+    address: "Shipping address is incomplete. Cannot create the shipping label",
+    price: "No selling price found for this product. Please check",
+    supplier: "Supplier or order quantity not found. Please configure before ordering",
+    "stock-deduct": "Not enough stock to deduct. Please check",
+  } as Record<ManualReason, string>,
+
+  deliveryStatus: {
+    in_transit: "On the way",
+    delivered: "Delivered to customer",
+    failed: "Delivery failed",
+    returned: "Returned",
+  } as Record<DeliveryStatus, string>,
+
+  auto: {
+    orderRef: (id: string) => `Order ${id}`,
+    skuMatched: (n: number) => `${n} orders matched to SKU rules`,
+    skuMissing: "No SKU rule matches this product. Please set up the SKU rule first",
+    skuMultiple: "More than one SKU rule matches. Please choose manually",
+    skuDb: "Cannot read SKU rules. Please try again later",
+    stockEnough: (id: string) => `${id} has enough stock and moves on to RSL matching`,
+    stockLow: (id: string) =>
+      `${id} does not have enough stock and moves on to unit cost and the purchase decision`,
+    labelCreated: (n: number) => `${n} shipping labels created`,
+    labelNoAddress: "Shipping address is incomplete. Cannot create the shipping label",
+    labelNoTemplate: "No suitable label template found. Please set up the label template first",
+    labelService: "Cannot create the shipping label. Please try again later",
+    stockDeducted: "Stock deducted and product quantity updated",
+    stockInsufficient: "Not enough stock to deduct. Please check",
+    stockSync: "Cannot update product quantity on Rakuten Ichiba. Please try again later",
+  },
 
   login: {
     title: "Sign in",
@@ -538,178 +786,227 @@ const en: typeof th = {
     footer: "Colorado Co., Ltd. · Internal system for administrators only",
     errIncomplete: "Required fields are missing",
     errEmailFormat: "The email format is not valid",
-    errTooManyAttempts:
-      "Too many sign-in attempts. Please wait a moment before trying again",
+    errTooManyAttempts: "Too many sign-in attempts. Please wait a moment before trying again",
     errWrongCredentials: "Incorrect email or password",
     okLogin: "Signed in successfully",
-    tagline:
-      "Order and shipping management for Japanese marketplaces, connected to RSL",
+    tagline: "Order and shipping management for Rakuten Ichiba, connected to RSL",
   },
 
   dashboard: {
     title: "Dashboard",
-    description: "Outstanding work and sales channel connection status",
+    description: "Outstanding work, errors to fix and the Rakuten RMS connection",
     importOrders: "Import orders",
-    connectionFailed: (channels: string) =>
-      `Cannot connect to ${channels}. Please check the configuration`,
+    importOk: (n: number) => `${n} orders imported`,
+    importNone: "No new orders in Rakuten RMS",
+    importDuplicates: (n: number) => `${n} duplicate orders skipped`,
+    importIncomplete: "Order data is incomplete. Please check",
+    importUnregistered: "Found a SKU that is not registered in the system",
+    importCancelRequest: (ids: string) =>
+      `The customer cancelled ${ids} on Rakuten while it is in progress. Please review it on the Cancel order screen`,
+    connectionFailed: (channel: string) =>
+      `Cannot connect to ${channel}. Please check the configuration`,
     viewList: "View list",
     recentOrders: "Recent orders",
     recentOrdersHint: "Latest orders received and their current status",
     viewAll: "View all",
-    connections: "Sales channel connections",
+    connections: "Rakuten RMS connection",
     lastSync: (time: string) => `Last synced ${time}`,
     connected: "Connected",
-    disconnected: "Connection failed",
+    disconnected: "Disconnected",
     lowStock: "Below reorder point",
-    lowStockHint:
-      "SKUs where in-house plus RSL stock has reached the reorder point",
-    noLowStock: "No SKU is below its reorder point",
+    lowStockHint: "SKUs whose in-house plus RSL stock has reached the reorder point",
+    noLowStock: "No SKUs below the reorder point",
     viewAllStock: "View all stock",
     weeklyVolume: "Orders imported in the last 7 days",
-    chartSeries: "Order count",
+    chartSeries: "Orders",
+    issues: "Errors to fix",
+    issuesHint: "Orders the system cannot continue on its own. Open one to fix it",
+    noIssues: "Nothing to fix",
+    unitCosts: "Unit cost",
+    unitCostsHint: "Calculated from each product's latest cost components",
+    reorderStatus: "Reorder status",
+    noPurchaseOrders: "No purchase orders yet",
+    eta: (date: string) => `Expected ${date}`,
+    ticker: "Order count by status",
   },
 
   verify: {
     title: "Order review",
-    description: "Review order details before sending them to SKU rule matching",
+    description: "Check each order's details before it moves on to SKU rule matching",
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID, SKU or sales channel",
-    emptySearchTitle: "No order matches your search",
+    emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID, SKU or sales channel again",
     emptyTitle: "No orders awaiting review",
-    emptyHint:
-      "New orders arrive here after you import orders from the dashboard",
+    emptyHint: "New orders arrive here after you import orders from the dashboard",
     detailTitle: "Order details",
     noSelectionTitle: "No order selected",
-    noSelectionHint:
-      "Pick a row from the table on the left to review it before confirming",
-    marketplaceOrderId: "Marketplace order number",
-    editNote: "The system records who edited each field and when",
+    noSelectionHint: "Select an order from the table to review its details before confirming",
+    marketplaceOrderId: "Rakuten order number",
+    channelSku: "Rakuten item code",
+    editNote: "The system logs who made each edit and when",
+    editLog: (by: string, at: string) => `Edited by ${by} at ${at}`,
+    customerCancelBadge: "Customer cancelled",
     submit: "Confirm order",
-    errIncomplete: "Order details are incomplete. Please check",
+    errIncomplete: "Order data is incomplete. Please check",
     errQty: "Quantity must be greater than 0",
     errAlreadyVerified: "This order has already been reviewed",
+    errCustomerCancelled: "This order was cancelled by the customer",
+    errMarketplace: "Cannot check the latest data from the marketplace. Please try again later",
     okVerified: "Order confirmed",
+    manualTitle: "Manual review",
+    manualHint:
+      "Orders with incomplete data. Fix the data in Rakuten RMS and import again, or cancel the order",
+    goCancel: "Go to Cancel order",
+    goProducts: "Go to SKU rules",
   },
 
   rslMatch: {
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID or SKU",
-    emptySearchTitle: "No order matches your search",
+    emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or SKU again",
     title: "RSL matching",
-    description:
-      "Compare the order SKU and variation against RSL warehouse data before formatting the label",
-    matchAll: "Match all automatically",
+    description: "Compare each order's SKU and variation with RSL inventory before the label is formatted",
+    matchAll: "Auto-match all",
     match: "Match with RSL",
     unmatch: "Undo match",
     rslReference: "RSL reference",
-    queueTitle: "Awaiting match",
-    matchedTitle: "Matched",
-    emptyTitle: "Every order has been matched",
-    emptyHint:
-      "Orders that passed review and SKU rule matching arrive here",
-    chooseFor: (orderId: string, sku: string) =>
-      `Choose an RSL record for ${orderId} · ${sku}`,
-    stockLeft: "RSL stock on hand",
+    queueTitle: "Not matched",
+    matchedTitle: "Matched, awaiting label print",
+    emptyTitle: "Every order is matched",
+    emptyHint: "Orders with enough stock wait here",
+    chooseFor: (orderId: string, sku: string) => `Choose an RSL record for ${orderId} · ${sku}`,
+    stockLeft: "Left in RSL",
     chooseThis: "Choose this record",
     errNotFound: "This product was not found in RSL",
-    errMultiple:
-      "More than one matching RSL record was found. Please choose one manually",
+    errMultiple: "More than one RSL record matches. Please choose manually",
+    errConnection: "Cannot connect to RSL. Please try again later",
     okMatched: "Order matched with RSL",
-    okUnmatched: "Match removed",
+    okUnmatched: (id: string) => `Match undone for ${id}; it is back to Not matched`,
+    matchAllSummary: (matched: number, multiple: number, notFound: number) =>
+      `Matched ${matched} · Choose manually ${multiple} · Not in RSL ${notFound}`,
   },
 
   cancel: {
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID, SKU or product name",
-    emptySearchTitle: "No order matches your search",
+    emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID, SKU or product name again",
     title: "Cancel order",
-    description:
-      "Cancel problem orders or customer cancellations, returning stock to the warehouse automatically",
+    description: "Cancel problem orders or customer cancellations, including related processes",
     action: "Cancel order",
-    emptyTitle: "No orders can be cancelled",
-    emptyHint: "Delivered or already cancelled orders are not listed here",
+    emptyTitle: "No orders with this status",
+    emptyHint: "Pick another status from the filter above",
+    statusFilter: "Filter by status",
+    note: "Note",
+    customerRequest: "Customer asked to cancel on Rakuten",
     dialogTitle: (orderId: string) => `Cancel ${orderId}`,
-    alreadyPrinted: " · A shipping label has already been printed",
     reasonLabel: "Cancellation reason",
     submit: "Confirm cancellation",
-    errClosed:
-      "This order cannot be cancelled because it has been delivered or already cancelled",
-    errNoReason: "Please provide a cancellation reason",
+    linkedPo: (po: string) => `A reorder purchase order is linked to this order (${po})`,
+    alsoCancelPo: "Cancel that purchase order too",
+    errClosed: "This order cannot be cancelled because it was delivered or already cancelled",
+    errAlready: (at: string) => `This order was already cancelled on ${at}`,
+    errNoReason: "Please enter a cancellation reason",
     errInTransit:
-      "This order is already in transit and cannot be cancelled in the system right away. Please contact the carrier to recall the parcel",
+      "This order is already in transit and cannot be cancelled right away. Please contact the carrier to recall the parcel",
     okCancelled: "Order cancelled",
-    restockedWithLabel: (qty: number) =>
-      `${qty} pcs returned to stock · A label was already printed, so please cancel it with the carrier as well`,
-    restocked: (qty: number) => `${qty} pcs returned to the warehouse`,
+    labelWarning:
+      "This order's label was printed but not handed to Delivery. Please also cancel the label with the carrier",
+    restocked: (qty: number) => `${qty} pcs returned to stock`,
+    poCancelled: "The related purchase order was cancelled",
+    specialRecorded: "The cancellation request was recorded as Needs special handling",
   },
 
   products: {
     searchLabel: "Search products",
     searchPlaceholder: "Search by SKU, product name or supplier",
-    emptySearchTitle: "No product matches your search",
+    emptySearchTitle: "No products match your search",
     emptySearchHint: "Try searching by SKU, product name or supplier again",
-    title: "SKU rules and product data",
-    description:
-      "This data links orders, stock and cost calculations, so it must match across every system",
+    title: "SKU rules & products",
+    description: "This data is used to match orders, stock and unit cost, and must agree everywhere",
     create: "Add product",
     edit: "Edit",
+    delete: "Delete product",
     editTitle: "Edit product",
-    dialogHint:
-      "The SKU entered here links orders, stock and cost across the system",
+    dialogHint: "The SKU you enter is used for orders, stock and cost across the system",
     emptyTitle: "No products yet",
-    emptyHint:
-      "Add a product and assign its SKU so imported orders can be matched",
+    emptyHint: "Add products and SKUs first so imported orders can be matched",
     productName: "Product name",
-    reorderThresholdField: "Reorder point",
-    reorderQty: "Reorder quantity",
+    channelSku: "Rakuten item code (mapping)",
+    channelSkuHint: "Used to match orders to this SKU rule. Must match the Rakuten item code",
+    reorderThresholdField: "Reorder Threshold",
+    reorderQty: "Reorder Quantity",
+    costSection: "Cost components",
+    costSectionHint: "Default values used on the unit cost screen",
     active: "On sale",
-    inactive: "Delisted",
-    errIncomplete: "Please complete all required fields",
+    inactive: "Off sale",
+    errIncomplete: "Please fill in all required fields",
     errDuplicateSku: "This SKU already exists",
-    errHasRelated:
-      "This product cannot be deleted because related records still exist",
-    errHasRelatedHint: "Set it to delisted instead",
+    errInvalidNumber: "Reorder Threshold and Reorder Quantity must be positive whole numbers",
+    errHasRelated: "This product cannot be deleted because it still has related records",
+    switchToInactive: "Set it to Off sale instead",
     okSaved: "Product saved",
+    okDeleted: (sku: string) => `Product ${sku} deleted`,
+    requeued: (n: number) => `${n} waiting orders went back into automatic processing`,
+    importCsv: "Import CSV",
+    importCsvHint:
+      "Header: sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price",
+    importResultTitle: "Import result",
+    importOk: (n: number) => `${n} rows imported`,
+    importFailed: (n: number) => `${n} rows failed. Fix them and import again`,
+    importRow: (row: number) => `Row ${row}`,
+    waitingRuleTitle: "Orders waiting for a SKU rule",
+    waitingRuleHint: "Save a SKU rule with the matching Rakuten item code and the system will match again",
+    supplierNone: "None",
   },
 
   stock: {
     searchLabel: "Search products",
     searchPlaceholder: "Search by SKU or product name",
-    emptySearchTitle: "No product matches your search",
+    emptySearchTitle: "No products match your search",
     emptySearchHint: "Try searching by SKU or product name again",
     title: "Stock levels",
-    description:
-      "Totals combine in-house and RSL stock, then compare against each SKU's reorder point",
+    description: "Total is in-house plus RSL stock, compared with each SKU's reorder point",
+    selectProduct: "Product",
+    selectPlaceholder: "Choose a SKU to check",
+    check: "Check stock",
+    overviewTitle: "Stock for all products",
     inHouse: "In-house",
     rsl: "RSL",
     total: "Total",
     low: "Below reorder point",
-    normal: "Healthy",
+    normal: "Normal",
     incomplete: "Incomplete data",
-    errIncomplete: "Stock data is incomplete. Please check the source system",
+    partial: "Partial data",
+    errNotFound: "This product was not found in the system",
+    errIncomplete: "Stock data is incomplete. Please check the data source",
+    errRsl: "Cannot fetch stock from RSL. Please try again later",
+    partialHint: "Showing in-house stock only",
   },
 
   cost: {
-    title: "Unit cost calculation",
-    description:
-      "Combines purchase price, exchange rate, freight, duty and every fee into a true per-piece cost",
-    selectProduct: "Select product",
-    selectPlaceholder: "Choose the SKU to calculate",
+    title: "Unit cost",
+    description: "Combine purchase price, exchange rate, freight, duty and every fee into the true cost per piece",
+    searchLabel: "Search products",
+    searchPlaceholder: "Search by SKU or product name",
+    emptySearchTitle: "No products match your search",
+    emptySearchHint: "Try searching by SKU or product name again",
+    startCalc: "Calculate restock cost",
     noProductTitle: "No product selected",
-    noProductHint:
-      "Choose a SKU above and the saved cost components will load for editing",
+    noProductHint: "Pick a product from the list to load its saved cost components",
+    formTitle: (sku: string) => `Cost components · ${sku}`,
     resultTitle: "Result",
     noResultTitle: "No result yet",
-    noResultHint: "Fill in every cost component, then press calculate",
+    noResultHint: "Fill in every cost component and press Calculate",
     calculate: "Calculate",
     unitCost: "Unit cost",
     currentPrice: "Current selling price",
     marginPerUnit: "Margin per unit",
     viewReport: "View unit cost report",
-    purchasePrice: "Purchase price per unit",
+    currency: "Purchase currency",
+    purchasePrice: "Lot purchase price",
     exchangeRate: "Exchange rate",
     intlFreight: "International freight",
     dutyFee: "Import duty",
@@ -717,160 +1014,244 @@ const en: typeof th = {
     marketplaceFee: "Marketplace fee",
     domesticShipping: "Domestic shipping",
     rslCharge: "RSL fee",
-    perLot: "per lot",
-    perPiece: "per piece",
+    perLot: "Per lot (THB)",
+    perPiece: "Per piece (THB)",
+    inCurrency: "In purchase currency",
+    rateUpdated: (at: string) => `Updated ${at}`,
     purchaseInBaht: "Purchase price in THB",
-    dividedBy: (qty: number) => `Divided by lot quantity (${qty})`,
+    dividedBy: (qty: number) => `Divided by quantity per lot (${qty})`,
+    remember: "Save these values for next time",
     okCalculated: "Unit cost calculated",
-    errInvalid: "Please enter every cost component correctly",
-    errOverPrice:
-      "Unit cost is higher than the selling price. Please check the price or the cost components",
+    errInvalid: "Please enter complete and valid cost data",
+    errNoRate: "No current exchange rate found. Please enter it manually",
+    errOverPrice: "Unit cost is higher than the selling price. Please check the price or cost components",
+    warnStaleRate: "The exchange rate may be out of date. Please check before calculating",
+    compareTitle: "Compare suppliers",
+    compareHint: "Other components stay the same; only purchase price and freight differ",
+    compareNone: "No alternative supplier quotes for this product yet",
+    compareCurrent: "Current",
+    historyTitle: "Calculation history",
+    historyEmpty: "This product has not been calculated yet",
+    calculatedAt: "Calculated at",
   },
 
   reorder: {
-    searchLabel: "Search products",
-    searchPlaceholder: "Search by SKU or product name",
-    emptySearchTitle: "No product matches your search",
-    emptySearchHint: "Try searching by SKU or product name again",
     title: "Reorder decisions",
-    description:
-      "Compare real cost against the selling price, then send the purchase order to the supplier",
-    tabDecide: (n: number) => `Awaiting decision (${n})`,
-    tabPurchase: (n: number) => `Awaiting purchase (${n})`,
-    emptyDecideTitle: "Nothing awaiting a decision",
-    emptyDecideHint:
-      "Orders whose cost calculation is complete arrive here for a decision",
-    emptyPurchaseTitle: "No SKU below its reorder point",
-    emptyPurchaseHint:
-      "SKUs whose combined stock falls below the reorder point appear here on schedule",
+    description: "Compare true cost with selling price before deciding, then send the order to the supplier",
+    tabDecide: (n: number) => `To decide (${n})`,
+    tabPurchase: (n: number) => `To reorder (${n})`,
+    tabOrdered: (n: number) => `Purchase orders (${n})`,
+    emptyDecideTitle: "Nothing to decide",
+    emptyDecideHint: "Orders without enough stock and with a calculated cost wait here for a decision",
+    emptyPurchaseTitle: "Nothing to reorder",
+    emptyPurchaseHint: "SKUs below the reorder point and orders judged worth it arrive here",
+    emptyOrderedTitle: "No purchase orders yet",
     leadTime: "Lead time",
-    days: "days",
     unitCost: "Unit cost",
-    currentPrice: "Current selling price",
+    currentPrice: "Current price",
     expectedMargin: "Expected margin per unit",
     noPrice: "No selling price",
-    cannotCompute: "Cannot compute",
-    pendingPo: (eta: string) =>
-      `A purchase order for this SKU is already open. Order more anyway? · Previous lot expected ${eta}`,
+    cannotCompute: "Cannot calculate",
+    goCost: "Go to Unit cost",
+    goProducts: "Go to SKU rules",
+    pendingPo: "There is already an open order for this SKU. Do you want to order more?",
+    pendingPoEta: (eta: string) => `The earlier lot is expected ${eta}`,
     approve: "Worth it - order more",
     reject: "Not worth it - cancel",
-    stockVsThreshold: "On hand / reorder point",
-    qtyToOrder: "Quantity to order",
+    stockVsThreshold: "Stock / reorder point",
+    qtyToOrder: "Qty to order",
+    linkedOrders: "Waiting orders",
     notConfigured: "Not configured",
     purchase: "Order",
     confirmTitle: (decision: string) => `Confirm decision: ${decision}`,
-    confirmApprove: "The order moves on to purchasing from the supplier",
+    confirmApprove: "The order moves on to supplier ordering",
     confirmReject: "The order moves on to cancellation",
-    orderQtyLabel: "Quantity to purchase",
-    orderQtyHint:
-      "This value applies to this purchase only and does not change the reorder quantity in the SKU rule",
+    orderQtyLabel: "Quantity to order",
+    orderQtyHint: "This value applies to this order only and does not change the Reorder Quantity in the SKU rule",
+    recalculated: (cost: string) => `Unit cost at this quantity: ${cost}`,
+    purchaseTitle: (sku: string) => `Order ${sku}`,
+    purchaseHint: (supplier: string, days: number) => `Email the order to ${supplier} · Lead time ${days} days`,
+    errDecided: "A decision has already been made for this order",
+    errDb: "Cannot save the decision. Please try again later",
     errNoPrice: "No selling price found for this product. Please check",
-    errNoPriceHint:
-      "The order is set to manual review until a selling price is provided",
-    errNotConfigured:
-      "No supplier or order quantity found. Please configure them before ordering",
+    errNoCost: "Please enter complete and valid cost data",
+    errNotConfigured: "Supplier or order quantity not found. Please configure before ordering",
+    errSendFailed: "Failed to send the purchase order. Please check and try again",
     okDecided: "Decision saved",
-    okDecidedApprove: "Order sent on to supplier purchasing",
-    okDecidedReject: "Order sent on to cancellation",
-    okPurchased: (sku: string, supplier: string) =>
-      `Purchase order for ${sku} sent to ${supplier}`,
-    okPurchasedHint:
-      "Status changed to ordered, with the expected delivery date",
+    okDecidedApprove: "The order moved on to supplier ordering",
+    okDecidedReject: "The order moved on to cancellation",
+    okPurchased: (sku: string, supplier: string) => `Order for ${sku} sent to ${supplier}`,
+    okPurchasedHint: (eta: string) => `Status Ordered · expected ${eta}`,
     decisionApprove: "Worth it",
     decisionReject: "Not worth it",
+    retry: "Previous send failed",
+    poId: "PO number",
+    orderDate: "Ordered on",
+    eta: "Expected",
   },
 
   shipping: {
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID or product name",
-    emptySearchTitle: "No order matches your search",
+    emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or product name again",
     title: "Customer delivery",
-    description:
-      "Hand printed parcels to the carrier and track them through to the customer",
-    waitingTitle: "Awaiting handover",
+    description: "Hand printed parcels to the carrier and track them until they reach the customer",
+    waitingTitle: "Awaiting handover to Delivery",
     shippedTitle: "Handed over",
-    dispatch: "Hand to carrier",
+    dispatch: "Hand over to Delivery",
+    dispatchSelected: (n: number) => `Hand over to Delivery (${n})`,
+    confirmTitle: "Confirm parcels being handed over",
+    confirmHint: "Count the parcels against this list before confirming",
+    selectAll: "Select all",
     trackingNumber: "Tracking number",
-    noTrackingYet: "No number yet",
+    carrier: "Carrier",
+    carrierStatus: "Carrier status",
+    notifyStatus: "Customer notice",
+    notify: "Send tracking to customer",
+    notified: "Sent",
+    notNotified: "Not sent",
+    syncPending: "Awaiting sync",
+    resendTitle: "Tracking was already sent for this order. Send it again?",
+    resendHint: "The system logs the resend with time and operator",
+    resendConfirm: "Confirm resend",
     emptyTitle: "No parcels awaiting handover",
-    emptyHint: "Orders with a printed label arrive here for handover",
-    errNotPrinted:
-      "This order has no printed label yet and cannot be handed over",
+    emptyHint: "Orders with printed labels wait here for handover",
+    errNotPrinted: "This order's label has not been printed, so it cannot be handed over",
     errNoTracking: "No tracking number found. Please check with the carrier",
-    errNoTrackingHint: "The order stays in awaiting handover",
-    okDispatched: (orderId: string, carrier: string) =>
-      `${orderId} handed to ${carrier}`,
+    errCarrier: "Cannot fetch status from the carrier. Please try again later",
+    deliveryFailed: (id: string) =>
+      `${id} could not be delivered. Please check and fix it, for example contact the customer or resend`,
+    returned: (id: string, qty: number) =>
+      qty > 0 ? `${id} was returned · ${qty} pcs back in stock` : `${id} was returned`,
+    okDispatched: (orderId: string, carrier: string) => `${orderId} handed to ${carrier}`,
     okDispatchedHint: (tracking: string) => `Tracking number ${tracking}`,
+    errNotifyIncomplete: "Tracking data is incomplete, so the customer cannot be notified",
+    errNotifyFailed: "Failed to send tracking. Please try again later",
+    okNotified: "Tracking sent to the customer",
   },
 
   label: {
     searchLabel: "Search orders",
     searchPlaceholder: "Search by order ID or shipping address",
-    emptySearchTitle: "No order matches your search",
+    emptySearchTitle: "No orders match your search",
     emptySearchHint: "Try searching by order ID or shipping address again",
     title: "Shipping labels",
-    description: "Print parcel labels for orders with a shipping method set",
+    description: "Print parcel labels for orders that are matched with RSL and formatted",
     printAll: "Print all labels",
     print: "Print label",
     reprint: "Reprint",
     viewLabel: "View label",
-    queueTitle: "Awaiting print",
+    queueTitle: "To print",
     printedTitle: "Printed",
-    emptyTitle: "No orders awaiting print",
-    emptyHint:
-      "Orders matched with RSL and formatted for labelling arrive here",
-    reprintTitle: "This order already has a printed label. Print it again?",
-    reprintHint: "The system logs each reprint with the time and operator",
+    parcels: "Parcels",
+    emptyTitle: "No orders waiting to print",
+    emptyHint: "Orders matched with RSL and formatted wait here",
+    reprintTitle: "This order's label was already printed. Print it again?",
+    reprintHint: "The system logs the reprint with time and operator",
     reprintConfirm: "Confirm reprint",
-    errNoAddress:
-      "The shipping address is incomplete, so the label cannot be printed",
-    errNoTemplate:
-      "No suitable label template was found. Please configure a label template first",
+    errNoAddress: "Shipping address is incomplete. Cannot print the shipping label",
+    errNoTemplate: "No suitable label template found. Please set up the label template first",
+    errPrinter: "Failed to print the shipping label. Please check the printer",
     okPrinted: (orderId: string) => `Label for ${orderId} sent to the printer`,
-    okPrintedHint: (template: string) => `Using template ${template}`,
+    okPrintedHint: (template: string, parcels: number) => `Template ${template} · ${parcels} labels`,
     okReprinted: (orderId: string) => `Label for ${orderId} reprinted`,
+    printAllSummary: (ok: number, failed: number) => `Printed ${ok} · Failed ${failed}`,
   },
 
   cleanup: {
     title: "Data cleanup",
-    description:
-      "Remove completed records to keep the database small. Every deletion is logged",
+    description: "Remove finished data to keep the system lean. Every deletion is logged",
     tabRange: "Delete by date range",
     tabClosed: "Delete closed orders",
     dataTypes: "Data types",
-    cutoffLabel: "Delete records older than",
-    cutoffHint: "Only records older than 12 months can be deleted",
+    typeLabel: { order: "Order", cost: "Cost", label: "Label", reorder: "Reorder" },
+    cutoffLabel: "Delete data older than",
+    cutoffHint: "Only data older than 12 months can be deleted",
+    closedOption: "Delete all closed orders",
     submit: "Confirm deletion",
-    backup: "Download a backup first",
-    closedTitle:
-      "Delete every delivered or cancelled order without setting a date range",
-    closedCount: "Closed orders found:",
-    closedCountSuffix: "records, along with their shipping labels",
-    confirmTitle: "Confirm deletion",
-    confirmClosed: (n: number) =>
-      `${n} closed orders will be deleted, along with their shipping labels`,
-    confirmRange: (types: string, cutoff: string) =>
-      `Records of type ${types} older than ${cutoff} will be deleted`,
+    backup: "Download backup before deleting",
+    backupDone: "Backup downloaded",
+    closedTitle: "Delete every delivered or cancelled order without choosing a date range",
+    review: "Review items",
+    reviewTitle: "Review before deleting",
+    countByType: (type: string, n: number) => `${type} ${n} items`,
+    closedSummary: (orders: number, labels: number) =>
+      `${orders} closed orders · ${labels} related shipping labels`,
+    blockedTitle: "Items that cannot be deleted",
     irreversible: "This deletion cannot be undone",
-    errNoType: "Please select at least one data type to delete",
-    errCutoff: "Only records older than 12 months can be deleted",
-    errNoData: "No deletable records were found in the selected period",
+    errNoType: "Please choose the data types to delete",
+    errCutoff: "Only data older than 12 months can be deleted",
+    errNoData: "No deletable data in the selected period",
+    errNoDataHint: "Try a different date range",
     errNoClosed: "No closed orders to delete",
+    errReferenced: "This data cannot be deleted because it still has related records",
+    errFailed: "Deletion failed. Please try again later",
+    okDeleted: (n: number) => `${n} items deleted`,
     okDeletedClosed: (n: number) => `${n} closed orders deleted`,
-    okDeleted: (n: number) => `${n} data types deleted`,
-    okDeletedHint: "The deletion has been logged",
   },
 
   sitemap: {
     title: "Site map",
-    description:
-      "The full structure for the single actor, Admin, starting from the sign-in screen",
+    description: "The full structure for the single actor, Admin, starting from the sign-in screen",
     rootHint: "UC 1A Sign in · root of the map",
     reports: "Reports",
     reportLabel: "Shipping label",
     reportCost: "Unit cost report",
     openedFrom: (screen: string) => `Opened from ${screen}`,
+    alsoHere: (uc: string) => `Also hosts the UC ${uc} button`,
+  },
+
+  reports: {
+    labelTitle: "Shipping label",
+    labelEyebrow: "Shipping Label",
+    rslReference: "RSL reference",
+    marketplaceOrderId: "Rakuten order number",
+    parcel: "Parcel",
+    recipient: "Recipient",
+    items: "Items",
+    printedFrom: (template: string) => `Printed from RSL Fulfillment Hub · Template ${template}`,
+    labelStatus: "Label status",
+    createdAt: "Created",
+    noLabel: "This order has no shipping label yet",
+    costTitle: "Unit cost report",
+    costItem: "Item",
+    costInBaht: "In THB",
+    purchaseLine: (price: number, currency: string, rate: number) =>
+      `Lot purchase price ${price.toLocaleString("en-GB")} ${currency} × exchange rate ${rate}`,
+    lotSubtotal: (qty: number) => `Lot total divided by ${qty} pcs`,
+    perLot: "(per lot)",
+    perPiece: "(per piece)",
+    formula:
+      "Formula: ((purchase price × exchange rate) + international freight + import duty) ÷ quantity per lot + marketplace fee + domestic shipping + RSL fee",
+    noCost: "This product has no unit cost calculation yet",
+    calculatedBy: "Calculated by",
+    history: "Calculation history",
+  },
+
+  dev: {
+    title: "Test tools",
+    description:
+      "Simulate external-system failures from each use case's alternative flows for testing and report screenshots (rubric item 33). Not part of the real system",
+    faultsTitle: "Simulate failures",
+    reset: "Reset sample data",
+    resetHint: "Clear everything you did and go back to the starting data",
+    resetDone: "Sample data reset",
+    faults: {
+      rms: "4A · Cannot connect to Rakuten RMS",
+      marketplaceVerify: "2A · Cannot fetch latest marketplace data",
+      skuRuleDb: "2S · Cannot read SKU rules",
+      rsl: "1S / 3S · Cannot connect to RSL",
+      labelService: "6S · Cannot create label file",
+      printer: "9A · Printer unavailable",
+      carrier: "8A · Cannot fetch carrier status",
+      trackingNotify: "5S · Sending tracking to Rakuten fails",
+      mpStockSync: "7S · Updating Rakuten stock fails",
+      supplierSend: "6A · Sending PO to supplier fails",
+      db: "5A / 10A · Database write fails",
+    } as Record<FaultKey, string>,
+    accounts: "Test accounts",
+    accountsHint: "admin@colorado.jp / demo1234 · locked@colorado.jp tests too many sign-in attempts",
   },
 };
 

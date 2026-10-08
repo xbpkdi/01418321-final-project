@@ -4,6 +4,7 @@
 // เมนูไม่มีเมนูย่อย จึงใช้ SidebarMenu ตรงๆ ไม่ต้องมี Collapsible แบบ nav-main
 // ผู้ใช้อยู่ที่ SidebarFooter ตามตำแหน่งที่ block วาง NavUser ไว้
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronsUpDown, LogOut, UserRound } from "lucide-react";
@@ -27,18 +28,37 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { navGroups } from "@/lib/nav";
 import { useT } from "@/lib/i18n/context";
+import { useStore } from "@/lib/store";
+import { logout as endSession } from "@/lib/workflow";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
+  const { state, run, isDirty } = useStore();
+  const [confirming, setConfirming] = React.useState(false);
 
-  // UC 1A: ล้าง session แล้ว redirect กลับหน้า Login (ไม่แตะฐานข้อมูล)
+  // UC 1A ขั้นตอนที่ 4: ล้าง session แล้ว redirect กลับหน้า Login (ไม่แตะข้อมูลอื่น)
   function logout() {
+    run((s) => ({ state: endSession(s) }));
     toast.success(t.app.logoutDone);
     router.push("/login");
+  }
+
+  // มีงานที่ยังไม่ได้บันทึก ต้องถามยืนยันก่อน
+  function requestLogout() {
+    if (isDirty()) setConfirming(true);
+    else logout();
   }
 
   return (
@@ -114,7 +134,7 @@ export function AppSidebar() {
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{t.app.admin}</span>
                     <span className="text-muted-foreground truncate text-xs">
-                      admin@colorado.jp
+                      {state.session?.user_email}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -126,7 +146,7 @@ export function AppSidebar() {
                 className="w-(--radix-dropdown-menu-trigger-width)"
               >
                 {/* UC 1A ขั้นตอนที่ 4 — ยกเลิก session แล้วกลับไปหน้า Login */}
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={requestLogout}>
                   <LogOut />
                   {t.app.logout}
                 </DropdownMenuItem>
@@ -137,6 +157,20 @@ export function AppSidebar() {
       </SidebarFooter>
 
       <SidebarRail />
+
+      <Dialog open={confirming} onOpenChange={setConfirming}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.app.logoutConfirm}</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirming(false)}>
+              {t.common.cancel}
+            </Button>
+            <Button onClick={logout}>{t.app.logout}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }

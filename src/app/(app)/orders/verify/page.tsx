@@ -1,13 +1,14 @@
 "use client";
 
 // OrderVerifyScreen — UC 2A ตรวจสอบคำสั่งซื้อ
-// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md
+// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md (ดู verifyOrder ใน lib/workflow.ts)
 
 import * as React from "react";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
@@ -17,23 +18,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { SectionMessage } from "@/components/shared/section-message";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable } from "@/components/shared/data-table";
 import { TableSearch } from "@/components/shared/table-search";
 import { verifyColumns } from "./columns";
-import { useT } from "@/lib/i18n/context";
-import { MOCK_ORDERS } from "@/mock/orders";
+import { useLanguage } from "@/lib/i18n/context";
+import { useStore, useUnsavedChanges } from "@/lib/store";
+import { findOrder, verifyOrder, type VerifyResult } from "@/lib/workflow";
+import { SHIPPING_METHODS } from "@/mock/delivery";
+import { formatDateTime } from "@/lib/format";
 import type { Order } from "@/types/order";
 
-const SHIPPING_METHODS = ["RSL ปกติ", "RSL ขนาดใหญ่", "จัดส่งเอง"];
-
 export default function OrderVerifyScreen() {
-  const router = useRouter();
-  const t = useT();
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const { lang, t } = useLanguage();
+  const { state, run } = useStore();
   const [keyword, setKeyword] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState("");
@@ -42,8 +45,14 @@ export default function OrderVerifyScreen() {
 
   // ขั้นตอนที่ 1: แสดงเฉพาะ Order ที่อยู่ในสถานะ "รอตรวจสอบคำสั่งซื้อ"
   const pending = useMemo(
-    () => orders.filter((o) => o.order_status === "รอตรวจสอบคำสั่งซื้อ"),
-    [orders],
+    () => state.orders.filter((o) => o.order_status === "รอตรวจสอบคำสั่งซื้อ"),
+    [state.orders],
+  );
+  // Order ที่ตรวจแล้วข้อมูลไม่ครบ — ให้เห็นว่าไปค้างอยู่ที่ไหน
+  const manual = state.orders.filter(
+    (o) =>
+      o.order_status === "รอดำเนินการด้วยตนเอง" &&
+      (o.manual_reason === "incomplete" || o.manual_reason === "sku-unregistered"),
   );
 
   // ค้นหาตาม order_id, sku และ sales_channel ตามที่ UC กำหนด
@@ -58,80 +67,55 @@ export default function OrderVerifyScreen() {
     );
   }, [pending, keyword]);
 
-  const selected = orders.find((o) => o.order_id === selectedId) ?? null;
+  const selected = selectedId ? findOrder(state, selectedId) ?? null : null;
   const columns = React.useMemo(() => verifyColumns(t), [t]);
+  useUnsavedChanges("verify", selected !== null && shippingMethod !== selected.shipping_method);
 
+  // ขั้นตอนที่ 2: เลือก Order แล้วดึงรายละเอียด (Q2A.1)
   function select(order: Order) {
     setSelectedId(order.order_id);
     setShippingMethod(order.shipping_method);
     setError(null);
   }
 
+  const MESSAGE: Record<Exclude<VerifyResult, "ok">, string> = {
+    incomplete: t.verify.errIncomplete,
+    qty: t.verify.errQty,
+    already: t.verify.errAlreadyVerified,
+    "customer-cancelled": t.verify.errCustomerCancelled,
+    marketplace: t.verify.errMarketplace,
+  };
+
+  // ขั้นตอนที่ 3: กด "ยืนยันคำสั่งซื้อ"
   function confirm() {
     if (!selected) return;
     setError(null);
-
-    // 2. ตรวจสอบความครบถ้วนของข้อมูล
-    if (
-      !selected.sku.trim() ||
-      !selected.shipping_address.trim() ||
-      selected.qty === null
-    ) {
-      setError(t.verify.errIncomplete);
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.order_id === selected.order_id
-            ? { ...o, order_status: "รอดำเนินการด้วยตนเอง" }
-            : o,
-        ),
-      );
-      setSelectedId(null);
-      return;
-    }
-
-    if (!Number.isInteger(selected.qty) || selected.qty <= 0) {
-      setError(t.verify.errQty);
-      return;
-    }
-
-    // 3. ตรวจสอบสถานะของ Order
-    if (selected.order_status !== "รอตรวจสอบคำสั่งซื้อ") {
-      setError(t.verify.errAlreadyVerified);
-      return;
-    }
-
-    // 4. อัปเดตสถานะ Order (Q2A.2)
     setSubmitting(true);
+    const orderId = selected.order_id;
     window.setTimeout(() => {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.order_id === selected.order_id
-            ? {
-                ...o,
-                shipping_method: shippingMethod,
-                order_status: "รอจับคู่กฎ SKU",
-              }
-            : o,
-        ),
-      );
-      setSelectedId(null);
-      setSubmitting(false);
-      // บอกขั้นถัดไปด้วย ไม่งั้นผู้ใช้ต้องเดาเองว่า Order ที่ยืนยันแล้วไปโผล่ที่ไหน
-      toast.success(t.verify.okVerified, {
-        action: {
-          label: t.nav.items.rslMatch,
-          onClick: () => router.push("/orders/rsl-match"),
-        },
+      const { result } = run((s) => {
+        const r = verifyOrder(s, orderId, { shipping_method: shippingMethod });
+        return { state: r.state, result: r.result };
       });
+      setSubmitting(false);
+      if (result === "ok") {
+        setSelectedId(null);
+        toast.success(t.verify.okVerified);
+        return;
+      }
+      // Order ที่ออกจากคิวไปแล้ว (ไม่ครบ/ลูกค้ายกเลิก) แจ้งด้วย toast เพราะแผงรายละเอียดจะปิด
+      if (result === "incomplete" || result === "customer-cancelled") {
+        setSelectedId(null);
+        toast.error(MESSAGE[result], { description: t.common.orderRef(orderId) });
+        return;
+      }
+      setError(MESSAGE[result]);
     }, 500);
   }
 
   return (
     <div className="grid gap-6 p-6">
-      <PageHeader
-        title={t.verify.title}
-        description={t.verify.description}
-      />
+      <PageHeader title={t.verify.title} description={t.verify.description} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
         <DataTable
@@ -151,15 +135,13 @@ export default function OrderVerifyScreen() {
           emptyState={
             <EmptyState
               icon={ClipboardCheck}
-              title={
-                keyword ? t.verify.emptySearchTitle : t.verify.emptyTitle
-              }
+              title={keyword ? t.verify.emptySearchTitle : t.verify.emptyTitle}
               hint={keyword ? t.verify.emptySearchHint : t.verify.emptyHint}
             />
           }
         />
 
-        <Card>
+        <Card className="self-start">
           <CardHeader>
             <CardTitle>{t.verify.detailTitle}</CardTitle>
           </CardHeader>
@@ -174,20 +156,23 @@ export default function OrderVerifyScreen() {
             </CardContent>
           ) : (
             <CardContent className="grid gap-4">
+              {selected.customer_cancel_request && (
+                <Badge variant="secondary" className="bg-status-cancelled-bg text-status-cancelled w-fit">
+                  {t.verify.customerCancelBadge}
+                </Badge>
+              )}
               <dl className="grid gap-3 text-sm">
                 <Row label="Order ID" value={selected.order_id} />
-                <Row
-                  label={t.verify.marketplaceOrderId}
-                  value={selected.marketplace_order_id}
-                />
+                <Row label={t.verify.marketplaceOrderId} value={selected.marketplace_order_id} />
                 <Row label={t.common.salesChannel} value={selected.sales_channel} />
-                <Row label="SKU" value={selected.sku} />
+                <Row label={t.verify.channelSku} value={selected.channel_sku} />
+                <Row label="SKU" value={selected.sku || "—"} />
                 <Row label={t.common.product} value={selected.product_name} />
                 <Row label="Variation" value={selected.variation} />
                 <Row label={t.common.qty} value={String(selected.qty)} numeric />
                 <Row
                   label={t.common.shippingAddress}
-                  value={selected.shipping_address}
+                  value={selected.shipping_address || "—"}
                   multiline
                 />
                 <div className="flex items-center justify-between gap-4">
@@ -200,13 +185,8 @@ export default function OrderVerifyScreen() {
 
               {/* UC อนุญาตให้แก้ไขฟิลด์ที่กำหนดก่อนยืนยัน เช่น shipping_method */}
               <Field className="border-t pt-4">
-                <FieldLabel htmlFor="shipping_method">
-                  {t.common.shippingMethod}
-                </FieldLabel>
-                <Select
-                  value={shippingMethod}
-                  onValueChange={setShippingMethod}
-                >
+                <FieldLabel htmlFor="shipping_method">{t.common.shippingMethod}</FieldLabel>
+                <Select value={shippingMethod} onValueChange={setShippingMethod}>
                   <SelectTrigger id="shipping_method">
                     <SelectValue />
                   </SelectTrigger>
@@ -218,25 +198,58 @@ export default function OrderVerifyScreen() {
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldDescription>{t.verify.editNote}</FieldDescription>
+                <FieldDescription>
+                  {t.verify.editNote}
+                  {selected.edit_log?.map((log) => (
+                    <span key={log.at} className="block">
+                      {t.verify.editLog(log.by, formatDateTime(log.at, lang))}
+                    </span>
+                  ))}
+                </FieldDescription>
               </Field>
 
-              {error && (
-                <p
-                  role="alert"
-                  className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
-                >
-                  {error}
-                </p>
-              )}
+              {error && <SectionMessage appearance="error">{error}</SectionMessage>}
 
               <Button onClick={confirm} disabled={submitting}>
+                {submitting && <Spinner />}
                 {t.verify.submit}
               </Button>
             </CardContent>
           )}
         </Card>
       </div>
+
+      {manual.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.verify.manualTitle}</CardTitle>
+            <CardDescription>{t.verify.manualHint}</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-2">
+            {manual.map((o) => (
+              <div
+                key={o.order_id}
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-md border px-3 py-2 text-sm"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="font-medium">{o.order_id}</span>
+                  <StatusBadge status={o.order_status} />
+                </span>
+                <span className="text-muted-foreground">
+                  {o.manual_reason ? t.manualReason[o.manual_reason] : ""}
+                </span>
+                <Button size="sm" variant="outline" asChild>
+                  {o.manual_reason === "sku-unregistered" ? (
+                    <Link href="/products">{t.verify.goProducts}</Link>
+                  ) : (
+                    <Link href="/orders/cancel">{t.verify.goCancel}</Link>
+                  )}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -253,16 +266,9 @@ function Row({
   multiline?: boolean;
 }) {
   return (
-    <div
-      className={
-        multiline ? "grid gap-1" : "flex items-start justify-between gap-4"
-      }
-    >
+    <div className={multiline ? "grid gap-1" : "flex items-start justify-between gap-4"}>
       <dt className="text-muted-foreground shrink-0">{label}</dt>
-      <dd
-        data-numeric={numeric ? "" : undefined}
-        className={multiline ? "" : "text-right"}
-      >
+      <dd data-numeric={numeric ? "" : undefined} className={multiline ? "" : "text-right"}>
         {value}
       </dd>
     </div>

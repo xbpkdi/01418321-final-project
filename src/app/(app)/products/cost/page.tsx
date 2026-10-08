@@ -1,185 +1,230 @@
 "use client";
 
 // CostCalculatorScreen — UC 4S คำนวณ Cost ในการสั่งสินค้าเติม stock เอง
-// สูตรและข้อความทั้งหมดมาจาก 00-use-case-descriptions.md
+// สูตรและข้อความทั้งหมดมาจาก 00-use-case-descriptions.md (ดู calculateCost ใน lib/workflow.ts)
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Calculator, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { useT } from "@/lib/i18n/context";
-import type { Dict } from "@/lib/i18n/dict";
-import { MOCK_COSTS, MOCK_PRODUCTS } from "@/mock/products";
-import { calcUnitCost, type CostComponents } from "@/types/product";
-
-type CostField = { key: keyof CostComponents; label: string; hint?: string };
-
-function costFields(t: Dict): CostField[] {
-  return [
-    { key: "purchase_price", label: t.cost.purchasePrice },
-    { key: "exchange_rate", label: t.cost.exchangeRate },
-    { key: "intl_freight", label: t.cost.intlFreight, hint: t.cost.perLot },
-    { key: "duty_fee", label: t.cost.dutyFee, hint: t.cost.perLot },
-    { key: "order_qty", label: t.cost.orderQty },
-    {
-      key: "marketplace_fee",
-      label: t.cost.marketplaceFee,
-      hint: t.cost.perPiece,
-    },
-    {
-      key: "domestic_shipping",
-      label: t.cost.domesticShipping,
-      hint: t.cost.perPiece,
-    },
-    { key: "rsl_charge", label: t.cost.rslCharge, hint: t.cost.perPiece },
-  ];
-}
-
-const baht = new Intl.NumberFormat("th-TH", {
-  style: "currency",
-  currency: "THB",
-  minimumFractionDigits: 2,
-});
+import { SectionMessage } from "@/components/shared/section-message";
+import { TableSearch } from "@/components/shared/table-search";
+import { useLanguage } from "@/lib/i18n/context";
+import { useStore, useUnsavedChanges } from "@/lib/store";
+import { formatBaht, formatDateTime } from "@/lib/format";
+import {
+  calculateCost,
+  costToForm,
+  findProduct,
+  findSupplier,
+  isRateStale,
+  type CostCalcResult,
+  type CostForm,
+} from "@/lib/workflow";
+import { SEED_SUPPLIER_QUOTES } from "@/mock/products";
+import { calcUnitCost, COST_KEYS, type CostKey } from "@/types/product";
 
 export default function CostCalculatorScreen() {
-  const t = useT();
-  const FIELDS = costFields(t);
+  const { lang, t } = useLanguage();
+  const { state, run } = useStore();
   const [sku, setSku] = useState<string>("");
-  const [form, setForm] = useState<CostComponents | null>(null);
-  const [result, setResult] = useState<number | null>(null);
+  const [form, setForm] = useState<CostForm | null>(null);
+  const [initial, setInitial] = useState<CostForm | null>(null);
+  const [remember, setRemember] = useState(true);
+  const [result, setResult] = useState<Extract<CostCalcResult, { ok: true }> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
+  useUnsavedChanges("cost", form !== null && JSON.stringify(form) !== JSON.stringify(initial));
 
-  const product = MOCK_PRODUCTS.find((p) => p.sku === sku);
+  const LABEL: Record<CostKey, { label: string; hint: string }> = {
+    purchase_price: { label: t.cost.purchasePrice, hint: t.cost.inCurrency },
+    exchange_rate: { label: t.cost.exchangeRate, hint: "" },
+    intl_freight: { label: t.cost.intlFreight, hint: t.cost.perLot },
+    duty_fee: { label: t.cost.dutyFee, hint: t.cost.perLot },
+    order_qty: { label: t.cost.orderQty, hint: "" },
+    marketplace_fee: { label: t.cost.marketplaceFee, hint: t.cost.perPiece },
+    domestic_shipping: { label: t.cost.domesticShipping, hint: t.cost.perPiece },
+    rsl_charge: { label: t.cost.rslCharge, hint: t.cost.perPiece },
+  };
 
-  function selectSku(value: string) {
+  const product = sku ? findProduct(state, sku) : undefined;
+  const saved = state.costs.find((c) => c.sku === sku);
+  const history = state.costLog.filter((l) => l.sku === sku).slice().reverse();
+
+  // ขั้นตอนที่ 1: รายการสินค้าพร้อมช่องค้นหา/กรองตาม SKU หรือชื่อสินค้า
+  const visible = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    return state.products.filter(
+      (p) => !q || p.sku.toLowerCase().includes(q) || p.product_name.toLowerCase().includes(q),
+    );
+  }, [state.products, keyword]);
+
+  // ขั้นตอนที่ 2: ดึงองค์ประกอบต้นทุน (Q5.1)
+  function select(value: string) {
+    const loaded = costToForm(state.costs.find((c) => c.sku === value), value);
     setSku(value);
+    setForm(loaded);
+    setInitial(loaded);
     setResult(null);
     setError(null);
-    // Q5.1: ดึงองค์ประกอบต้นทุนของสินค้านั้น
-    const found = MOCK_COSTS.find((c) => c.sku === value);
-    setForm(
-      found ?? {
-        sku: value,
-        purchase_price: 0,
-        currency: "CNY",
-        exchange_rate: 0,
-        intl_freight: 0,
-        duty_fee: 0,
-        marketplace_fee: 0,
-        domestic_shipping: 0,
-        rsl_charge: 0,
-        order_qty: 1,
-      },
-    );
   }
 
+  // ขั้นตอนที่ 3: กด "คำนวณ" (Q5.2 + Q5.3)
   function calculate() {
     if (!form) return;
     setError(null);
-
-    // ตรวจสอบ: ข้อมูลที่กรอกต้องไม่เป็นค่าว่างหรือค่าลบ
-    const invalid = FIELDS.some((f) => {
-      const value = form[f.key];
-      return typeof value !== "number" || Number.isNaN(value) || value < 0;
+    const { result: r } = run((s) => {
+      const out = calculateCost(s, sku, form, remember);
+      return { state: out.state, result: out.result };
     });
-    if (invalid || form.order_qty <= 0) {
-      setError(t.cost.errInvalid);
+    if (!r.ok) {
+      setResult(null);
+      setError(r.reason === "no-rate" ? t.cost.errNoRate : t.cost.errInvalid);
       return;
     }
-
-    // Q5.2 แล้วบันทึกผลด้วย Q5.3
-    const unitCost = calcUnitCost(form);
-    setResult(unitCost);
+    setResult(r);
+    setInitial(form);
     toast.success(t.cost.okCalculated);
   }
 
-  const overSellingPrice =
-    result !== null && product ? result > product.selling_price : false;
+  // องค์ประกอบที่ยังไม่เคยตั้งค่า (ทางเลือก #1) และอัตราแลกเปลี่ยน
+  const missing = form ? COST_KEYS.filter((k) => form[k].trim() === "" && k !== "exchange_rate") : [];
+  const noRate = form ? form.exchange_rate.trim() === "" : false;
+  const stale = form && saved && form.exchange_rate === String(saved.exchange_rate) && isRateStale(saved);
+
+  // ทางเลือก #3: เปรียบเทียบซัพพลายเออร์ — ใช้องค์ประกอบปัจจุบัน เปลี่ยนเฉพาะราคาซื้อและค่าขนส่ง
+  const quotes = SEED_SUPPLIER_QUOTES.filter((q) => q.sku === sku);
+  const comparison = result
+    ? [
+        {
+          supplier: findSupplier(state, product?.supplier_id ?? "")?.supplier_name ?? t.common.notSet,
+          current: true,
+          currency: form?.currency ?? "",
+          purchase_price: result.components.purchase_price,
+          intl_freight: result.components.intl_freight,
+          unit_cost: result.unit_cost,
+        },
+        ...quotes.map((q) => ({
+          supplier: findSupplier(state, q.supplier_id)?.supplier_name ?? q.supplier_id,
+          current: false,
+          currency: q.currency,
+          purchase_price: q.purchase_price,
+          intl_freight: q.intl_freight,
+          unit_cost: calcUnitCost({
+            ...result.components,
+            purchase_price: q.purchase_price,
+            exchange_rate: q.exchange_rate,
+            intl_freight: q.intl_freight,
+          }),
+        })),
+      ]
+    : [];
 
   return (
     <div className="grid gap-6 p-6">
-      <PageHeader
-        title={t.cost.title}
-        description={t.cost.description}
-      />
+      <PageHeader title={t.cost.title} description={t.cost.description} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="self-start rounded-lg border">
-          <div className="border-b p-5">
-            <Field>
-              <FieldLabel htmlFor="sku">{t.cost.selectProduct}</FieldLabel>
-              <Select value={sku} onValueChange={selectSku}>
-                <SelectTrigger id="sku" className="w-full">
-                  <SelectValue placeholder={t.cost.selectPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_PRODUCTS.map((p) => (
-                    <SelectItem key={p.sku} value={p.sku}>
-                      {p.sku} · {p.product_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-
-          {!form ? (
-            <EmptyState
-              icon={Calculator}
-              title={t.cost.noProductTitle}
-              hint={t.cost.noProductHint}
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_340px]">
+        <Card className="self-start">
+          <CardContent className="grid gap-3">
+            <TableSearch
+              value={keyword}
+              onChange={setKeyword}
+              label={t.cost.searchLabel}
+              placeholder={t.cost.searchPlaceholder}
             />
+            {visible.length === 0 ? (
+              <EmptyState icon={Calculator} title={t.cost.emptySearchTitle} hint={t.cost.emptySearchHint} />
+            ) : (
+              <ul className="grid gap-1">
+                {visible.map((p) => (
+                  <li
+                    key={p.sku}
+                    className={`flex items-center justify-between gap-2 rounded-md px-2 py-1.5 ${p.sku === sku ? "bg-sidebar-selected" : ""}`}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{p.sku}</p>
+                      <p className="text-muted-foreground truncate text-xs">{p.product_name}</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => select(p.sku)}>
+                      {t.cost.startCalc}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <section className="self-start rounded-lg border">
+          {!form ? (
+            <EmptyState icon={Calculator} title={t.cost.noProductTitle} hint={t.cost.noProductHint} />
           ) : (
             <div className="grid gap-5 p-5">
+              <h2 className="font-semibold">{t.cost.formTitle(sku)}</h2>
+
+              {noRate && <SectionMessage appearance="error">{t.cost.errNoRate}</SectionMessage>}
+              {stale && <SectionMessage appearance="warning">{t.cost.warnStaleRate}</SectionMessage>}
+              {missing.length > 0 && (
+                <SectionMessage appearance="warning">
+                  {t.cost.errInvalid} · {missing.map((k) => LABEL[k].label).join(", ")}
+                </SectionMessage>
+              )}
+
               <FieldGroup className="grid gap-4 sm:grid-cols-2">
-                {FIELDS.map((field) => (
-                  <Field key={field.key}>
-                    <FieldLabel htmlFor={field.key}>{field.label}</FieldLabel>
+                <Field>
+                  <FieldLabel htmlFor="currency">{t.cost.currency}</FieldLabel>
+                  <Input
+                    id="currency"
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+                  />
+                </Field>
+                {COST_KEYS.map((key) => (
+                  <Field key={key} data-invalid={form[key].trim() === "" ? true : undefined}>
+                    <FieldLabel htmlFor={key}>{LABEL[key].label}</FieldLabel>
                     <Input
-                      id={field.key}
+                      id={key}
                       type="number"
                       min={0}
                       step="any"
-                      value={form[field.key] as number}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          [field.key]: Number(e.target.value),
-                        })
-                      }
+                      value={form[key]}
+                      aria-invalid={form[key].trim() === "" ? true : undefined}
+                      onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                     />
-                    {field.hint && (
-                      <FieldDescription>{field.hint}</FieldDescription>
+                    {key === "exchange_rate" && saved?.exchange_rate_updated_at ? (
+                      <FieldDescription>
+                        {t.cost.rateUpdated(formatDateTime(saved.exchange_rate_updated_at, lang))}
+                      </FieldDescription>
+                    ) : (
+                      LABEL[key].hint && <FieldDescription>{LABEL[key].hint}</FieldDescription>
                     )}
                   </Field>
                 ))}
               </FieldGroup>
 
-              {error && (
-                <p
-                  role="alert"
-                  className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
-                >
-                  {error}
-                </p>
-              )}
+              {/* ทางเลือก #1: เสนอบันทึกค่าที่กรอกเองไว้ใช้ครั้งถัดไป */}
+              <FieldLabel htmlFor="remember" className="font-normal">
+                <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
+                {t.cost.remember}
+              </FieldLabel>
+
+              {error && <SectionMessage appearance="error">{error}</SectionMessage>}
 
               <Button onClick={calculate} className="w-fit">
                 {t.cost.calculate}
@@ -188,89 +233,140 @@ export default function CostCalculatorScreen() {
           )}
         </section>
 
-        <section className="self-start rounded-lg border">
-          <h2 className="border-b px-5 py-3.5 font-semibold">
-            {t.cost.resultTitle}
-          </h2>
-
-          {result === null || !form ? (
-            <EmptyState
-              icon={Calculator}
-              title={t.cost.noResultTitle}
-              hint={t.cost.noResultHint}
-            />
-          ) : (
-            <div className="grid gap-4 p-5">
-              <div>
-                <p className="text-muted-foreground text-sm">{t.cost.unitCost}</p>
-                <p
-                  data-numeric
-                  className="text-primary mt-1 text-3xl font-semibold"
-                >
-                  {baht.format(result)}
-                </p>
-              </div>
-
-              <dl className="grid gap-2 border-t pt-4 text-sm">
-                <Line
-                  label={t.cost.purchaseInBaht}
-                  value={form.purchase_price * form.exchange_rate}
-                />
-                <Line label={t.cost.intlFreight} value={form.intl_freight} />
-                <Line label={t.cost.dutyFee} value={form.duty_fee} />
-                <Line
-                  label={t.cost.dividedBy(form.order_qty)}
-                  value={
-                    (form.purchase_price * form.exchange_rate +
-                      form.intl_freight +
-                      form.duty_fee) /
-                    form.order_qty
-                  }
-                />
-                <Line
-                  label={t.cost.marketplaceFee}
-                  value={form.marketplace_fee}
-                />
-                <Line label={t.cost.domesticShipping} value={form.domestic_shipping} />
-                <Line label={t.cost.rslCharge} value={form.rsl_charge} />
-              </dl>
-
-              {product && (
-                <div className="border-t pt-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {t.cost.currentPrice}
-                    </span>
-                    <span data-numeric>{baht.format(product.selling_price)}</span>
-                  </div>
-                  <div className="mt-1 flex justify-between font-medium">
-                    <span>{t.cost.marginPerUnit}</span>
-                    <span data-numeric>
-                      {baht.format(product.selling_price - result)}
-                    </span>
-                  </div>
+        <div className="grid content-start gap-6">
+          <section className="rounded-lg border">
+            <h2 className="border-b px-5 py-3.5 font-semibold">{t.cost.resultTitle}</h2>
+            {!result || !form ? (
+              <EmptyState icon={Calculator} title={t.cost.noResultTitle} hint={t.cost.noResultHint} />
+            ) : (
+              <div className="grid gap-4 p-5">
+                <div>
+                  <p className="text-muted-foreground text-sm">{t.cost.unitCost}</p>
+                  <p data-numeric className="text-primary mt-1 text-3xl font-semibold">
+                    {formatBaht(result.unit_cost)}
+                  </p>
                 </div>
-              )}
 
-              {overSellingPrice && (
-                <p
-                  role="alert"
-                  className="text-destructive border-destructive/20 bg-destructive/5 rounded-md border px-3 py-2.5 text-sm"
-                >
-                  {t.cost.errOverPrice}
-                </p>
-              )}
+                <dl className="grid gap-2 border-t pt-4 text-sm">
+                  <Line
+                    label={t.cost.purchaseInBaht}
+                    value={result.components.purchase_price * result.components.exchange_rate}
+                  />
+                  <Line label={t.cost.intlFreight} value={result.components.intl_freight} />
+                  <Line label={t.cost.dutyFee} value={result.components.duty_fee} />
+                  <Line
+                    label={t.cost.dividedBy(result.components.order_qty)}
+                    value={
+                      (result.components.purchase_price * result.components.exchange_rate +
+                        result.components.intl_freight +
+                        result.components.duty_fee) /
+                      result.components.order_qty
+                    }
+                  />
+                  <Line label={t.cost.marketplaceFee} value={result.components.marketplace_fee} />
+                  <Line label={t.cost.domesticShipping} value={result.components.domestic_shipping} />
+                  <Line label={t.cost.rslCharge} value={result.components.rsl_charge} />
+                </dl>
 
-              <Button asChild variant="outline">
-                <Link href={`/reports/unit-cost/${form.sku}`}>
-                  <FileText />
-                  {t.cost.viewReport}
-                </Link>
-              </Button>
-            </div>
+                {product && product.selling_price !== null && (
+                  <div className="border-t pt-4 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t.cost.currentPrice}</span>
+                      <span data-numeric>{formatBaht(product.selling_price)}</span>
+                    </div>
+                    <div className="mt-1 flex justify-between font-medium">
+                      <span>{t.cost.marginPerUnit}</span>
+                      <span data-numeric>{formatBaht(product.selling_price - result.unit_cost)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ทางเลือก #2: ต้นทุนสูงกว่าราคาขาย (สีแดง) */}
+                {result.overPrice && <SectionMessage appearance="error">{t.cost.errOverPrice}</SectionMessage>}
+
+                <Button asChild variant="outline">
+                  <Link href={`/reports/unit-cost/${sku}`}>
+                    <FileText />
+                    {t.cost.viewReport}
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </section>
+
+          {form && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">{t.cost.historyTitle}</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-1.5 text-sm">
+                {history.length === 0 ? (
+                  <p className="text-muted-foreground">{t.cost.historyEmpty}</p>
+                ) : (
+                  history.slice(0, 5).map((h) => (
+                    <div key={h.calculated_at} className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">{formatDateTime(h.calculated_at, lang)}</span>
+                      <span data-numeric>{formatBaht(h.unit_cost)}</span>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
           )}
-        </section>
+        </div>
       </div>
+
+      {result && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.cost.compareTitle}</CardTitle>
+            <CardDescription>{t.cost.compareHint}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {quotes.length === 0 ? (
+              <p className="text-muted-foreground text-sm">{t.cost.compareNone}</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.common.supplier}</TableHead>
+                    <TableHead className="text-right">{t.cost.purchasePrice}</TableHead>
+                    <TableHead className="text-right">{t.cost.intlFreight}</TableHead>
+                    <TableHead className="text-right">{t.cost.unitCost}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comparison.map((row) => {
+                    const best = Math.min(...comparison.map((c) => c.unit_cost)) === row.unit_cost;
+                    return (
+                      <TableRow key={row.supplier}>
+                        <TableCell>
+                          {row.supplier}
+                          {row.current && (
+                            <span className="text-muted-foreground ml-2 text-xs">{t.cost.compareCurrent}</span>
+                          )}
+                        </TableCell>
+                        <TableCell data-numeric className="text-right">
+                          {row.purchase_price.toLocaleString("th-TH")} {row.currency}
+                        </TableCell>
+                        <TableCell data-numeric className="text-right">
+                          {formatBaht(row.intl_freight)}
+                        </TableCell>
+                        <TableCell
+                          data-numeric
+                          className={`text-right font-medium ${best ? "text-status-success" : ""}`}
+                        >
+                          {formatBaht(row.unit_cost)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -279,7 +375,7 @@ function Line({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd data-numeric>{baht.format(value)}</dd>
+      <dd data-numeric>{formatBaht(value)}</dd>
     </div>
   );
 }

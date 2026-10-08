@@ -9,7 +9,11 @@ import type { Order } from "@/types/order";
 
 const col = createColumnHelper<AppTableFeatures, Order>();
 
-export function cancelColumns(t: Dict, onCancel: (order: Order) => void) {
+export function cancelColumns(
+  t: Dict,
+  onCancel: (order: Order) => void,
+  noteOf: (order: Order) => string | null,
+) {
   return col.columns([
     col.accessor("order_id", {
       header: "Order ID",
@@ -38,6 +42,16 @@ export function cancelColumns(t: Dict, onCancel: (order: Order) => void) {
       header: t.common.status,
       meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
+    }),
+    col.display({
+      id: "note",
+      header: t.cancel.note,
+      cell: (ctx) => {
+        const note = noteOf(ctx.row.original);
+        return note ? (
+          <span className="text-status-cancelled block max-w-[36ch] text-xs">{note}</span>
+        ) : null;
+      },
     }),
     col.display({
       id: "actions",

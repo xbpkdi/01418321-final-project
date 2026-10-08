@@ -18,14 +18,13 @@ import { GlowCard } from "@/components/landing/glow-card";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useT } from "@/lib/i18n/context";
-import { MOCK_USERS } from "@/mock/users";
-
-// รูปแบบอีเมลตามที่ UC 1A ขั้นตอนที่ 3 กำหนดไว้ตรงตัว
-const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
+import { useStore } from "@/lib/store";
+import { login } from "@/lib/workflow";
 
 export default function LoginScreen() {
   const router = useRouter();
   const t = useT();
+  const { run } = useStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -51,39 +50,29 @@ export default function LoginScreen() {
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-
-    // 1. ตรวจสอบค่าที่กรอกมา
-    if (!email.trim() || !password.trim()) {
-      setError(t.login.errIncomplete);
-      return;
-    }
-
-    // 2. ตรวจสอบรูปแบบอีเมล
-    if (!EMAIL_PATTERN.test(email.trim())) {
-      setError(t.login.errEmailFormat);
-      return;
-    }
-
-    // 3. ตรวจสอบอีเมลและรหัสผ่าน (Q1.1) — ของจริงจะย้ายไปทำฝั่ง server
     setSubmitting(true);
+
+    // ขั้นตอนที่ 3 ทั้งหมด (ตรวจค่าว่าง → รูปแบบอีเมล → Q1.1) อยู่ใน workflow.login
+    // ของจริงจะย้ายไปทำฝั่ง server และเทียบ hash แทนการเทียบตรงๆ
     window.setTimeout(() => {
-      const user = MOCK_USERS.find((u) => u.user_email === email.trim());
-
-      if (user && user.fail_attempts >= 5) {
-        setError(t.login.errTooManyAttempts);
-        setSubmitting(false);
+      const { result } = run((s) => {
+        const r = login(s, email, password);
+        return { state: r.state, result: r.result };
+      });
+      setSubmitting(false);
+      if (result === "ok") {
+        toast.success(t.login.okLogin);
+        router.push("/dashboard");
         return;
       }
-
-      // ไม่ระบุว่าผิดที่ฟิลด์ใด เพื่อความปลอดภัย
-      if (!user || user.user_password !== password) {
-        setError(t.login.errWrongCredentials);
-        setSubmitting(false);
-        return;
-      }
-
-      toast.success(t.login.okLogin);
-      router.push("/dashboard");
+      setError(
+        {
+          incomplete: t.login.errIncomplete,
+          "email-format": t.login.errEmailFormat,
+          locked: t.login.errTooManyAttempts,
+          wrong: t.login.errWrongCredentials,
+        }[result],
+      );
     }, 600);
   }
 

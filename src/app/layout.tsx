@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Archivo, Kanit, Noto_Sans_Thai } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n/context";
+import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
 // UI: Archivo สำหรับละติน ส่วนอักษรไทยตกไปที่ Noto Sans Thai
@@ -19,7 +20,7 @@ const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai"], weight: "700"
 export const metadata: Metadata = {
   title: "RSL Fulfillment Hub",
   description:
-    "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่านมาร์เก็ตเพลสญี่ปุ่น เชื่อมต่อกับ RSL",
+    "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่าน Rakuten Ichiba เชื่อมต่อกับ RSL",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="th" className={`${archivo.variable} ${notoSansThai.variable} ${anton.variable} ${kanit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
-          {children}
+          <StoreProvider>{children}</StoreProvider>
           <Toaster />
         </LanguageProvider>
       </body>

@@ -51,6 +51,7 @@ export default function SiteMapScreen() {
                     <p className="text-muted-foreground text-xs">
                       {t.nav.items[item.titleKey]}
                       {item.uc !== "—" && ` · UC ${item.uc}`}
+                      {item.hostsUc && ` · ${t.sitemap.alsoHere(item.hostsUc)}`}
                     </p>
                   </li>
                 ))}

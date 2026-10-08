@@ -4,12 +4,29 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { AppTableFeatures } from "@/components/shared/data-table";
+import { useT } from "@/lib/i18n/context";
 import type { Dict } from "@/lib/i18n/dict";
-import type { StockLevel } from "@/types/product";
+import type { StockCheck } from "@/lib/workflow";
 
-export type StockRow = StockLevel & { total: number; low: boolean };
+export type StockRow = Extract<StockCheck, { found: true }> & {
+  product_name: string;
+  variation: string;
+};
 
 const col = createColumnHelper<AppTableFeatures, StockRow>();
+
+/** สีแดง = ต่ำกว่าเกณฑ์, สีเขียว = ปกติ ตามที่ UC 3S กำหนด */
+export function StockBadge({ low }: { low: boolean }) {
+  const t = useT();
+  return (
+    <Badge
+      variant="secondary"
+      className={low ? "bg-status-cancelled-bg text-status-cancelled" : "bg-status-success-bg text-status-success"}
+    >
+      {low ? t.stock.low : t.stock.normal}
+    </Badge>
+  );
+}
 
 export function stockColumns(t: Dict) {
   return col.columns([
@@ -24,9 +41,7 @@ export function stockColumns(t: Dict) {
       cell: (ctx) => (
         <div>
           <p>{ctx.getValue()}</p>
-          <p className="text-muted-foreground text-xs">
-            {ctx.row.original.variation}
-          </p>
+          <p className="text-muted-foreground text-xs">{ctx.row.original.variation}</p>
         </div>
       ),
     }),
@@ -44,7 +59,7 @@ export function stockColumns(t: Dict) {
       meta: { label: t.stock.rsl },
       cell: (ctx) => (
         <div data-numeric className="text-right">
-          {ctx.row.original.incomplete ? (
+          {ctx.getValue() === null ? (
             <span className="text-muted-foreground">{t.common.notFound}</span>
           ) : (
             ctx.getValue()
@@ -61,7 +76,7 @@ export function stockColumns(t: Dict) {
         </div>
       ),
     }),
-    col.accessor("reorder_threshold", {
+    col.accessor("threshold", {
       header: () => <div className="text-right">{t.common.reorderThreshold}</div>,
       meta: { label: t.common.reorderThreshold },
       cell: (ctx) => (
@@ -75,23 +90,11 @@ export function stockColumns(t: Dict) {
       header: t.common.status,
       cell: (ctx) => (
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge
-            variant="secondary"
-            className={
-              ctx.row.original.low
-                ? "bg-status-cancelled-bg text-status-cancelled"
-                : "bg-status-success-bg text-status-success"
-            }
-          >
-            {ctx.row.original.low ? t.stock.low : t.stock.normal}
-          </Badge>
-          {ctx.row.original.incomplete && (
-            <Badge
-              variant="secondary"
-              className="bg-status-attention-bg text-status-attention"
-            >
+          <StockBadge low={ctx.row.original.low} />
+          {(ctx.row.original.incomplete || ctx.row.original.partial) && (
+            <Badge variant="secondary" className="bg-status-attention-bg text-status-attention">
               <AlertTriangle />
-              {t.stock.incomplete}
+              {ctx.row.original.incomplete ? t.stock.incomplete : t.stock.partial}
             </Badge>
           )}
         </div>
