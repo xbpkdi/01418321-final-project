@@ -109,7 +109,7 @@
   --sidebar-selected: #e9f2fe; /* color.background.selected */
   --sidebar-selected-foreground: #1868db; /* color.text.selected */
   --sidebar-border: #0b120e24; /* color.border */
-  --header: #1c2b42; /* color.background.brand.boldest */
+  --header: #292a2e; /* color.background.neutral.bold */
   --header-foreground: #ffffff; /* color.text.inverse */
 
   --sidebar-ring: #4688ec; /* color.border.focused */

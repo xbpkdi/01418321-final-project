@@ -20,7 +20,7 @@
 | `--input` | `#8c8f97` | `color.border.input` | ขอบ input |
 | `--ring` | `#4688ec` | `color.border.focused` | focus ring |
 | `--sidebar-selected` | `#e9f2fe` | `color.background.selected` | เมนูที่เลือกอยู่ (ตัวอักษร `color.text.selected` `#1868db`) |
-| `--header` | `#1c2b42` | `color.background.brand.boldest` | แถบบน (ตัวอักษร `color.text.inverse`) |
+| `--header` | `#292a2e` | `color.background.neutral.bold` | แถบบน (ตัวอักษร `color.text.inverse`) |
 | `--sky` | `#669df1` | `color.background.accent.blue.subtle` | แสง ribbon |
 | `--coral` | `#ff5a36` | (แนว quark) | จุด `.` ท้ายหัวข้อใหญ่, ขีดเหนือหัวข้อการ์ด Login, แสงตามเมาส์ |
 
