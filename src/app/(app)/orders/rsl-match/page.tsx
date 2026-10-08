@@ -3,7 +3,7 @@
 // RslMatchScreen — UC 1S จับคู่ Order กับเลข RSL
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Link2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/co
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { matchedColumns, queueColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
@@ -37,6 +38,7 @@ export default function RslMatchScreen() {
     options: RslShipment[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
   const [working, setWorking] = useState<string | null>(null);
 
   const queue = MOCK_ORDERS.filter(
@@ -131,6 +133,16 @@ export default function RslMatchScreen() {
     unmatch,
   );
 
+  // ค้นด้วย Order ID หรือ SKU เฉพาะคิวรอจับคู่
+  const visibleQueue = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    if (!q) return queue;
+    return queue.filter(
+      (o) =>
+        o.order_id.toLowerCase().includes(q) || o.sku.toLowerCase().includes(q),
+    );
+  }, [queue, keyword]);
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -194,15 +206,25 @@ export default function RslMatchScreen() {
         </CardHeader>
         <CardContent>
           <DataTable
-            data={queue}
+            data={visibleQueue}
             columns={queueCols}
             getRowId={(row) => row.order_id}
             showColumnToggle={false}
+            toolbar={
+              <TableSearch
+                value={keyword}
+                onChange={setKeyword}
+                label={t.rslMatch.searchLabel}
+                placeholder={t.rslMatch.searchPlaceholder}
+              />
+            }
             emptyState={
               <EmptyState
                 icon={Link2}
-                title={t.rslMatch.emptyTitle}
-                hint={t.rslMatch.emptyHint}
+                title={
+                  keyword ? t.rslMatch.emptySearchTitle : t.rslMatch.emptyTitle
+                }
+                hint={keyword ? t.rslMatch.emptySearchHint : t.rslMatch.emptyHint}
               />
             }
           />

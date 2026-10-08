@@ -3,7 +3,7 @@
 // LabelPrintScreen — UC 9A พิมพ์ใบปะสินค้า
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { printedColumns, queueColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
@@ -35,9 +36,21 @@ export default function LabelPrintScreen() {
   const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [reprint, setReprint] = useState<Order | null>(null);
+  const [keyword, setKeyword] = useState("");
 
   const queue = orders.filter((o) => READY.includes(o.order_status));
   const printed = orders.filter((o) => o.order_status === "พิมพ์ใบปะสินค้าแล้ว");
+
+  // ค้นด้วย Order ID หรือที่อยู่จัดส่ง เฉพาะคิวรอพิมพ์
+  const visibleQueue = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    if (!q) return queue;
+    return queue.filter(
+      (o) =>
+        o.order_id.toLowerCase().includes(q) ||
+        o.shipping_address.toLowerCase().includes(q),
+    );
+  }, [queue, keyword]);
 
   function print(order: Order) {
     // ตรวจสอบ: ต้องมีที่อยู่จัดส่งและวิธีจัดส่งครบถ้วน
@@ -103,15 +116,23 @@ export default function LabelPrintScreen() {
         </CardHeader>
         <CardContent>
           <DataTable
-            data={queue}
+            data={visibleQueue}
             columns={queueCols}
             getRowId={(row) => row.order_id}
             showColumnToggle={false}
+            toolbar={
+              <TableSearch
+                value={keyword}
+                onChange={setKeyword}
+                label={t.label.searchLabel}
+                placeholder={t.label.searchPlaceholder}
+              />
+            }
             emptyState={
               <EmptyState
                 icon={Printer}
-                title={t.label.emptyTitle}
-                hint={t.label.emptyHint}
+                title={keyword ? t.label.emptySearchTitle : t.label.emptyTitle}
+                hint={keyword ? t.label.emptySearchHint : t.label.emptyHint}
               />
             }
           />

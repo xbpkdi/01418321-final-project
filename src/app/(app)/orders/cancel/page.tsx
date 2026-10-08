@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import { Suspense } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { cancelColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
@@ -43,6 +44,7 @@ function CancelOrderContent() {
   const [target, setTarget] = useState<Order | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [keyword, setKeyword] = useState("");
 
   const open = React.useCallback(
     (order: Order) => {
@@ -105,6 +107,18 @@ function CancelOrderContent() {
     .filter((o) => !focusStatus || o.order_status === focusStatus);
   const columns = React.useMemo(() => cancelColumns(t, open), [t, open]);
 
+  // ค้นด้วย Order ID, SKU หรือชื่อสินค้า
+  const visible = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    if (!q) return cancellable;
+    return cancellable.filter(
+      (o) =>
+        o.order_id.toLowerCase().includes(q) ||
+        o.sku.toLowerCase().includes(q) ||
+        o.product_name.toLowerCase().includes(q),
+    );
+  }, [cancellable, keyword]);
+
   return (
     <div className="grid gap-6 p-6">
       <PageHeader
@@ -113,14 +127,22 @@ function CancelOrderContent() {
       />
 
       <DataTable
-        data={cancellable}
+        data={visible}
         columns={columns}
         getRowId={(row) => row.order_id}
+        toolbar={
+          <TableSearch
+            value={keyword}
+            onChange={setKeyword}
+            label={t.cancel.searchLabel}
+            placeholder={t.cancel.searchPlaceholder}
+          />
+        }
         emptyState={
           <EmptyState
             icon={XCircle}
-            title={t.cancel.emptyTitle}
-            hint={t.cancel.emptyHint}
+            title={keyword ? t.cancel.emptySearchTitle : t.cancel.emptyTitle}
+            hint={keyword ? t.cancel.emptySearchHint : t.cancel.emptyHint}
           />
         }
       />

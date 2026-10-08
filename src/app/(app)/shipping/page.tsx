@@ -3,13 +3,14 @@
 // ShipmentScreen — UC 8A จัดส่งสินค้าให้ลูกค้าผ่าน Delivery
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
+import { TableSearch } from "@/components/shared/table-search";
 import { shippedColumns, waitingColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { MOCK_ORDERS } from "@/mock/orders";
@@ -20,6 +21,7 @@ export default function ShipmentScreen() {
   const t = useT();
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [tracking, setTracking] = useState<Record<string, string>>({});
+  const [keyword, setKeyword] = useState("");
 
   const waiting = orders.filter(
     (o) => o.order_status === "พิมพ์ใบปะสินค้าแล้ว",
@@ -27,6 +29,17 @@ export default function ShipmentScreen() {
   const shipped = orders.filter((o) =>
     ["อยู่ระหว่างจัดส่ง", "จัดส่งสำเร็จ"].includes(o.order_status),
   );
+
+  // ค้นด้วย Order ID หรือชื่อสินค้า เฉพาะคิวรอส่งมอบ
+  const visibleWaiting = useMemo(() => {
+    const q = keyword.trim().toLowerCase();
+    if (!q) return waiting;
+    return waiting.filter(
+      (o) =>
+        o.order_id.toLowerCase().includes(q) ||
+        o.product_name.toLowerCase().includes(q),
+    );
+  }, [waiting, keyword]);
 
   function dispatch(order: Order) {
     // ตรวจสอบ: ต้องพิมพ์ใบปะสินค้าแล้วเท่านั้น
@@ -87,15 +100,25 @@ export default function ShipmentScreen() {
         </CardHeader>
         <CardContent>
           <DataTable
-            data={waiting}
+            data={visibleWaiting}
             columns={waitingCols}
             getRowId={(row) => row.order_id}
             showColumnToggle={false}
+            toolbar={
+              <TableSearch
+                value={keyword}
+                onChange={setKeyword}
+                label={t.shipping.searchLabel}
+                placeholder={t.shipping.searchPlaceholder}
+              />
+            }
             emptyState={
               <EmptyState
                 icon={Truck}
-                title={t.shipping.emptyTitle}
-                hint={t.shipping.emptyHint}
+                title={
+                  keyword ? t.shipping.emptySearchTitle : t.shipping.emptyTitle
+                }
+                hint={keyword ? t.shipping.emptySearchHint : t.shipping.emptyHint}
               />
             }
           />
