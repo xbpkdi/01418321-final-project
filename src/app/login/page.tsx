@@ -103,7 +103,7 @@ export default function LoginScreen() {
           <p className="eyebrow">{t.app.company}</p>
           <FlapTitle
             text={t.app.name}
-            className="display mt-4 cursor-default text-[clamp(3rem,7.5vw,7rem)]"
+            className="display mt-4 cursor-default text-[clamp(4.5rem,12vw,11rem)]"
             suffix={
               <span
                 aria-hidden
@@ -118,8 +118,8 @@ export default function LoginScreen() {
 
         <div className="rise" style={{ animationDelay: "140ms" }}>
           <GlowCard className="p-6 sm:p-8">
-            {/* ขีดสั้นแบบที่คั่นหนังสือ ไม่ชนมุมโค้งของการ์ด */}
-            <span aria-hidden className="bg-cobalt mb-4 block h-1 w-10 rounded-full" />
+            {/* ขีดสั้นแบบที่คั่นหนังสือ สีคอรัลเข้าชุดกับจุดหลังหัวข้อใหญ่ */}
+            <span aria-hidden className="bg-coral mb-4 block h-1 w-10 rounded-full" />
             <h2 className="display text-4xl">{t.login.title}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
               {t.login.description}

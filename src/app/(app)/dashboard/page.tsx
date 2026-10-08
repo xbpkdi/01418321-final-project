@@ -118,7 +118,7 @@ export default function DashboardScreen() {
               </CardDescription>
               <CardTitle
                 data-numeric
-                className="font-display mt-2 text-6xl leading-none font-extrabold tracking-tight tabular-nums"
+                className="font-display mt-2 text-6xl leading-none tabular-nums"
               >
                 <CountUp value={item.count} />
               </CardTitle>

@@ -55,7 +55,7 @@ export function AppSidebar() {
                   <Boxes className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="display truncate text-[0.95rem]">
+                  <span className="display truncate text-lg">
                     {t.app.name}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
