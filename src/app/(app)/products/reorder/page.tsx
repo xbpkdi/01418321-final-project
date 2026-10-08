@@ -23,7 +23,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataTable } from "@/components/shared/data-table";
 import { purchaseColumns } from "./columns";
-import { useT } from "@/lib/i18n/context";
+import { useLanguage } from "@/lib/i18n/context";
 import { MOCK_PURCHASE_QUEUE, MOCK_REORDER_CANDIDATES } from "@/mock/products";
 import type { ReorderCandidate } from "@/types/product";
 
@@ -36,7 +36,13 @@ const baht = new Intl.NumberFormat("th-TH", {
 type Decision = "คุ้มค่า" | "ไม่คุ้มค่า";
 
 export default function ReorderDecisionScreen() {
-  const t = useT();
+  const { lang, t } = useLanguage();
+  // วันที่ต้องตามภาษาที่เลือก ไม่ใช่แสดง ISO ดิบ
+  const etaFormatter = new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
   const [candidates, setCandidates] = useState(MOCK_REORDER_CANDIDATES);
   const [queue, setQueue] = useState(MOCK_PURCHASE_QUEUE);
   const [confirming, setConfirming] = useState<{
@@ -180,7 +186,11 @@ export default function ReorderDecisionScreen() {
 
                     {c.has_pending_po && (
                       <p className="border-status-attention/30 bg-status-attention-bg text-status-attention border-t px-5 py-3 text-sm">
-                        {t.reorder.pendingPo(c.pending_po_eta ?? "")}
+                        {t.reorder.pendingPo(
+                          c.pending_po_eta
+                            ? etaFormatter.format(new Date(`${c.pending_po_eta}T00:00:00`))
+                            : "",
+                        )}
                       </p>
                     )}
 
