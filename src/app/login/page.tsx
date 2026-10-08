@@ -120,7 +120,7 @@ export default function LoginScreen() {
         <div className="rise" style={{ animationDelay: "140ms" }}>
           <GlowCard className="px-6 py-7 sm:py-8">
             {/* ขีดสั้นแบบที่คั่นหนังสือ สีคอรัลเข้าชุดกับจุดหลังหัวข้อใหญ่ */}
-            <span aria-hidden className="bg-coral mb-4 block h-1 w-10 rounded-full" />
+            <span aria-hidden className="bg-coral mb-4 block h-1 w-16 rounded-full" />
             <h2 className="display text-4xl">{t.login.title}</h2>
             <p className="text-muted-foreground mt-2 text-sm">
               {t.login.description}
