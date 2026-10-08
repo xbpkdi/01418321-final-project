@@ -269,41 +269,6 @@
     color: var(--cobalt);
   }
 
-  /* เทปกาวพาดเฉียง (TapeTicker) */
-  .tape {
-    width: 112%;
-    margin-left: -6%;
-    overflow: hidden;
-    padding-block: 0.7rem;
-    background: var(--cobalt);
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: clamp(1.1rem, 2vw, 1.6rem);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    transform: rotate(-2.5deg);
-    box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--cobalt) 70%, transparent);
-  }
-  .tape-alt {
-    background: var(--amber);
-    color: var(--navy-deep);
-    transform: rotate(1.5deg);
-  }
-  .tape-track {
-    display: flex;
-    width: max-content;
-    animation: tape 32s linear infinite;
-  }
-  .tape-alt .tape-track {
-    animation-direction: reverse;
-  }
-  .tape-row {
-    display: flex;
-    gap: 3rem;
-    padding-right: 3rem;
-    white-space: nowrap;
-  }
-
   /* การ์ดกระจกที่เอียงตามเมาส์ (TiltCard) */
   .tilt-stage {
     perspective: 1100px;
@@ -372,12 +337,6 @@
   }
 }
 
-@keyframes tape {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @keyframes ribbon-drift {
   to {
     transform: rotate(-7deg) translateX(6%);
@@ -398,8 +357,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ribbon,
   .ribbon-2,
-  .rise,
-  .tape-track {
+  .rise {
     animation: none;
   }
   .tilt-card,

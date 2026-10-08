@@ -2,11 +2,10 @@
 
 // LoginScreen — UC 1A เข้าสู่ระบบ
 // โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย (split-flap) + การ์ดฟอร์มกระจกขวา
-// ด้านหลังเป็นกล่องพัสดุ 3D (three.js) และแสงตามเมาส์ ด้านล่างเป็นเทปกาวชื่อช่องทางขาย
+// ด้านหลังเป็นแถบแสง ribbon โทนน้ำเงินและแสงจางๆ ตามเมาส์
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
 
 import { useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -15,21 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { LanguageToggle } from "@/components/app-shell/language-toggle";
 import { FlapTitle } from "@/components/landing/flap-title";
-import { TapeTicker } from "@/components/landing/tape-ticker";
 import { TiltCard } from "@/components/landing/tilt-card";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { MOCK_CONNECTIONS } from "@/mock/orders";
+
 import { useT } from "@/lib/i18n/context";
 import { MOCK_USERS } from "@/mock/users";
 
 // รูปแบบอีเมลตามที่ UC 1A ขั้นตอนที่ 3 กำหนดไว้ตรงตัว
 const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
-
-// WebGL มีแค่ฝั่ง client และหนัก จึงโหลดแยกหลังหน้าแสดงแล้ว
-const ParcelScene = dynamic(
-  () => import("@/components/landing/parcel-scene").then((m) => m.ParcelScene),
-  { ssr: false },
-);
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -94,11 +86,10 @@ export default function LoginScreen() {
       onPointerMove={trackGlow}
       className="cursor-glow relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
     >
-      <div className="absolute inset-0 -z-10">
-        <ParcelScene eventSource={hostRef} still={still} />
-      </div>
+      <div className="ribbon" aria-hidden />
+      <div className="ribbon ribbon-2" aria-hidden />
 
-      <header className="flex items-center justify-between gap-4 border-b bg-white/40 px-[clamp(16px,4vw,48px)] py-4 backdrop-blur-md">
+      <header className="flex items-center justify-between gap-4 border-b px-[clamp(16px,4vw,48px)] py-4">
         <span className="display flex items-center gap-2 text-xl">
           <span className="bg-cobalt size-2.5 rounded-full" />
           {t.app.name}
@@ -181,20 +172,7 @@ export default function LoginScreen() {
         </div>
       </main>
 
-      <div className="pointer-events-none relative -mb-2 grid gap-0 py-6">
-        <TapeTicker
-          items={MOCK_CONNECTIONS.map((c) => ({ label: c.channel, ok: c.connected }))}
-        />
-        <TapeTicker
-          alt
-          items={[
-            { label: t.app.name, ok: true },
-            { label: t.app.company, ok: true },
-          ]}
-        />
-      </div>
-
-      <footer className="bg-white/50 px-[clamp(16px,4vw,48px)] py-4 backdrop-blur-md">
+      <footer className="px-[clamp(16px,4vw,48px)] py-5">
         <FieldDescription>{t.login.footer}</FieldDescription>
       </footer>
     </div>
