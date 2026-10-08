@@ -109,6 +109,9 @@ const th = {
       "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
     errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
     okLogin: "เข้าสู่ระบบสำเร็จ",
+    // ประโยคเดียวกับ description ใน metadata ของ layout
+    tagline:
+      "ระบบจัดการคำสั่งซื้อและการจัดส่งสินค้าผ่านมาร์เก็ตเพลสญี่ปุ่น เชื่อมต่อกับ RSL",
   },
 
   dashboard: {
@@ -539,6 +542,8 @@ const en: typeof th = {
       "Too many sign-in attempts. Please wait a moment before trying again",
     errWrongCredentials: "Incorrect email or password",
     okLogin: "Signed in successfully",
+    tagline:
+      "Order and shipping management for Japanese marketplaces, connected to RSL",
   },
 
   dashboard: {

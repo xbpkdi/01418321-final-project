@@ -10,7 +10,7 @@
   --font-sans: var(--font-archivo), var(--font-noto-thai), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
   --font-heading: var(--font-archivo), var(--font-noto-thai), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-anton), var(--font-kanit), Impact, "Arial Narrow", sans-serif;
+  --font-display: var(--font-bricolage), var(--font-kanit), ui-sans-serif, system-ui, sans-serif;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --color-navy: var(--navy);
   --color-navy-deep: var(--navy-deep);
@@ -189,13 +189,13 @@
 
 /* ใช้กับหน้ารายงาน (rubric ข้อ 31) — ซ่อน UI ที่ไม่ต้องติดไปบนกระดาษ */
 @layer components {
-  /* หัวข้อใหญ่แบบ poster: Anton (ละติน) + Kanit 700 (ไทย) */
+  /* หัวข้อใหญ่แบบ poster: Bricolage Grotesque 800 (ละติน) + Kanit 700 (ไทย) */
   .display {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: -0.01em;
-    line-height: 0.95;
+    letter-spacing: -0.03em;
+    line-height: 0.92;
   }
   /* label เล็กตัวพิมพ์ใหญ่เว้นระยะ ใช้เหนือหัวข้อและหัวกลุ่มเมนู */
   .eyebrow {
@@ -273,7 +273,7 @@
     color: var(--cobalt);
   }
 
-  /* การ์ดกระจก (GlowCard): ตัวการ์ดนิ่ง ขอบเรืองแสงตามเมาส์ แถบไล่สีด้านบน */
+  /* การ์ดกระจก (GlowCard): ตัวการ์ดนิ่ง ขอบเรืองแสงตามเมาส์ */
   .glow-card {
     position: relative;
     overflow: hidden;
@@ -304,15 +304,6 @@
     mask-composite: exclude;
     pointer-events: none;
   }
-  .glow-card::after {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto;
-    height: 5px;
-    /* สีทึบตัดขอบ ไม่ไล่สี: cobalt แล้วจบด้วยคอรัลท่อนสั้น */
-    background: linear-gradient(90deg, var(--cobalt) 0 84%, var(--coral) 84% 100%);
-  }
-
   /* ตารางเส้นบางแบบกระดาษ blueprint จางลงที่ขอบ */
   .grid-paper {
     position: absolute;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton, Archivo, Kanit, Noto_Sans_Thai } from "next/font/google";
+import { Archivo, Bricolage_Grotesque, Kanit, Noto_Sans_Thai } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n/context";
 import "./globals.css";
@@ -12,8 +12,8 @@ const notoSansThai = Noto_Sans_Thai({
   weight: ["400", "500", "600", "700"],
 });
 
-// Display: Anton ไม่มีอักษรไทย จึงจับคู่กับ Kanit 700 ที่หนักและแคบใกล้เคียงกัน
-const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: "400" });
+// Display: Bricolage Grotesque ไม่มีอักษรไทย จึงจับคู่กับ Kanit 700 ที่หนักใกล้เคียงกัน
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai"], weight: "700" });
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="th" className={`${archivo.variable} ${notoSansThai.variable} ${anton.variable} ${kanit.variable} h-full antialiased`}>
+    <html lang="th" className={`${archivo.variable} ${notoSansThai.variable} ${bricolage.variable} ${kanit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
           {children}
