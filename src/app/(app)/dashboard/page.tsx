@@ -36,15 +36,13 @@ import { useLanguage } from "@/lib/i18n/context";
 // ส่ง status ไปกรองปลายทางด้วย ไม่งั้นพอรายการเยอะจะหาไม่เจอว่ากดมาจากใบไหน
 // "รอดำเนินการด้วยตนเอง" ต้องไปหน้ายกเลิก Order เพราะเป็นหน้าเดียวที่แสดง Order ได้ทุกสถานะ
 // (หน้าตรวจสอบคำสั่งซื้อกรองเฉพาะ "รอตรวจสอบคำสั่งซื้อ" จึงไม่เคยแสดงรายการกลุ่มนี้)
-// accent = สีแยกการ์ดแต่ละใบ (accent ของ Atlassian) ส้มให้ใบที่ต้องทำเองเพราะเป็นกลุ่ม attention
-const WATCHED: { status: OrderStatus; href: string; accent: string }[] = [
-  { status: "รอตรวจสอบคำสั่งซื้อ", href: "/orders/verify", accent: "blue" },
-  { status: "รอ Admin ตัดสินใจสั่งซื้อ", href: "/products/reorder", accent: "teal" },
-  { status: "รอพิมพ์ใบปะสินค้า", href: "/shipping/label", accent: "purple" },
+const WATCHED: { status: OrderStatus; href: string }[] = [
+  { status: "รอตรวจสอบคำสั่งซื้อ", href: "/orders/verify" },
+  { status: "รอ Admin ตัดสินใจสั่งซื้อ", href: "/products/reorder" },
+  { status: "รอพิมพ์ใบปะสินค้า", href: "/shipping/label" },
   {
     status: "รอดำเนินการด้วยตนเอง",
     href: `/orders/cancel?status=${encodeURIComponent("รอดำเนินการด้วยตนเอง")}`,
-    accent: "orange",
   },
 ];
 
@@ -107,12 +105,9 @@ export default function DashboardScreen() {
         {counts.map((item, i) => (
           <Card
             key={item.status}
-            className="rise stat-card bg-(--accent-bg)"
-            style={{
-              animationDelay: `${80 + i * 60}ms`,
-              ["--accent-bg" as string]: `var(--accent-${item.accent}-subtlest)`,
-              ["--tone" as string]: `var(--accent-${item.accent}-bolder)`,
-            }}
+            // การ์ดขาว แถบบนสี primary ทุกใบ: สีแยกต่อใบไม่ได้สื่อความหมาย และไปชนกับสีสถานะ
+            className="rise stat-card"
+            style={{ animationDelay: `${80 + i * 60}ms` }}
           >
             <CardHeader>
               <CardDescription>
@@ -120,7 +115,7 @@ export default function DashboardScreen() {
               </CardDescription>
               <CardTitle
                 data-numeric
-                className="font-display mt-2 text-6xl leading-none text-(--tone) tabular-nums"
+                className="font-display mt-2 text-6xl leading-none tabular-nums"
               >
                 <CountUp value={item.count} />
               </CardTitle>

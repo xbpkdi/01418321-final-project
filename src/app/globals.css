@@ -112,16 +112,7 @@
   --header: #1c2b42; /* color.background.brand.boldest */
   --header-foreground: #ffffff; /* color.text.inverse */
 
-  /* สีแยกการ์ดสถิติบน dashboard: color.background.accent.*.subtlest (พื้น) / .bolder (ตัวเลข) */
-  --accent-blue-subtlest: #e9f2fe;
-  --accent-blue-bolder: #1868db;
-  --accent-teal-subtlest: #e7f9ff;
-  --accent-teal-bolder: #227d9b;
-  --accent-purple-subtlest: #f8eefe;
-  --accent-purple-bolder: #964ac0;
-  --accent-orange-subtlest: #fff5db;
-  --accent-orange-bolder: #bd5b00;
-  --sidebar-ring: #4688ec;
+  --sidebar-ring: #4688ec; /* color.border.focused */
 
   /* สีสถานะ 5 กลุ่ม → ใช้ใน StatusBadge (Atlassian lozenge: text.* บน background.*) */
   --status-waiting: #505258; /* color.text.subtle */
@@ -382,11 +373,11 @@
     position: absolute;
     inset: 0 0 auto;
     height: 4px;
-    background: var(--tone, var(--cobalt));
+    background: var(--primary);
   }
   .stat-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--tone, var(--cobalt)) 60%, transparent);
+    box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--primary) 60%, transparent);
   }
 }
 
