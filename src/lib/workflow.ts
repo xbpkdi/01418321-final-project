@@ -1729,6 +1729,16 @@ export function runAutomation(input: AppState): {
         // Q7S.1 — ตัดไปแล้ว ข้ามเพื่อกันตัดซ้ำ
         if (o.stock_deducted) {
           s = setStatus(s, o.order_id, "จัดส่งสำเร็จ");
+          s = {
+            ...s,
+            errorLog: [
+              ...s.errorLog,
+              {
+                at: nowIso(),
+                message: `7S ${o.order_id}: Order นี้ตัดสต๊อกไปแล้วเมื่อ ${o.deducted_at ?? "-"}`,
+              },
+            ],
+          };
           continue;
         }
         const row = s.stock.find((x) => x.sku === o.sku);
@@ -1750,6 +1760,7 @@ export function runAutomation(input: AppState): {
         s = setStatus(s, o.order_id, "จัดส่งสำเร็จ", {
           stock_deducted: true,
           mp_stock_synced: synced,
+          deducted_at: nowIso(),
         });
         events.push({
           code: synced ? "stock-deducted" : "stock-sync",

@@ -79,6 +79,7 @@ export type Order = {
   notify_log?: { by: string; at: string }[];
   /** 7S */
   stock_deducted?: boolean;
+  deducted_at?: string;
   mp_stock_synced?: boolean;
   /** 7A */
   cancel_reason?: string;
