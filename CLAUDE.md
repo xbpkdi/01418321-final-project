@@ -21,7 +21,7 @@ No test runner is configured. `npx tsc --noEmit` is the only type check besides 
 
 ## Architecture
 
-**No backend yet.** All screens read and write one shared client-side store. `src/lib/db.ts` (`pg` pool) and `src/lib/queries/` exist but are unused until the ER diagram is done; `DATABASE_URL` in `.env.local` is not needed to run the app. `src/app/api/` does not exist.
+**No backend yet.** All screens read and write one shared client-side store. `src/lib/db.ts` (`pg` pool) and `src/lib/queries/` exist but are unused until the SQL is rewritten against the ER diagram; `DATABASE_URL` in `.env.local` is not needed to run the app. `src/app/api/` does not exist.
 
 **State flow (read these together):**
 - `src/lib/workflow.ts` holds every use case (UC) as a pure function `(AppState, ...args) => { state, result }`, plus `createSeed()` and `runAutomation()`. Screens never mutate state directly and never build user-facing result text here; they map `result` codes to strings from `src/lib/i18n/dict.ts`.
@@ -39,10 +39,10 @@ No test runner is configured. `npx tsc --noEmit` is the only type check besides 
 
 ## Content source of truth
 
-Button labels, messages, SQL and step order must match `00-use-case-descriptions.md` word for word. That file lives in the separate `321-sa-proj` repo (not here), next to `ui-design-brief.md` and `frontend-build-plan.md`. Code comments cite UC step numbers ("ทางเลือก #2", `Q5A.3`); keep those references when editing.
+Three team-supplied documents in `docs/source/` are the source of truth: `use-case-description.pdf` for behaviour, wording and step order; `bizflow-to-be.drawio.xml` for how use cases connect; `er-diagram.drawio.xml` for table and column names. The PDF stores Thai in a way `pdftotext` drops; extract it with PyMuPDF. The draw.io files are plain XML. They change; when the team sends a new version, replace the file here and re-check affected code against it. If they disagree with each other or with the code, the document wins and the conflict goes to the team as a question. Rakuten only: ignore Yahoo!/Amazon/eBay in the documents. Order statuses are the 22 in `src/lib/order-status.ts`; "จัดส่งสำเร็จ" is set only when the carrier confirms delivery (8A), so 7S must not set it. `workflow.ts` still does this, and needs changing. Code comments cite UC step numbers ("ทางเลือก #2", `Q5A.3`); keep those references when editing.
 
-When SQL is added under `src/lib/queries/`: raw SQL only (no ORM, the grading rubric requires listing every statement), constants named after the Q-number with `.` replaced by `_` (`Q5.2` → `Q5_2`), parameterized (`$1`) only. If SQL differs from the use case description, fix the description first.
+When SQL is added under `src/lib/queries/`: raw SQL only (no ORM, the grading rubric requires listing every statement), constants named after the Q-number with `.` replaced by `_`, parameterized (`$1`) only. If SQL differs from the use case description, fix the description first. Target Q-number scheme is `Q<UC id>.<n>` (`Q4S.1` → `Q4S_1`), but the current UC document does not follow it yet (e.g. 3A uses Q13.1, 4A uses Q11.1). The team is revising it, so treat existing `// Q…` comments as provisional.
 
 ## Spec-driven development (spec-kit)
 
-The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is still the unfilled template; run `speckit-constitution` before relying on it. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`.
+The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is ratified (four principles: pure workflow and single store, UC traceability, UC documents as source of truth, `DESIGN.md` authority); read it before specifying or planning. Spec-kit artifacts are written in Thai. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`.
