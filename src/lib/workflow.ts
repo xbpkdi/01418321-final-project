@@ -69,7 +69,7 @@ export type DeletionLog = {
 };
 
 export type AppState = {
-  version: 1;
+  version: 2;
   orders: Order[];
   products: Product[];
   suppliers: Supplier[];
@@ -97,7 +97,7 @@ export function createSeed(now = Date.now()): AppState {
   const iso = (offsetDays: number) =>
     new Date(now - offsetDays * DAY).toISOString();
   return {
-    version: 1,
+    version: 2,
     orders: structuredClone(SEED_ORDERS),
     products: structuredClone(SEED_PRODUCTS),
     suppliers: structuredClone(SEED_SUPPLIERS),

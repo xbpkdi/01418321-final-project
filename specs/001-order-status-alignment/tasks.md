@@ -11,7 +11,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 **Tests**: ไม่มี task เขียน automated test เพราะ constitution ไม่บังคับ และ spec ไม่ได้ขอ ใช้ขั้นตอนตรวจด้วยมือจาก [quickstart.md](./quickstart.md) แทน (เลขสถานการณ์ในวงเล็บคือ # ในตารางของ quickstart)
 
-**Organization**: จัดกลุ่มตาม user story ตามลำดับ priority ใน spec.md
+**Organization**: จัดกลุ่มตาม user story ตามลำดับ priority ใน spec.md; เลข Phase ใช้ตั้งชื่อ branch `feature/phase-<n>` ตาม constitution (Phase 0 คืองานพื้นฐานก่อนทุก story, Phase 1 ถึง 5 คือ US1 ถึง US5, Phase 6 คืองานปิดท้าย)
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -23,28 +23,26 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 โปรเจกต์ Next.js ชุดเดียว: `src/lib/`, `src/mock/`, `src/app/(app)/shipping/` ตาม plan.md
 
-## Phase 1: Setup
+## Phase 0: Setup and Foundational (Blocking Prerequisites)
 
-**Purpose**: จดสถานะก่อนแก้ เพื่อแยกปัญหาเดิมออกจากปัญหาที่เกิดจากงานนี้
+**Branch**: `feature/phase-0` (constitution v1.4.0: หนึ่ง phase ต่อหนึ่ง branch) **Purpose**: จดสถานะก่อนแก้ และ bump เวอร์ชันข้อมูลที่เก็บในเบราว์เซอร์ตามที่ทีมอนุมัติ (research.md ข้อ 5) ต้องเสร็จก่อนทุก story
 
-- [ ] T001 รัน `npm run lint` และ `npx tsc --noEmit` ที่ราก repository ก่อนแก้โค้ด จดข้อผิดพลาดที่มีอยู่เดิม (ถ้ามี) ไว้เทียบหลังแก้
+### Setup
 
----
+- [X] T001 รัน `npm run lint` และ `npx tsc --noEmit` ที่ราก repository ก่อนแก้โค้ด จดข้อผิดพลาดที่มีอยู่เดิม (ถ้ามี) ไว้เทียบหลังแก้ (ผลตอน 2026-10-12: ผ่านทั้งคู่ ไม่มีข้อผิดพลาดเดิม)
 
-## Phase 2: Foundational (Blocking Prerequisites)
-
-**Purpose**: bump เวอร์ชันข้อมูลที่เก็บในเบราว์เซอร์ ตามที่ทีมอนุมัติ (research.md ข้อ 5) ต้องทำก่อน เพื่อให้ทุก story ทดสอบบนข้อมูลชุดใหม่
+### Foundational
 
 **⚠️ CRITICAL**: ทำสองงานนี้ต่อกันและ commit พร้อมกัน เพราะแก้แยกกันจะทำให้ type ไม่ตรง
 
-- [ ] T002 ใน `src/lib/workflow.ts` เปลี่ยน `version: 1` เป็น `version: 2` ทั้งใน type `AppState` (บรรทัดประมาณ 72) และใน `createSeed()` (บรรทัดประมาณ 100)
-- [ ] T003 ใน `src/lib/store.tsx` เปลี่ยน `STORAGE_KEY` เป็น `"rsl-hub-state-v2"` และเปลี่ยนเงื่อนไขใน `load()` จาก `parsed.version === 1` เป็น `parsed.version === 2` (ต้องทำหลัง T002)
+- [X] T002 ใน `src/lib/workflow.ts` เปลี่ยน `version: 1` เป็น `version: 2` ทั้งใน type `AppState` (บรรทัดประมาณ 72) และใน `createSeed()` (บรรทัดประมาณ 100)
+- [X] T003 ใน `src/lib/store.tsx` เปลี่ยน `STORAGE_KEY` เป็น `"rsl-hub-state-v2"` และเปลี่ยนเงื่อนไขใน `load()` จาก `parsed.version === 1` เป็น `parsed.version === 2` (ต้องทำหลัง T002)
 
 **Checkpoint**: `npx tsc --noEmit` ผ่าน และเปิดแอปครั้งแรกแล้วโหลดข้อมูลตั้งต้นชุดใหม่
 
 ---
 
-## Phase 3: User Story 1 - ตัดสต๊อกแล้ว Order ยังไม่ถือว่าส่งสำเร็จ (Priority: P1) 🎯 MVP
+## Phase 1: User Story 1 - ตัดสต๊อกแล้ว Order ยังไม่ถือว่าส่งสำเร็จ (Priority: P1) 🎯 MVP
 
 **Goal**: 7S หักสต๊อกหนึ่งครั้งและคงสถานะ "แจ้งเลขติดตามแล้ว"
 
@@ -63,7 +61,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ---
 
-## Phase 4: User Story 2 - "จัดส่งสำเร็จ" เมื่อขนส่งยืนยันว่าถึงลูกค้า (Priority: P1)
+## Phase 2: User Story 2 - "จัดส่งสำเร็จ" เมื่อขนส่งยืนยันว่าถึงลูกค้า (Priority: P1)
 
 **Goal**: ขนส่งยืนยัน `delivered` เป็นทางเดียวที่ทำให้ Order เป็น "จัดส่งสำเร็จ" รวมกรณียืนยันก่อน 5S/7S เสร็จ และ `delivered` ไม่ถูกเขียนทับ
 
@@ -82,7 +80,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ---
 
-## Phase 5: User Story 3 - ยกเลิก ลบข้อมูลเก่า และแจ้งเลขติดตามซ้ำ ยังทำงานถูกต้อง (Priority: P2)
+## Phase 3: User Story 3 - ยกเลิก ลบข้อมูลเก่า และแจ้งเลขติดตามซ้ำ ยังทำงานถูกต้อง (Priority: P2)
 
 **Goal**: 5S ส่งซ้ำ, 7A และ 10A ถูกต้องกับ Order ที่รออยู่ที่ "แจ้งเลขติดตามแล้ว"
 
@@ -98,7 +96,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ---
 
-## Phase 6: User Story 4 - 3S แยกเส้นทางตามสต๊อกและใช้สถานะครบ 22 ค่า (Priority: P2)
+## Phase 4: User Story 4 - 3S แยกเส้นทางตามสต๊อกและใช้สถานะครบ 22 ค่า (Priority: P2)
 
 **Goal**: ล็อกพฤติกรรม 3S ที่ถูกอยู่แล้ว และยืนยันว่าไม่มีสถานะนอกรายการ
 
@@ -113,7 +111,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ---
 
-## Phase 7: User Story 5 - ข้อมูลตั้งต้นและปุ่มรีเซ็ตให้ทดสอบทุกเส้นทางได้ (Priority: P3)
+## Phase 5: User Story 5 - ข้อมูลตั้งต้นและปุ่มรีเซ็ตให้ทดสอบทุกเส้นทางได้ (Priority: P3)
 
 **Goal**: ข้อมูลตั้งต้นไม่ขัดกฎใหม่ และเดินครบทุกเส้นทางหลังรีเซ็ต
 
@@ -129,7 +127,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ---
 
-## Phase 8: Polish & Cross-Cutting Concerns
+## Phase 6: Polish & Cross-Cutting Concerns
 
 - [ ] T024 [P] ใน `CLAUDE.md` แก้สองจุด: (1) หัวข้อ Architecture เปลี่ยน storage key `rsl-hub-state-v1` เป็น `rsl-hub-state-v2`; (2) หัวข้อ "Content source of truth" ลบประโยค "`workflow.ts` still does this, and needs changing."
 - [ ] T025 [P] ใน `specs/001-order-status-alignment/spec.md` เปลี่ยน `**Status**: Draft` เป็น `**Status**: Implemented` เมื่อ T026 ผ่าน
@@ -141,8 +139,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: เริ่มได้ทันที
-- **Foundational (Phase 2)**: ต้องเสร็จก่อนทุก story
+- **Phase 0 (Setup และ Foundational)**: เริ่มได้ทันที และต้องเสร็จก่อนทุก story
 - **US1 → US2**: ต่อเนื่องกันเพราะแก้บล็อก 7S ใน `runAutomation` เดียวกัน และต้องส่งมอบพร้อมกัน (US1 อย่างเดียวทำให้ Order ค้างที่ "แจ้งเลขติดตามแล้ว")
 - **US3**: ต้องหลัง US1 (ใช้ `columns.tsx` ร่วมกัน และต้องมี Order ที่ค้างที่ "แจ้งเลขติดตามแล้ว")
 - **US4**: ต้องหลัง US2 (ตรวจว่ากฎเลื่อนสถานะเป็นที่เดียวที่ตั้ง "จัดส่งสำเร็จ")
@@ -174,7 +171,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ### MVP First
 
-1. Phase 1 และ 2
+1. Phase 0
 2. US1 และ US2 ต่อกัน แล้วหยุดตรวจตาม quickstart (1) ถึง (4) และ (10) นี่คือ MVP
 3. ส่งมอบหรือสาธิตได้ทันที
 
