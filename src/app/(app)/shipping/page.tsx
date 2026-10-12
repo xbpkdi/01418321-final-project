@@ -236,9 +236,12 @@ export default function ShipmentScreen() {
                 key={o.order_id}
                 className="flex justify-between gap-3 rounded-md border px-3 py-2"
               >
-                <span className="font-medium">{o.order_id}</span>
-                <span className="text-muted-foreground truncate">
-                  {o.product_name} · {t.label.parcels} {o.parcel_total ?? 1}
+                <span className="shrink-0 font-medium">{o.order_id}</span>
+                <span className="text-muted-foreground min-w-0 flex-1 truncate">
+                  {o.product_name}
+                </span>
+                <span className="text-muted-foreground shrink-0">
+                  {t.label.parcels} {o.parcel_total ?? 1}
                 </span>
               </li>
             ))}
