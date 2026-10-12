@@ -1,7 +1,7 @@
 "use client";
 
 // ProductScreen — UC 3A ตั้งกฎ SKU
-// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md (ดู saveProduct ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู saveProduct ใน lib/workflow.ts)
 
 import { useMemo, useRef, useState } from "react";
 import { FileUp, Package } from "lucide-react";
@@ -122,7 +122,7 @@ export default function ProductScreen() {
     setError(null);
   }
 
-  // ขั้นตอนที่ 3: กรอกข้อมูลแล้วกด "บันทึก" (Q13.1)
+  // ขั้นตอนที่ 3: กรอกข้อมูลแล้วกด "บันทึก" (Q3A.2 เพิ่มใหม่ / Q3A.3 แก้ไข)
   function save() {
     if (!draft || !costDraft) return;
     const { result, requeued } = run((s) => {

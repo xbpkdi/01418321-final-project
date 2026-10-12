@@ -19,18 +19,18 @@ export type ManualReason =
   | "supplier" // 6A ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ
   | "stock-deduct"; // 7S ยอดสต๊อกไม่พอตัด
 
-/** สถานะจากผู้ให้บริการขนส่ง (Q8.3 carrier_tracking.delivery_status) */
+/** สถานะจากผู้ให้บริการขนส่ง (Q8A.3 carrier_tracking.delivery_status) */
 export type DeliveryStatus = "in_transit" | "delivered" | "failed" | "returned";
 
 /** แหล่งที่จัดส่งสินค้า (Q7S.1 fulfill_source) */
 export type FulfillSource = "in_house" | "rsl";
 
 /**
- * รูปร่างหลักตาม Q2A.1:
+ * รูปร่างหลักตาม Q2A.2:
  *   SELECT order_id, marketplace_order_id, sales_channel, order_date, sku,
  *          variation, qty, shipping_address, shipping_method, order_status
  *   FROM orders WHERE order_id=$1
- * บวกคอลัมน์ที่ UC อื่นเขียนลงตาราง orders (Q2S.2, Q4.2, Q5A.3, Q8.2, Q9.2, Q10.1, Q7S.5)
+ * บวกคอลัมน์ที่ UC อื่นเขียนลงตาราง orders (Q2S.2, Q1S.2, Q5A.4, Q5A.5, Q8A.2, Q5S.2, Q7A.1, Q7S.5)
  */
 export type Order = {
   order_id: string;

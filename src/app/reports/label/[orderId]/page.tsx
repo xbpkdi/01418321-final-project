@@ -1,7 +1,7 @@
 "use client";
 
 // รายงานที่ 1 — ใบปะสินค้า (rubric ข้อ 31) · เปิดจาก LabelPrintScreen
-// โครงสร้างฟิลด์อิง Q6S.2 (label_template, rsl_no, parcel_seq, parcel_total, label_status, created_at)
+// โครงสร้างฟิลด์อิง Q6S.2 (label_template, rsl_reference_id, parcel_seq, parcel_total, label_status, created_at)
 // บวกข้อมูลผู้รับและรายการสินค้าจากตาราง orders — Multi-parcel พิมพ์แยกใบละกล่อง (6S, 9A ทางเลือก #4)
 
 import { use } from "react";

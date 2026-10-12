@@ -1,7 +1,7 @@
 "use client";
 
 // RslMatchScreen — UC 1S จับคู่ Order กับเลข RSL
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู matchRsl ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู matchRsl ใน lib/workflow.ts)
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -72,7 +72,7 @@ export default function RslMatchScreen() {
           break;
         case "ok":
           setCandidates(null);
-          // Q4.2 แล้วส่งต่อ 6S
+          // Q1S.2 แล้วส่งต่อ 6S
           toast.success(t.rslMatch.okMatched, {
             description: `${t.rslMatch.rslReference} ${result.reference}`,
             action: {

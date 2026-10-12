@@ -1,7 +1,7 @@
 import type { DeliveryStatus } from "@/types/order";
 
 /**
- * ข้อมูลผู้ให้บริการขนส่งตาม Q8.1:
+ * ข้อมูลผู้ให้บริการขนส่งตาม Q8A.1:
  *   SELECT tracking_number, carrier_name, pickup_date
  *   FROM delivery_partners WHERE order_id=$1
  */
@@ -31,7 +31,7 @@ export function findTracking(orderId: string): DeliveryInfo | undefined {
 }
 
 /**
- * สถานะจากระบบติดตามของผู้ให้บริการขนส่งตาม Q8.3:
+ * สถานะจากระบบติดตามของผู้ให้บริการขนส่งตาม Q8A.3:
  *   SELECT delivery_status, last_location, updated_at
  *   FROM carrier_tracking WHERE tracking_number=$1
  * หมายเลขที่ไม่มีในรายการถือว่ายังอยู่ระหว่างทาง
@@ -63,7 +63,7 @@ export function trackCarrier(trackingNumber: string) {
 }
 
 /**
- * รูปแบบใบปะสินค้าตาม Q6.1 / Q6S.1 (shipping_rules)
+ * รูปแบบใบปะสินค้าตาม Q9A.1 / Q6S.1 (shipping_rules)
  * max_items_per_parcel ใช้แยกพัสดุ (Multi-parcel) ตาม 6S และ 9A ทางเลือก #4
  * วิธีจัดส่ง "จัดส่งเอง" ไม่มีรูปแบบ — ใช้ทดสอบ "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม"
  */

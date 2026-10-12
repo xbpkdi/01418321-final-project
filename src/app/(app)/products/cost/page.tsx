@@ -1,7 +1,7 @@
 "use client";
 
 // CostCalculatorScreen — UC 4S คำนวณ Cost ในการสั่งสินค้าเติม stock เอง
-// สูตรและข้อความทั้งหมดมาจาก 00-use-case-descriptions.md (ดู calculateCost ใน lib/workflow.ts)
+// สูตรและข้อความทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู calculateCost ใน lib/workflow.ts)
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -100,7 +100,7 @@ export default function CostCalculatorScreen() {
     );
   }, [state.products, keyword]);
 
-  // ขั้นตอนที่ 2: ดึงองค์ประกอบต้นทุน (Q5.1)
+  // ขั้นตอนที่ 2: ดึงองค์ประกอบต้นทุน (Q4S.1)
   function select(value: string) {
     const loaded = costToForm(
       state.costs.find((c) => c.sku === value),
@@ -113,7 +113,7 @@ export default function CostCalculatorScreen() {
     setError(null);
   }
 
-  // ขั้นตอนที่ 3: กด "คำนวณ" (Q5.2 + Q5.3)
+  // ขั้นตอนที่ 3: กด "คำนวณ" (Q4S.2 + Q4S.3)
   function calculate() {
     if (!form) return;
     setError(null);

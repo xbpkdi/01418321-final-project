@@ -1,5 +1,5 @@
 /**
- * ข้อมูลฝั่ง RSL สำหรับจับคู่ตาม Q4.1:
+ * ข้อมูลฝั่ง RSL สำหรับจับคู่ตาม Q1S.1:
  *   SELECT rsl_order_id, rsl_sku, rsl_variation, rsl_stock_qty
  *   FROM rsl_shipments WHERE rsl_sku=$1 AND rsl_variation=$2
  */

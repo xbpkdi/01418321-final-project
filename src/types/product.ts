@@ -1,7 +1,7 @@
 import type { SalesChannel } from "./order";
 
 /**
- * รูปร่างตาม Q13.1 (ตาราง products) รวมกับกฎ SKU ที่ 2S ใช้จับคู่ (Q2S.1)
+ * รูปร่างตาม Q3A.2/Q3A.3 (ตาราง products) รวมกับกฎ SKU ที่ 2S ใช้จับคู่ (Q2S.1)
  * channel_sku คือรหัสสินค้าฝั่ง Rakuten ที่ map เข้ากับ SKU ภายใน (3A ทางเลือก #3)
  */
 export type Product = {
@@ -18,7 +18,7 @@ export type Product = {
   active: boolean;
 };
 
-/** ตาราง suppliers ตาม Q7.1 */
+/** ตาราง suppliers ตาม Q6A.2 */
 export type Supplier = {
   supplier_id: string;
   supplier_name: string;
@@ -26,7 +26,7 @@ export type Supplier = {
   lead_time: number;
 };
 
-/** รูปร่างตาม Q3.1 (ตาราง stock) */
+/** รูปร่างตาม Q3S.1 (ตาราง stock) */
 export type StockLevel = {
   sku: string;
   in_house_qty: number;
@@ -36,8 +36,8 @@ export type StockLevel = {
 };
 
 /**
- * รูปร่างตาม Q5.1 (ตาราง product_cost)
- * purchase_price คือราคาซื้อทั้งล็อต เพราะสูตร Q5.2 หารผลรวมด้วย order_qty
+ * รูปร่างตาม Q4S.1 (ตาราง product_cost)
+ * purchase_price คือราคาซื้อทั้งล็อต เพราะสูตร Q4S.2 หารผลรวมด้วย order_qty
  * ค่า null คือองค์ประกอบที่ยังไม่เคยตั้งค่า (4S ทางเลือก #1)
  */
 export type CostComponents = {
@@ -77,7 +77,7 @@ export function isCompleteCost(c: CostComponents): c is CompleteCost {
   );
 }
 
-/** สูตรตาม Q5.2 */
+/** สูตรตาม Q4S.2 */
 export function calcUnitCost(c: Pick<CompleteCost, CostKey>): number {
   return (
     (c.purchase_price * c.exchange_rate + c.intl_freight + c.duty_fee) /
@@ -88,7 +88,7 @@ export function calcUnitCost(c: Pick<CompleteCost, CostKey>): number {
   );
 }
 
-/** ประวัติการคำนวณตาม Q5.3 (cost_calculation_log) */
+/** ประวัติการคำนวณตาม Q4S.3 (cost_calculation_log) */
 export type CostLog = {
   sku: string;
   unit_cost: number;
@@ -97,7 +97,7 @@ export type CostLog = {
   calculated_by: string;
 };
 
-/** ตาราง purchase_orders ตาม Q7.2 */
+/** ตาราง purchase_orders ตาม Q6A.3 */
 export type PurchaseOrder = {
   po_id: string;
   sku: string;

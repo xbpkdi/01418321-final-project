@@ -3,7 +3,7 @@
 // ShipmentScreen — UC 8A จัดส่งสินค้าให้ลูกค้าผ่าน Delivery
 // ปุ่ม "ส่งเลขติดตามให้ลูกค้า" ของ UC 5S อยู่ในตาราง "ส่งมอบแล้ว" ของหน้านี้
 // (5S ไม่มี Screen object ของตัวเอง actor ใน diagram คือ Scheduler / Admin แบบเดียวกับ 4A)
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู dispatch / pollCarrier / notifyTracking)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู dispatch / pollCarrier / notifyTracking)
 
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -53,7 +53,7 @@ export default function ShipmentScreen() {
   const waiting = shipmentQueue(state);
   const shipped = shippedOrders(state);
 
-  // Q8.3: ดึงสถานะจากผู้ให้บริการขนส่งเมื่อเปิดหน้า (ระบบดึงเป็นระยะ)
+  // Q8A.3: ดึงสถานะจากผู้ให้บริการขนส่งเมื่อเปิดหน้า (ระบบดึงเป็นระยะ)
   React.useEffect(() => {
     if (polled.current) return;
     polled.current = true;
@@ -89,7 +89,7 @@ export default function ShipmentScreen() {
     );
   }
 
-  // ขั้นตอนที่ 3: ยืนยันรายการพัสดุที่ส่งมอบ (Q8.1 + Q8.2)
+  // ขั้นตอนที่ 3: ยืนยันรายการพัสดุที่ส่งมอบ (Q8A.1 + Q8A.2)
   function confirmDispatch() {
     const { results } = run((s) => {
       const r = dispatch(s, selected);
@@ -114,7 +114,7 @@ export default function ShipmentScreen() {
     }
   }
 
-  // UC 5S ขั้นตอนที่ 3: ส่งเลขติดตามให้ลูกค้า (Q9.1 + Q9.2)
+  // UC 5S ขั้นตอนที่ 3: ส่งเลขติดตามให้ลูกค้า (Q5S.1 + Q5S.2)
   function notify(orderId: string, confirmResend = false) {
     const { result } = run((s) => {
       const r = notifyTracking(s, orderId, confirmResend);
