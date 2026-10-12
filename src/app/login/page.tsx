@@ -85,7 +85,7 @@ export default function LoginScreen() {
     <div
       ref={hostRef}
       onPointerMove={trackGlow}
-      className="bg-background relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
+      className="bg-background relative isolate flex min-h-[100dvh] flex-col overflow-clip"
     >
       <div className="grid-paper" aria-hidden />
       <div className="ribbon" aria-hidden />
