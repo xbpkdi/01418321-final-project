@@ -102,6 +102,19 @@ decoration, and the Topbar language toggle is part of the design.
   before any design or implementation work that adds or changes SQL.
 - Spec-driven order: specify, then clarify if needed, plan, tasks, analyze, implement. Skipping a
   step requires a reason in the PR description.
+- Branching: implementation work MUST NOT be committed directly to `dev` or `main`. Every branch
+  is cut from an up-to-date `dev` and merged back into `dev` by a pull request approved by at
+  least one team member other than the author. Branch names are:
+  - `feature/phase-<n>`: one phase of a feature's `tasks.md` (for example `feature/phase-0`,
+    `feature/phase-3`), holding all the tasks of that phase.
+  - `feature/t-<nnn>`: one single task (for example `feature/t-012`). Use it for a task that is
+    independent of the others, such as one marked `[P]`, or to split a large phase.
+  - `docs/<topic>`: documentation-only work (specs, constitution, source documents), for example
+    `docs/sdd-setup`.
+  A branch MUST hold exactly one phase or one task, never a mix. Task IDs restart at T001 in each
+  feature, so when the same name was already used by another feature, add the feature number:
+  `feature/002-t-012`. The commit messages and the pull request description MUST name the task IDs
+  and the feature number (for example `001-order-status-alignment`).
 - Alternative-flow coverage: every alternative flow caused by an external system MUST have an
   entry in `FAULT_KEYS` and a toggle on the `/dev` page. Seed data in `src/mock/` MUST cover every
   use case path, with a comment saying which case each row tests.
@@ -120,4 +133,4 @@ clarification. Reviewers MUST check each feature PR against Principles I to IV. 
 deviation MUST be justified in the PR description. Runtime guidance for agents lives in `CLAUDE.md`
 and `AGENTS.md`.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-10 | **Last Amended**: 2026-10-10
+**Version**: 1.4.0 | **Ratified**: 2026-10-10 | **Last Amended**: 2026-10-12
