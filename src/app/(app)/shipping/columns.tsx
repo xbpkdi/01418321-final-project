@@ -101,17 +101,24 @@ export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
       header: t.common.status,
       meta: { label: t.common.status },
       cell: (ctx) => (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <StatusBadge status={ctx.getValue()} />
-          {ctx.row.original.stock_deducted &&
-            ctx.row.original.mp_stock_synced === false && (
-              <Badge
-                variant="secondary"
-                className="bg-status-attention-bg text-status-attention"
-              >
-                {t.shipping.syncPending}
-              </Badge>
-            )}
+        <div className="grid gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StatusBadge status={ctx.getValue()} />
+            {ctx.row.original.stock_deducted &&
+              ctx.row.original.mp_stock_synced === false && (
+                <Badge
+                  variant="secondary"
+                  className="bg-status-attention-bg text-status-attention"
+                >
+                  {t.shipping.syncPending}
+                </Badge>
+              )}
+          </div>
+          {ctx.row.original.stock_deducted && (
+            <span className="text-muted-foreground text-xs">
+              {t.shipping.stockDeducted}
+            </span>
+          )}
         </div>
       ),
     }),
