@@ -1259,6 +1259,9 @@ export function pollCarrier(s: AppState): {
     if (!o.tracking_number || !watched.includes(o.order_status)) continue;
     const { delivery_status } = trackCarrier(o.tracking_number);
     if (delivery_status === o.delivery_status) continue;
+    // ขนส่งยืนยันส่งถึงแล้วไม่ถอยกลับเป็นอยู่ระหว่างทาง (ยังรับ returned และ failed)
+    if (o.delivery_status === "delivered" && delivery_status === "in_transit")
+      continue;
     if (delivery_status === "failed") {
       next = setStatus(next, o.order_id, "จัดส่งไม่สำเร็จ", {
         delivery_status,
@@ -1765,6 +1768,17 @@ export function runAutomation(input: AppState): {
         !s.faults.mpStockSync
       ) {
         s = patchOrder(s, o.order_id, { mp_stock_synced: true });
+      }
+
+      // 8A: ขนส่งยืนยันว่าถึงลูกค้า (และ 7S ตัดสต๊อกแล้ว) → "จัดส่งสำเร็จ"
+      // นี่คือที่เดียวที่ตั้งสถานะนี้ — ไม่มี event ใหม่เพราะ 8A ไม่มีข้อความของตัวเอง
+      const delivered = findOrder(s, o.order_id);
+      if (
+        delivered?.order_status === "แจ้งเลขติดตามแล้ว" &&
+        delivered.stock_deducted &&
+        delivered.delivery_status === "delivered"
+      ) {
+        s = setStatus(s, o.order_id, "จัดส่งสำเร็จ");
       }
     }
 
