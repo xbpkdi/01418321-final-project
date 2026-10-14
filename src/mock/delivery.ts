@@ -51,6 +51,25 @@ export const MOCK_CARRIER_TRACKING: Record<
     delivery_status: "returned",
     last_location: "金沢ベース",
   },
+  // ส่งถึงลูกค้าแล้ว หลัง 5S และ 7S เสร็จ (ORD-24166) — 8A, FR-004
+  "4418-2290-1105": {
+    delivery_status: "delivered",
+    last_location: "横浜ベース",
+  },
+  // ส่งถึงลูกค้าก่อน 5S/7S เสร็จ (ORD-24165) — FR-005 Order ต้องรอจนกดส่งเลขติดตาม
+  "4418-2290-1106": {
+    delivery_status: "delivered",
+    last_location: "仙台ベース",
+  },
+  // Order ที่ปิดแล้ว (ORD-23012, ORD-24168): ขนส่งยังตอบ delivered — FR-015 ต้องไม่ถูกเขียนทับ
+  "4418-1001-0012": {
+    delivery_status: "delivered",
+    last_location: "東京ベース",
+  },
+  "4418-2290-0168": {
+    delivery_status: "delivered",
+    last_location: "高松ベース",
+  },
 };
 
 export function trackCarrier(trackingNumber: string) {
