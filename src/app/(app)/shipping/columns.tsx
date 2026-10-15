@@ -130,6 +130,7 @@ export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
         const canNotify = [
           "อยู่ระหว่างจัดส่ง",
           "รอแจ้งเลขติดตาม",
+          "แจ้งเลขติดตามแล้ว",
           "จัดส่งสำเร็จ",
         ].includes(o.order_status);
         return (
