@@ -19,6 +19,12 @@ npm run lint     # eslint (next core-web-vitals + typescript)
 
 No test runner is configured. `npx tsc --noEmit` is the only type check besides `next build`. Demo login: `admin@colorado.jp` / `demo1234` (`locked@colorado.jp` exercises the lockout path). The `/dev` page (not in the menu) resets seed data and toggles simulated external-system faults.
 
+**Verification:** no tests are mandatory (constitution policy). Verify with `npm run lint`, `npx tsc --noEmit` or `npm run build`, then walk the affected UC paths by hand, using the `/dev` fault toggles for alternative flows.
+
+**Git:** never commit implementation work directly to `dev` or `main`. Cut a branch from up-to-date `dev`, one phase or one task per branch: `feature/phase-<n>`, `feature/t-<nnn>` (add the feature number if the task id was reused, e.g. `feature/002-t-012`), or `docs/<topic>`. Merge by PR approved by another team member. Commit messages and PR descriptions name the task IDs and feature number.
+
+**Next.js:** this is Next 16 with breaking changes. Read the relevant guide under `node_modules/next/dist/docs/` before writing Next.js code (see `AGENTS.md`).
+
 ## Architecture
 
 **No backend yet.** All screens read and write one shared client-side store. `src/lib/db.ts` (`pg` pool) and `src/lib/queries/` exist but are unused until the SQL is rewritten against the ER diagram; `DATABASE_URL` in `.env.local` is not needed to run the app. `src/app/api/` does not exist.
@@ -45,4 +51,4 @@ When SQL is added under `src/lib/queries/`: raw SQL only (no ORM, the grading ru
 
 ## Spec-driven development (spec-kit)
 
-The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is ratified (four principles: pure workflow and single store, UC traceability, UC documents as source of truth, `DESIGN.md` authority); read it before specifying or planning. Spec-kit artifacts are written in Thai. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`.
+The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is ratified (four principles: pure workflow and single store, UC traceability, UC documents as source of truth, `DESIGN.md` authority); read it before specifying or planning. Spec-kit artifacts are written in Thai. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`. The active feature is `specs/001-order-status-alignment` (aligns code to the 22 statuses; its `tasks.md` drives the current work). Order of steps: specify, clarify, plan, tasks, analyze, implement; skipping one needs a reason in the PR.
