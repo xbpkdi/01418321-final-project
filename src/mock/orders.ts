@@ -6,8 +6,9 @@ import type { ChannelConnection, Order } from "@/types/order";
  *
  * ทุก Order ตั้งใจวางไว้ให้ครอบคลุมเส้นทางใน use case description
  * คอมเมนต์ท้ายแต่ละรายการบอกว่าใช้ทดสอบเส้นทางไหน
- * สถานะที่ระบบประมวลผลเอง (รอจับคู่กฎ SKU, รอตรวจสอบสต๊อก, รอจัดรูปแบบใบปะสินค้า,
- * แจ้งเลขติดตามแล้ว) ไม่อยู่ในข้อมูลตั้งต้น เพราะ src/lib/workflow.ts จะประมวลผลต่อทันที
+ * สถานะที่ระบบประมวลผลเอง (รอจับคู่กฎ SKU, รอตรวจสอบสต๊อก, รอจัดรูปแบบใบปะสินค้า)
+ * ไม่อยู่ในข้อมูลตั้งต้น เพราะ src/lib/workflow.ts จะประมวลผลต่อทันที
+ * ส่วน "แจ้งเลขติดตามแล้ว" เป็นสถานะรอขนส่งยืนยันว่าถึงลูกค้า (8A) จึงมีในข้อมูลตั้งต้นได้
  */
 
 const RK = "Rakuten Ichiba" as const;
@@ -347,7 +348,7 @@ export const SEED_ORDERS: Order[] = [
     tracking_notified: false,
   }),
   order({
-    // จัดส่งและตัดสต๊อกแล้ว แต่ลูกค้าปฏิเสธรับ (8A ทางเลือก #3 + 7S ทางเลือก #2)
+    // ตัดสต๊อกและแจ้งเลขติดตามแล้ว รอขนส่งยืนยัน — ขนส่งตอบ returned (ลูกค้าปฏิเสธรับ) แล้วระบบคืนสต๊อกและเป็น "ตีกลับ/คืนสินค้า" (8A ทางเลือก #3 + 7S ทางเลือก #2)
     order_id: "ORD-24172",
     marketplace_order_id: "377841-20260930-0000172",
     order_date: "2026-09-30T13:48:00+09:00",
@@ -358,7 +359,7 @@ export const SEED_ORDERS: Order[] = [
     qty: 1,
     shipping_address: "石川県金沢市広岡 3-1-1",
     shipping_method: "RSL ปกติ",
-    order_status: "จัดส่งสำเร็จ",
+    order_status: "แจ้งเลขติดตามแล้ว",
     sku_rule_id: "RULE-FSH-RDS-180",
     rsl_reference_id: "RSL-9f2210",
     label_template: "RSL-STD-A6",
@@ -372,6 +373,57 @@ export const SEED_ORDERS: Order[] = [
     tracking_notified_at: "2026-10-01T15:00:00+09:00",
     stock_deducted: true,
     mp_stock_synced: true,
+  }),
+  order({
+    // ตัดสต๊อกและแจ้งเลขติดตามแล้ว รอขนส่งยืนยัน — ทดสอบ "ส่งถึงหลัง 7S": ขนส่งตอบ delivered แล้วเป็น "จัดส่งสำเร็จ" (8A)
+    order_id: "ORD-24166",
+    marketplace_order_id: "377841-20260930-0000166",
+    order_date: "2026-09-30T10:20:00+09:00",
+    channel_sku: "rk-lmp021-w",
+    sku: "OUT-LMP-021",
+    product_name: "ตะเกียงแคมป์ปิ้ง ชาร์จ USB",
+    variation: "แสงวอร์ม",
+    qty: 1,
+    shipping_address: "神奈川県横浜市西区みなとみらい 2-2-1",
+    shipping_method: "RSL ปกติ",
+    order_status: "แจ้งเลขติดตามแล้ว",
+    sku_rule_id: "RULE-OUT-LMP-021",
+    rsl_reference_id: "RSL-9f2266",
+    label_template: "RSL-STD-A6",
+    parcel_total: 1,
+    label_printed_at: "2026-09-30T17:00:00+09:00",
+    tracking_number: "4418-2290-1105",
+    carrier_name: "Yamato Transport",
+    dispatched_at: "2026-10-01T14:00:00+09:00",
+    delivery_status: "in_transit",
+    tracking_notified: true,
+    tracking_notified_at: "2026-10-01T15:00:00+09:00",
+    stock_deducted: true,
+    mp_stock_synced: true,
+  }),
+  order({
+    // ขนส่งตอบว่าส่งถึงแล้วแต่ยังไม่ได้แจ้งเลขติดตาม — ทดสอบ "ส่งถึงก่อน 5S/7S เสร็จ": ต้องรอ 5S และ 7S แล้วจึงเป็น "จัดส่งสำเร็จ"
+    order_id: "ORD-24165",
+    marketplace_order_id: "377841-20260930-0000165",
+    order_date: "2026-09-30T10:20:00+09:00",
+    channel_sku: "rk-lmp021-w",
+    sku: "OUT-LMP-021",
+    product_name: "ตะเกียงแคมป์ปิ้ง ชาร์จ USB",
+    variation: "แสงวอร์ม",
+    qty: 1,
+    shipping_address: "宮城県仙台市青葉区中央 1-1-1",
+    shipping_method: "RSL ปกติ",
+    order_status: "อยู่ระหว่างจัดส่ง",
+    sku_rule_id: "RULE-OUT-LMP-021",
+    rsl_reference_id: "RSL-9f2265",
+    label_template: "RSL-STD-A6",
+    parcel_total: 1,
+    label_printed_at: "2026-09-30T17:00:00+09:00",
+    tracking_number: "4418-2290-1106",
+    carrier_name: "Yamato Transport",
+    dispatched_at: "2026-10-01T14:00:00+09:00",
+    delivery_status: "in_transit",
+    tracking_notified: false,
   }),
 
   // ── 7A ยกเลิก Order ──

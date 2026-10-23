@@ -3,6 +3,9 @@
  *
  *   4A นำเข้า → 2A ตรวจสอบ → 2S จับคู่กฎ SKU → 3S ตรวจสต๊อก
  *     ├─ สต๊อกพอ  → 1S จับคู่ RSL → 6S จัดรูปแบบใบปะ → 9A พิมพ์ → 8A ส่งมอบ → 5S แจ้งเลขติดตาม → 7S ตัดสต๊อก
+ *     │             (7S ตัดสต๊อกโดยไม่เปลี่ยนสถานะ Order คง "แจ้งเลขติดตามแล้ว";
+ *     │              "จัดส่งสำเร็จ" ตั้งได้เมื่อขนส่งยืนยันว่าถึงลูกค้า (8A) เท่านั้น
+ *     │              ดูข้อกำหนด Order status vocabulary ใน .specify/memory/constitution.md)
  *     └─ สต๊อกไม่พอ → 4S ต้นทุน → 5A ตัดสินใจ ─┬─ คุ้มค่า   → 6A สั่งซื้อจาก Supplier
  *                                            └─ ไม่คุ้มค่า → 7A ยกเลิก
  *
@@ -69,7 +72,7 @@ export type DeletionLog = {
 };
 
 export type AppState = {
-  version: 1;
+  version: 2;
   orders: Order[];
   products: Product[];
   suppliers: Supplier[];
@@ -97,7 +100,7 @@ export function createSeed(now = Date.now()): AppState {
   const iso = (offsetDays: number) =>
     new Date(now - offsetDays * DAY).toISOString();
   return {
-    version: 1,
+    version: 2,
     orders: structuredClone(SEED_ORDERS),
     products: structuredClone(SEED_PRODUCTS),
     suppliers: structuredClone(SEED_SUPPLIERS),
@@ -1256,6 +1259,9 @@ export function pollCarrier(s: AppState): {
     if (!o.tracking_number || !watched.includes(o.order_status)) continue;
     const { delivery_status } = trackCarrier(o.tracking_number);
     if (delivery_status === o.delivery_status) continue;
+    // ขนส่งยืนยันส่งถึงแล้วไม่ถอยกลับเป็นอยู่ระหว่างทาง (ยังรับ returned และ failed)
+    if (o.delivery_status === "delivered" && delivery_status === "in_transit")
+      continue;
     if (delivery_status === "failed") {
       next = setStatus(next, o.order_id, "จัดส่งไม่สำเร็จ", {
         delivery_status,
@@ -1724,23 +1730,9 @@ export function runAutomation(input: AppState): {
         continue;
       }
 
-      // 7S ตัดสต๊อก
-      if (o.order_status === "แจ้งเลขติดตามแล้ว") {
-        // Q7S.1 — ตัดไปแล้ว ข้ามเพื่อกันตัดซ้ำ
-        if (o.stock_deducted) {
-          s = setStatus(s, o.order_id, "จัดส่งสำเร็จ");
-          s = {
-            ...s,
-            errorLog: [
-              ...s.errorLog,
-              {
-                at: nowIso(),
-                message: `7S ${o.order_id}: Order นี้ตัดสต๊อกไปแล้วเมื่อ ${o.deducted_at ?? "-"}`,
-              },
-            ],
-          };
-          continue;
-        }
+      // 7S ตัดสต๊อก — ตัดครั้งเดียวและไม่เปลี่ยนสถานะ Order (คง "แจ้งเลขติดตามแล้ว")
+      // Q7S.1 — ตัดไปแล้ว (stock_deducted) ข้ามเพื่อกันตัดซ้ำ
+      if (o.order_status === "แจ้งเลขติดตามแล้ว" && !o.stock_deducted) {
         const row = s.stock.find((x) => x.sku === o.sku);
         const available =
           row === undefined
@@ -1757,7 +1749,7 @@ export function runAutomation(input: AppState): {
         s = adjustStock(s, o.sku, o.fulfill_source, -o.qty);
         // Q7S.4 + Q7S.5 — ซิงค์ไม่ได้ก็ตัดสต๊อกในระบบไว้ก่อน แล้วรอซิงค์
         const synced = !s.faults.mpStockSync;
-        s = setStatus(s, o.order_id, "จัดส่งสำเร็จ", {
+        s = patchOrder(s, o.order_id, {
           stock_deducted: true,
           mp_stock_synced: synced,
           deducted_at: nowIso(),
@@ -1769,13 +1761,25 @@ export function runAutomation(input: AppState): {
         continue;
       }
 
-      // 7S ทางเลือก #1: ลองซิงค์ยอดคงเหลือใหม่
+      // 7S ทางเลือก #1: ลองซิงค์ยอดคงเหลือใหม่ (ใช้ Order ล่าสุดจาก state ปัจจุบัน)
+      const cur = findOrder(s, o.order_id);
       if (
-        o.stock_deducted &&
-        o.mp_stock_synced === false &&
+        cur?.stock_deducted &&
+        cur.mp_stock_synced === false &&
         !s.faults.mpStockSync
       ) {
         s = patchOrder(s, o.order_id, { mp_stock_synced: true });
+      }
+
+      // 8A: ขนส่งยืนยันว่าถึงลูกค้า (และ 7S ตัดสต๊อกแล้ว) → "จัดส่งสำเร็จ"
+      // นี่คือที่เดียวที่ตั้งสถานะนี้ — ไม่มี event ใหม่เพราะ 8A ไม่มีข้อความของตัวเอง
+      const delivered = findOrder(s, o.order_id);
+      if (
+        delivered?.order_status === "แจ้งเลขติดตามแล้ว" &&
+        delivered.stock_deducted &&
+        delivered.delivery_status === "delivered"
+      ) {
+        s = setStatus(s, o.order_id, "จัดส่งสำเร็จ");
       }
     }
 

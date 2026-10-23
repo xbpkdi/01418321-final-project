@@ -18,7 +18,7 @@ import {
   type AutoEvent,
 } from "@/lib/workflow";
 
-const STORAGE_KEY = "rsl-hub-state-v1";
+const STORAGE_KEY = "rsl-hub-state-v2";
 
 type StoreValue = {
   state: AppState;
@@ -39,7 +39,7 @@ function load(): AppState {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AppState;
-      if (parsed.version === 1) return parsed;
+      if (parsed.version === 2) return parsed;
     }
   } catch {
     // private window หรือข้อมูลเสีย — เริ่มจากข้อมูลตั้งต้น
