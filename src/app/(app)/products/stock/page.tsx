@@ -1,7 +1,7 @@
 "use client";
 
 // StockCheckScreen — UC 3S ตรวจสอบของสินค้าใน stock + RSL
-// ข้อความและเกณฑ์ทั้งหมดมาจาก 00-use-case-descriptions.md (ดู checkStock ใน lib/workflow.ts)
+// ข้อความและเกณฑ์ทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู checkStock ใน lib/workflow.ts)
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,7 @@ export default function StockCheckScreen() {
 
   const incomplete = rows.filter((r) => r.incomplete);
 
-  // ขั้นตอนที่ 1–2: เลือกสินค้า แล้วกด "เช็คสต๊อก" (Q3.1)
+  // ขั้นตอนที่ 1–2: เลือกสินค้า แล้วกด "เช็คสต๊อก" (Q3S.1)
   function check() {
     setResult(checkStock(state, sku));
   }

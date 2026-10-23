@@ -59,10 +59,10 @@ src/
 
 ## สถานะงาน
 
-หน้าจอครบ 12 หน้า + รายงาน 2 ฉบับ ใช้ข้อมูลตัวอย่างที่เก็บใน localStorage ระหว่างรอ ER Diagram
+หน้าจอครบ 12 หน้า + รายงาน 2 ฉบับ ใช้ข้อมูลตัวอย่างที่เก็บใน localStorage
 ทุกหน้าใช้ข้อมูลชุดเดียวกัน เดิน flow ข้ามหน้าได้ตั้งแต่นำเข้า Order จนตัดสต๊อก
-แผนงานและสเปคอยู่ที่ repo `321-sa-proj`:
 
-- `03-chapter2-use-case-descriptions/ui-design-brief.md` — design system และสเปครายหน้า
-- `03-chapter2-use-case-descriptions/frontend-build-plan.md` — รายการงานทั้งหมด
-- `03-chapter2-use-case-descriptions/00-use-case-descriptions.md` — **แหล่งความจริงของเนื้อหา** ทุกปุ่ม/ข้อความต้องตรงคำต่อคำ
+- `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
+- `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)
+- `DESIGN.md` — design system
+- โครงสร้างฐานข้อมูลอยู่ที่ repo `321-sa-proj` โฟลเดอร์ `04-chapter2-diagrams-database/sql/`

@@ -3,7 +3,7 @@
 // LoginScreen — UC 1A เข้าสู่ระบบ
 // โครงหน้าแนว poster: ชื่อระบบตัวใหญ่ซ้าย (split-flap) + การ์ดฟอร์มกระจกขวา
 // ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงส้มจางๆ ตามเมาส์
-// ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 00-use-case-descriptions.md
+// ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 321-sa-proj/report-doc/content/usecases.json
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -57,7 +57,7 @@ export default function LoginScreen() {
     setError(null);
     setSubmitting(true);
 
-    // ขั้นตอนที่ 3 ทั้งหมด (ตรวจค่าว่าง → รูปแบบอีเมล → Q1.1) อยู่ใน workflow.login
+    // ขั้นตอนที่ 3 ทั้งหมด (ตรวจค่าว่าง → รูปแบบอีเมล → Q1A.1) อยู่ใน workflow.login
     // ของจริงจะย้ายไปทำฝั่ง server และเทียบ hash แทนการเทียบตรงๆ
     window.setTimeout(() => {
       const { result } = run((s) => {
@@ -85,7 +85,7 @@ export default function LoginScreen() {
     <div
       ref={hostRef}
       onPointerMove={trackGlow}
-      className="bg-background relative isolate flex min-h-[100dvh] flex-col overflow-hidden"
+      className="bg-background relative isolate flex min-h-[100dvh] flex-col overflow-clip"
     >
       <div className="grid-paper" aria-hidden />
       <div className="ribbon" aria-hidden />

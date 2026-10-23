@@ -1,7 +1,7 @@
 "use client";
 
 // OrderVerifyScreen — UC 2A ตรวจสอบคำสั่งซื้อ
-// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 00-use-case-descriptions.md (ดู verifyOrder ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู verifyOrder ใน lib/workflow.ts)
 
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -81,7 +81,7 @@ export default function OrderVerifyScreen() {
     selected !== null && shippingMethod !== selected.shipping_method,
   );
 
-  // ขั้นตอนที่ 2: เลือก Order แล้วดึงรายละเอียด (Q2A.1)
+  // ขั้นตอนที่ 2: เลือก Order แล้วดึงรายละเอียด (Q2A.2)
   function select(order: Order) {
     setSelectedId(order.order_id);
     setShippingMethod(order.shipping_method);

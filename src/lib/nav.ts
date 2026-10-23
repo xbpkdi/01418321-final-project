@@ -33,7 +33,7 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-/** โครงเมนูตาม ui-design-brief.md ข้อ 9.2 — ใช้ร่วมกันระหว่าง Sidebar กับหน้า Site map (rubric ข้อ 29) */
+/** โครงเมนูตาม DESIGN.md — ใช้ร่วมกันระหว่าง Sidebar กับหน้า Site map (rubric ข้อ 29) */
 export const navGroups: NavGroup[] = [
   {
     labelKey: "main",

@@ -1,6 +1,6 @@
 # SQL Queries
 
-เก็บ SQL ทุกคำสั่งไว้ที่นี่ โดย **ตั้งชื่อตาม Query number ใน `00-use-case-descriptions.md`** เช่น
+เก็บ SQL ทุกคำสั่งไว้ที่นี่ โดย **ตั้งชื่อตาม Query number ใน `report-doc/content/usecases.json` (repo 321-sa-proj)** เช่น
 
 ```ts
 // src/lib/queries/orders.ts

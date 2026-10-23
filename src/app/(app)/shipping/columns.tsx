@@ -68,7 +68,7 @@ export function waitingColumns(
   ]);
 }
 
-/** ตารางส่งมอบแล้ว — ติดตามสถานะจากขนส่ง (Q8.3) และแจ้งเลขติดตามให้ลูกค้า (5S) */
+/** ตารางส่งมอบแล้ว — ติดตามสถานะจากขนส่ง (Q8A.3) และแจ้งเลขติดตามให้ลูกค้า (5S) */
 export function shippedColumns(t: Dict, onNotify: (order: Order) => void) {
   return col.columns([
     col.accessor("order_id", {

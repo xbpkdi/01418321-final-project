@@ -1,7 +1,7 @@
 "use client";
 
 // DataCleanupScreen — UC 10A ลบข้อมูลเก่าที่ไม่ใช้แล้ว
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู planRangeCleanup / commitCleanup)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู planRangeCleanup / commitCleanup)
 
 import { useState } from "react";
 import { Download, Trash2 } from "lucide-react";
@@ -89,7 +89,7 @@ export default function DataCleanupScreen() {
       setError({ message: t.cleanup.errCutoff });
       return;
     }
-    // Q10A.1 + Q10A.2
+    // Q10A.1–Q10A.4
     const next = planRangeCleanup(state, types, cutoff);
     if (next.items.length === 0) {
       setError({ message: t.cleanup.errNoData, hint: t.cleanup.errNoDataHint });
@@ -98,7 +98,7 @@ export default function DataCleanupScreen() {
     setPlan(next);
   }
 
-  // ทางเลือก #2: ลบ Order ที่ปิดแล้วทั้งหมด (Q10A.8 + Q10A.9)
+  // ทางเลือก #2: ลบ Order ที่ปิดแล้วทั้งหมด (Q10A.10 + Q10A.11)
   function reviewClosed() {
     setError(null);
     const next = planClosedCleanup(state);
@@ -124,7 +124,7 @@ export default function DataCleanupScreen() {
     toast.success(t.cleanup.backupDone);
   }
 
-  // Q10A.3–7 / Q10A.10–12 — ล้มเหลวแล้ว rollback ทั้งชุด
+  // Q10A.5–9 / Q10A.12–14 — ล้มเหลวแล้ว rollback ทั้งชุด
   function commit() {
     if (!plan) return;
     const { ok } = run((s) => {

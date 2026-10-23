@@ -1,7 +1,7 @@
 "use client";
 
 // CancelOrderScreen — UC 7A ยกเลิก Order
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู checkCancel / cancelOrder ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู checkCancel / cancelOrder ใน lib/workflow.ts)
 
 import * as React from "react";
 import { Suspense, useMemo, useState } from "react";

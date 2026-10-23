@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 
 /**
- * ยังไม่ได้ใช้งานจริง — รอ ER Diagram (todo/04-chapter2-diagrams-database.md) เสร็จก่อน
+ * ยังไม่ได้ใช้งานจริง — โครงสร้างตารางอยู่ที่ 04-chapter2-diagrams-database/sql/schema.sql ใน repo 321-sa-proj
  * ระหว่างนี้ทุกหน้าดึงข้อมูลจาก src/mock/ ที่มีรูปร่างเดียวกับผลลัพธ์ของ query
  */
 let pool: Pool | undefined;

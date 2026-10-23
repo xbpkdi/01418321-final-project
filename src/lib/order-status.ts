@@ -1,5 +1,5 @@
 /**
- * ค่าสถานะทั้งหมดของ Order — ลอกมาจาก 00-use-case-descriptions.md ตรงตัว
+ * ค่าสถานะทั้งหมดของ Order — ลอกมาจาก 321-sa-proj/report-doc/content/usecases.json ตรงตัว
  * ห้ามเพิ่ม/แก้คำเอง ถ้าต้องเปลี่ยนให้แก้ที่ use case description ก่อน
  */
 export const ORDER_STATUSES = [
@@ -29,7 +29,7 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-/** กลุ่มสีของ badge ตาม ui-design-brief.md ข้อ 4 */
+/** กลุ่มสีของ badge ตาม DESIGN.md */
 export type StatusTone =
   "waiting" | "progress" | "success" | "attention" | "cancelled";
 

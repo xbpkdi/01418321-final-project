@@ -1,7 +1,7 @@
 "use client";
 
 // LabelPrintScreen — UC 9A พิมพ์ใบปะสินค้า · จุดออกรายงานที่ 1 (ใบปะสินค้า)
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู printLabel ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู printLabel ใน lib/workflow.ts)
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -62,7 +62,7 @@ export default function LabelPrintScreen() {
     already: t.label.reprintTitle,
   };
 
-  // ขั้นตอนที่ 3: กด "พิมพ์ใบปะสินค้า" (Q6.1 + Q6.2)
+  // ขั้นตอนที่ 3: กด "พิมพ์ใบปะสินค้า" (Q9A.1 + Q9A.2)
   function print(orderId: string, isReprint = false): boolean {
     const { result, template } = run((s) => {
       const r = printLabel(s, orderId, isReprint);

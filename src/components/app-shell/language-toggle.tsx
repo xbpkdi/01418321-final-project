@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/context";
 
 /**
- * ปุ่มสลับภาษา TH/EN — ต้องมีทุกหน้าตาม ui-design-brief.md ข้อ 3
+ * ปุ่มสลับภาษา TH/EN — ต้องมีทุกหน้าตาม DESIGN.md
  * เหตุผลทางธุรกิจ: ผู้ใช้งานจริงเป็นคนญี่ปุ่นที่ต้องการระบบภาษาอังกฤษ
  */
 export function LanguageToggle() {

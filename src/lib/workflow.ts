@@ -106,7 +106,7 @@ export function createSeed(now = Date.now()): AppState {
     suppliers: structuredClone(SEED_SUPPLIERS),
     stock: structuredClone(SEED_STOCK),
     costs,
-    // ประวัติการคำนวณ (Q5.3) — มีรายการเก่ากว่า 12 เดือนไว้ทดสอบ 10A
+    // ประวัติการคำนวณ (Q4S.3) — มีรายการเก่ากว่า 12 เดือนไว้ทดสอบ 10A
     costLog: [
       costLogFrom(costs[0], "2025-04-10T10:00:00+09:00"),
       costLogFrom(costs[2], "2025-05-22T15:30:00+09:00"),
@@ -255,7 +255,7 @@ export function login(
   if (!EMAIL_PATTERN.test(email.trim()))
     return { state: s, result: "email-format" };
 
-  // Q1.1
+  // Q1A.1
   const user = s.users.find((u) => u.user_email === email.trim());
   if (user && user.fail_attempts >= 5) return { state: s, result: "locked" };
   if (!user) return { state: s, result: "wrong" };
@@ -357,7 +357,7 @@ export function importOrders(s: AppState): {
       duplicates++;
       continue;
     }
-    // Q11.1
+    // Q4A.2
     const order: Order = {
       ...item,
       order_id: `ORD-${next.nextOrderSeq}`,
@@ -462,7 +462,7 @@ export function verifyOrder(
     });
   }
 
-  // Q2A.2
+  // Q2A.4
   return {
     state: setStatus(next, orderId, "รอจับคู่กฎ SKU", {
       verified_at: nowIso(),
@@ -503,7 +503,7 @@ export function validateProduct(
 }
 
 /**
- * Q13.1 บันทึกสินค้า แล้วนำ Order ที่ค้างเพราะสินค้านี้กลับเข้ากระบวนการเอง
+ * Q3A.2/Q3A.3 บันทึกสินค้า แล้วนำ Order ที่ค้างเพราะสินค้านี้กลับเข้ากระบวนการเอง
  * - กฎ SKU ใหม่/แก้แล้ว → Order "รอดำเนินการด้วยตนเอง" จาก 2S กลับไปจับคู่กฎ SKU (2S ขั้นตอนที่ 3)
  * - ลงทะเบียน SKU แล้ว → Order จาก 4A ทางเลือก #2 กลับไปรอตรวจสอบ
  * - ระบุราคาขายแล้ว → Order จาก 5A กลับไปรอ Admin ตัดสินใจ
@@ -696,7 +696,7 @@ export function isRateStale(c: CostComponents | undefined, now = Date.now()) {
 }
 
 /**
- * Q5.2 + Q5.3
+ * Q4S.2 + Q4S.3
  * remember = true: บันทึกค่าที่กรอกเองไว้ใช้ครั้งถัดไป (ทางเลือก #1)
  */
 export function calculateCost(
@@ -807,7 +807,7 @@ export function decide(
   }
   if (unitCostOf(s, o.sku) === null) return { state: s, result: "no-cost" };
   if (s.faults.db) return { state: s, result: "db" };
-  // Q5A.3 / Q5A.4
+  // Q5A.4 / Q5A.5
   return {
     state: setStatus(
       s,
@@ -970,7 +970,7 @@ export function purchase(
     return { state: next, result: { kind: "send-failed" } };
   }
 
-  // Q7.1 + Q7.2 แล้วอัปเดตเป็น "สั่งซื้อแล้ว" พร้อมวันที่คาดว่าจะได้รับ
+  // Q6A.2 + Q6A.3 แล้วอัปเดตเป็น "สั่งซื้อแล้ว" พร้อมวันที่คาดว่าจะได้รับ
   const eta = new Date(Date.now() + supplier.lead_time * DAY)
     .toISOString()
     .slice(0, 10);
@@ -1025,7 +1025,7 @@ export function matchRsl(
   // ทางเลือก #4: คงไว้ที่ "ยังไม่ได้จับคู่" ให้ลองใหม่รอบถัดไป
   if (s.faults.rsl) return { state: s, result: { kind: "connection" } };
 
-  // Q4.1
+  // Q1S.1
   const found = findRslMatches(o.sku, o.variation);
   const pick = chosen
     ? found.find((f) => f.rsl_order_id === chosen)
@@ -1039,7 +1039,7 @@ export function matchRsl(
     };
   if (!pick) return { state: s, result: { kind: "multiple", options: found } };
 
-  // Q4.2 แล้วส่งต่อ 6S
+  // Q1S.2 แล้วส่งต่อ 6S
   return {
     state: setStatus(s, orderId, "รอจัดรูปแบบใบปะสินค้า", {
       rsl_reference_id: pick.rsl_order_id,
@@ -1126,7 +1126,7 @@ export function printLabel(
   if (o.order_status === "พิมพ์ใบปะสินค้าแล้ว" && !reprint)
     return { state: s, result: "already" };
 
-  // Q6.1
+  // Q9A.1
   const rule = findShippingRule(o.shipping_method, o.sales_channel);
   if (!rule)
     return { state: toManual(s, orderId, "template"), result: "no-template" };
@@ -1148,7 +1148,7 @@ export function printLabel(
     };
   }
 
-  // Q6.2
+  // Q9A.2
   return {
     state: setStatus(s, orderId, "พิมพ์ใบปะสินค้าแล้ว", {
       label_template: rule.label_template,
@@ -1205,14 +1205,14 @@ export function dispatch(
       results.push({ orderId: id, result: "not-printed" });
       continue;
     }
-    // Q8.1
+    // Q8A.1
     const info = findTracking(id);
     if (!info) {
       next = setStatus(next, id, "รอส่งมอบ");
       results.push({ orderId: id, result: "no-tracking" });
       continue;
     }
-    // Q8.2
+    // Q8A.2
     next = setStatus(next, id, "อยู่ระหว่างจัดส่ง", {
       tracking_number: info.tracking_number,
       carrier_name: info.carrier_name,
@@ -1236,7 +1236,7 @@ export type CarrierEvent =
   | { kind: "returned"; orderId: string; restocked: number };
 
 /**
- * Q8.3 ดึงสถานะจากผู้ให้บริการขนส่ง
+ * Q8A.3 ดึงสถานะจากผู้ให้บริการขนส่ง
  * - ส่งไม่สำเร็จ → "จัดส่งไม่สำเร็จ" (ทางเลือก #2)
  * - ตีกลับ → "ตีกลับ/คืนสินค้า" และถ้าตัดสต๊อกไปแล้วให้คืนสต๊อก (ทางเลือก #3, 7S ทางเลือก #2)
  */
@@ -1328,7 +1328,7 @@ export function notifyTracking(
       result: "failed",
     };
   }
-  // Q9.1 + Q9.2
+  // Q5S.1 + Q5S.2
   const resend = o.tracking_notified;
   const next = patchOrder(s, orderId, {
     tracking_notified: true,
@@ -1416,7 +1416,7 @@ export function cancelOrder(
 
   const o = findOrder(s, orderId)!;
   let next = s;
-  // Q10.2 คืนสต๊อก — เฉพาะ Order ที่ถูกตัดสต๊อกไปแล้ว (stock_deducted)
+  // Q7A.2 คืนสต๊อก — เฉพาะ Order ที่ถูกตัดสต๊อกไปแล้ว (stock_deducted)
   let restocked = 0;
   if (o.stock_deducted) {
     next = adjustStock(next, o.sku, "in_house", o.qty);
@@ -1433,7 +1433,7 @@ export function cancelOrder(
     };
     poCancelled = true;
   }
-  // Q10.1
+  // Q7A.1
   next = setStatus(next, orderId, "ยกเลิกแล้ว", {
     cancel_reason: reason.trim(),
     cancelled_at: nowIso(),
@@ -1459,7 +1459,7 @@ export type CleanupPlan = {
   blocked: { data_type: CleanupType; record_id: string }[];
 };
 
-/** Q10A.1 / Q10A.2: ข้อมูลที่ลบได้ตามประเภทและวันที่ */
+/** Q10A.1–Q10A.4: ข้อมูลที่ลบได้ตามประเภทและวันที่ */
 export function planRangeCleanup(
   s: AppState,
   types: CleanupType[],
@@ -1752,6 +1752,7 @@ export function runAutomation(input: AppState): {
         s = patchOrder(s, o.order_id, {
           stock_deducted: true,
           mp_stock_synced: synced,
+          deducted_at: nowIso(),
         });
         events.push({
           code: synced ? "stock-deducted" : "stock-sync",

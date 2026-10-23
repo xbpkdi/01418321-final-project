@@ -1,7 +1,7 @@
 "use client";
 
 // รายงานที่ 1 — ใบปะสินค้า (rubric ข้อ 31) · เปิดจาก LabelPrintScreen
-// โครงสร้างฟิลด์อิง Q6S.2 (label_template, rsl_no, parcel_seq, parcel_total, label_status, created_at)
+// โครงสร้างฟิลด์อิง Q6S.2 (label_template, rsl_reference_id, parcel_seq, parcel_total, label_status, created_at)
 // บวกข้อมูลผู้รับและรายการสินค้าจากตาราง orders — Multi-parcel พิมพ์แยกใบละกล่อง (6S, 9A ทางเลือก #4)
 
 import { use } from "react";
@@ -34,7 +34,7 @@ export default function ShippingLabelReport({
           {r.noLabel}
         </p>
       ) : (
-        <div className="grid gap-6 print:gap-0">
+        <div className="grid grid-cols-1 gap-6 print:gap-0">
           {Array.from({ length: parcels }, (_, i) => (
             <article
               key={i}
@@ -95,7 +95,7 @@ export default function ShippingLabelReport({
                 <table className="mt-2 w-full">
                   <thead>
                     <tr className="border-b text-left text-xs">
-                      <th className="py-1 font-medium">SKU</th>
+                      <th className="py-1 pr-3 font-medium">SKU</th>
                       <th className="py-1 font-medium">{t.common.product}</th>
                       <th className="py-1 text-right font-medium">
                         {t.common.qty}
@@ -104,7 +104,7 @@ export default function ShippingLabelReport({
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="py-2 align-top">{order.sku}</td>
+                      <td className="py-2 pr-3 align-top">{order.sku}</td>
                       <td className="py-2 align-top">
                         {order.product_name}
                         <span className="block text-xs text-neutral-600">

@@ -176,7 +176,7 @@ export const SEED_STOCK: StockLevel[] = [
 const HOUR = 60 * 60 * 1000;
 
 /**
- * ต้นทุนตาม Q5.1 — purchase_price คือราคาซื้อทั้งล็อตตามสูตร Q5.2
+ * ต้นทุนตาม Q4S.1 — purchase_price คือราคาซื้อทั้งล็อตตามสูตร Q4S.2
  * เวลาอัปเดตอัตราแลกเปลี่ยนคิดจากเวลาที่สร้างข้อมูล เพื่อให้เคส "เก่าเกิน 24 ชั่วโมง" ทดสอบได้ทุกวัน
  */
 export function seedCosts(now: number): CostComponents[] {
@@ -326,7 +326,7 @@ export const SEED_SUPPLIER_QUOTES: {
   },
 ];
 
-/** คำสั่งซื้อที่ค้างอยู่กับ Supplier (Q7.2) — ใช้ทดสอบ "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว" */
+/** คำสั่งซื้อที่ค้างอยู่กับ Supplier (Q6A.3) — ใช้ทดสอบ "มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว" */
 export const SEED_PURCHASE_ORDERS: PurchaseOrder[] = [
   {
     po_id: "PO-0091",

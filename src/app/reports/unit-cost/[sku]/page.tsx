@@ -1,7 +1,7 @@
 "use client";
 
 // รายงานที่ 2 — รายงานต้นทุนต่อหน่วย (rubric ข้อ 31) · เปิดจาก CostCalculatorScreen
-// โครงสร้างอิงสูตร Q5.2 และผลที่บันทึกผ่าน Q5.3 (cost_calculation_log) ครั้งล่าสุด
+// โครงสร้างอิงสูตร Q4S.2 และผลที่บันทึกผ่าน Q4S.3 (cost_calculation_log) ครั้งล่าสุด
 // พร้อมประวัติการคำนวณย้อนหลัง
 
 import { use } from "react";

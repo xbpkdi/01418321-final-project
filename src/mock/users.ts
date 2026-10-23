@@ -1,6 +1,6 @@
 /**
  * บัญชีทดสอบระหว่างยังไม่ต่อฐานข้อมูลจริง
- * รูปร่างตรงกับผลลัพธ์ของ Q1.1 ใน use case description:
+ * รูปร่างตรงกับผลลัพธ์ของ Q1A.1 ใน use case description:
  *   SELECT user_id, user_password, fail_attempts FROM users WHERE user_email=$1
  * ของจริงต้องเทียบ hash ฝั่ง server ไม่ใช่เก็บรหัสผ่านเป็น plain text แบบนี้
  */

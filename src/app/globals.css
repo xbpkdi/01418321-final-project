@@ -240,7 +240,7 @@
   .ribbon-host {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
+    overflow: clip;
   }
   .ribbon {
     position: absolute;

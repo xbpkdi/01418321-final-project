@@ -1,9 +1,9 @@
 "use client";
 
 // ReorderDecisionScreen — UC 5A ตัดสินใจสั่งซื้อเพิ่ม + UC 6A สั่งซื้อจาก Supplier
-// สองขั้นตอนนี้รวมไว้หน้าเดียวตาม ui-design-brief.md ข้อ 1
+// สองขั้นตอนนี้รวมไว้หน้าเดียวตาม DESIGN.md
 // Order ที่ตัดสินใจ "คุ้มค่า" ใน 5A จะไปรออยู่ในแท็บ "รอสั่งซื้อเติมสต๊อก" ของ 6A ทันที
-// ข้อความและเงื่อนไขทั้งหมดมาจาก 00-use-case-descriptions.md (ดู decide / purchase ใน lib/workflow.ts)
+// ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู decide / purchase ใน lib/workflow.ts)
 
 import { useState } from "react";
 import Link from "next/link";
@@ -93,7 +93,7 @@ export default function ReorderDecisionScreen() {
     db: t.reorder.errDb,
   };
 
-  // Q5A.3 / Q5A.4
+  // Q5A.4 / Q5A.5
   function commitDecision() {
     if (!confirming) return;
     const { orderId, decision, qty } = confirming;

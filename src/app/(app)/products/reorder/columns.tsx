@@ -106,7 +106,7 @@ export function purchaseColumns(
 
 const poCol = createColumnHelper<AppTableFeatures, PurchaseOrder>();
 
-/** ผลการสั่งซื้อที่บันทึกไว้ (Q7.2) */
+/** ผลการสั่งซื้อที่บันทึกไว้ (Q6A.3) */
 export function purchaseOrderColumns(
   t: Dict,
   lang: Lang,
