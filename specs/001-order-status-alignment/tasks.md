@@ -90,7 +90,7 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 - [X] T016 [US3] ใน `src/app/(app)/shipping/columns.tsx` คอลัมน์ `notify`: เพิ่ม `"แจ้งเลขติดตามแล้ว"` ในรายการสถานะที่แสดงปุ่ม `t.shipping.notify` (ตัวแปร `canNotify`) เพื่อให้ส่งเลขติดตามซ้ำได้ตาม 5S ทางเลือก #3 (ทำหลัง T007 เพราะแก้ไฟล์เดียวกัน)
 - [X] T017 [P] [US3] อ่านทบทวน (ไม่คาดว่าต้องแก้) ใน `src/lib/workflow.ts`: `HANDED_OVER`, `checkCancel`, `cancelOrder` ต้องให้ "แจ้งเลขติดตามแล้ว" ได้ผล `in-transit` → "รอดำเนินการพิเศษ" ไม่คืนสต๊อก และ "จัดส่งสำเร็จ"/"ยกเลิกแล้ว" ได้ `closed`/`already`; `CLOSED_STATUSES`, `planRangeCleanup`, `planClosedCleanup` ต้องนับเฉพาะ "จัดส่งสำเร็จ" และ "ยกเลิกแล้ว" ถ้าพบต่างจากนี้ให้แก้และจดใน plan.md
-- [ ] T018 [US3] ตรวจด้วยมือตาม quickstart (5), (7), (8), (9)
+- [X] T018 [US3] ตรวจด้วยมือตาม quickstart (5), (7), (8), (9)
 
 **Checkpoint**: US3 ผ่านโดยไม่กระทบ US1 และ US2
 
