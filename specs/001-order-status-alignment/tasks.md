@@ -104,8 +104,8 @@ description: "รายการงาน: จัดลำดับสถาน�
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] ค้นด้วย Grep ทั้ง `src/` หา `"จัดส่งสำเร็จ"` ที่ถูกส่งเข้า `setStatus` หรือ `order_status:` ในโค้ด (ไม่นับ `src/mock/` และ `dict.ts`) ยืนยันว่ามีเฉพาะกฎเลื่อนสถานะจาก T010; ถ้าพบที่อื่นให้แก้ใน `src/lib/workflow.ts` หรือไฟล์ที่พบ
-- [ ] T020 [US4] ตรวจด้วยมือตาม quickstart (11) และ (12); รัน `npx tsc --noEmit` (type `OrderStatus` ใน `src/lib/order-status.ts` จะจับค่าสถานะนอก 22 ค่า)
+- [X] T019 [US4] ค้นด้วย Grep ทั้ง `src/` หา `"จัดส่งสำเร็จ"` ที่ถูกส่งเข้า `setStatus` หรือ `order_status:` ในโค้ด (ไม่นับ `src/mock/` และ `dict.ts`) ยืนยันว่ามีเฉพาะกฎเลื่อนสถานะจาก T010; ถ้าพบที่อื่นให้แก้ใน `src/lib/workflow.ts` หรือไฟล์ที่พบ
+- [X] T020 [US4] ตรวจด้วยมือตาม quickstart (11) และ (12); รัน `npx tsc --noEmit` (type `OrderStatus` ใน `src/lib/order-status.ts` จะจับค่าสถานะนอก 22 ค่า)
 
 **Checkpoint**: US4 ผ่าน
 
