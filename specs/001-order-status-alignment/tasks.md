@@ -130,8 +130,8 @@ description: "รายการงาน: จัดลำดับสถาน�
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T024 [P] ใน `CLAUDE.md` แก้สองจุด: (1) หัวข้อ Architecture เปลี่ยน storage key `rsl-hub-state-v1` เป็น `rsl-hub-state-v2`; (2) หัวข้อ "Content source of truth" ลบประโยค "`workflow.ts` still does this, and needs changing."
-- [ ] T025 [P] ใน `specs/001-order-status-alignment/spec.md` เปลี่ยน `**Status**: Draft` เป็น `**Status**: Implemented` เมื่อ T026 ผ่าน
-- [ ] T026 เดิน quickstart ครบ (1) ถึง (13) โดยสถานการณ์ (1) ถึง (9) ต้องเสร็จภายใน 10 นาที (SC-004) แล้วรัน `npm run lint`, `npx tsc --noEmit`, `npm run build` ที่ราก repository ผลต้องไม่เลวกว่า T001
+- [X] T025 [P] ใน `specs/001-order-status-alignment/spec.md` เปลี่ยน `**Status**: Draft` เป็น `**Status**: Implemented` เมื่อ T026 ผ่าน
+- [X] T026 เดิน quickstart ครบ (1) ถึง (13) โดยสถานการณ์ (1) ถึง (9) ต้องเสร็จภายใน 10 นาที (SC-004) แล้วรัน `npm run lint`, `npx tsc --noEmit`, `npm run build` ที่ราก repository ผลต้องไม่เลวกว่า T001
 
 ---
 
