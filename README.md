@@ -21,6 +21,27 @@ npm run dev
 
 เปิด http://localhost:3000 (จะ redirect ไปหน้า `/login` ซึ่งเป็น root ของ site map)
 
+## PostgreSQL สำหรับพัฒนา
+
+ติดตั้ง PostgreSQL ในเครื่องและเริ่ม service ให้ทำงาน จากนั้นเปิด `psql` ด้วยบัญชีผู้ดูแลเพื่อสร้าง role และฐานข้อมูลสำหรับพัฒนา:
+
+```powershell
+psql -U postgres
+```
+
+ใน prompt ของ `psql`, ใช้รหัสผ่านเฉพาะเครื่องสำหรับ role นี้:
+
+```sql
+CREATE ROLE rsl_app LOGIN PASSWORD 'replace-with-local-password';
+CREATE DATABASE rsl_fulfillment_hub OWNER rsl_app;
+```
+
+ออกจาก `psql`, คัดลอก `.env.local.example` เป็น `.env.local` แล้วใส่ role, รหัสผ่าน และชื่อฐานข้อมูลที่ตั้งไว้ใน `DATABASE_URL`. ห้าม commit `.env.local` หรือรหัสผ่านจริงลง repository. ขณะนี้แอปยังใช้ mock/localStorage และยังไม่อ่าน `DATABASE_URL`; migration และคำสั่ง seed จะเพิ่มใน phase ถัดไปของ feature 002.
+
+```powershell
+Copy-Item .env.local.example .env.local
+```
+
 บัญชีทดสอบ: `admin@colorado.jp` / `demo1234` (`locked@colorado.jp` ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป)
 
 หน้า `/dev` (ไม่อยู่ในเมนู) ใช้รีเซ็ตข้อมูลตัวอย่าง และจำลองข้อผิดพลาดจากระบบภายนอกตาม "ทางเลือก" ของแต่ละ UC
