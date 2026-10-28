@@ -26,6 +26,14 @@ const th = {
     logoutDone: "ออกจากระบบแล้ว",
   },
 
+  errors: {
+    databaseUnavailable: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
+    databaseFailure: "ไม่สามารถดำเนินการกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
+    externalUnavailable: "ไม่สามารถเชื่อมต่อระบบภายนอกได้ กรุณาลองใหม่ภายหลัง",
+    externalRejected: "ระบบภายนอกไม่สามารถดำเนินการตามคำขอได้",
+    externalInvalidResponse: "ได้รับข้อมูลที่ไม่ถูกต้องจากระบบภายนอก",
+  },
+
   nav: {
     groups: {
       main: "หน้าหลัก",
@@ -699,6 +707,14 @@ const en: typeof th = {
     logout: "Log out",
     logoutConfirm: "Do you want to log out?",
     logoutDone: "Logged out",
+  },
+
+  errors: {
+    databaseUnavailable: "The database is unavailable. Please try again later.",
+    databaseFailure: "The database operation could not be completed. Please try again later.",
+    externalUnavailable: "An external service is unavailable. Please try again later.",
+    externalRejected: "An external service could not complete the request.",
+    externalInvalidResponse: "An external service returned an invalid response.",
   },
 
   nav: {
