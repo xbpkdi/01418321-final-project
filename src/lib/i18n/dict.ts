@@ -692,7 +692,7 @@ const th = {
     } as Record<FaultKey, string>,
     accounts: "บัญชีทดสอบ",
     accountsHint:
-      "admin@colorado.jp / demo1234 · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
   },
 };
 
@@ -1384,7 +1384,7 @@ const en: typeof th = {
     } as Record<FaultKey, string>,
     accounts: "Test accounts",
     accountsHint:
-      "admin@colorado.jp / demo1234 · locked@colorado.jp tests too many sign-in attempts",
+      "admin@colorado.jp uses the seeded password · locked@colorado.jp tests too many sign-in attempts",
   },
 };
 

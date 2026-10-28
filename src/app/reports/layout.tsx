@@ -1,9 +1,10 @@
-import { AuthGuard } from "@/components/app-shell/auth-guard";
+import { requireSession } from "@/lib/auth/require-session";
 
-export default function ReportsLayout({
+export default async function ReportsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AuthGuard>{children}</AuthGuard>;
+  await requireSession();
+  return children;
 }

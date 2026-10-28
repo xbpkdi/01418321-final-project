@@ -28,7 +28,6 @@ import {
   type StockLevel,
   type Supplier,
 } from "@/types/product";
-import { MOCK_USERS, type MockUser } from "@/mock/users";
 import {
   SEED_CONNECTION,
   SEED_ORDERS,
@@ -72,7 +71,7 @@ export type DeletionLog = {
 };
 
 export type AppState = {
-  version: 2;
+  version: 3;
   orders: Order[];
   products: Product[];
   suppliers: Supplier[];
@@ -83,7 +82,6 @@ export type AppState = {
   rmsInbox: Omit<Order, "order_id" | "order_status">[];
   rmsCancelRequests: string[];
   connection: ChannelConnection;
-  users: MockUser[];
   session: { user_id: string; user_email: string } | null;
   faults: Record<FaultKey, boolean>;
   deletionLog: DeletionLog[];
@@ -100,7 +98,7 @@ export function createSeed(now = Date.now()): AppState {
   const iso = (offsetDays: number) =>
     new Date(now - offsetDays * DAY).toISOString();
   return {
-    version: 2,
+    version: 3,
     orders: structuredClone(SEED_ORDERS),
     products: structuredClone(SEED_PRODUCTS),
     suppliers: structuredClone(SEED_SUPPLIERS),
@@ -127,7 +125,6 @@ export function createSeed(now = Date.now()): AppState {
     rmsInbox: structuredClone(SEED_RMS_INBOX),
     rmsCancelRequests: [...SEED_RMS_CANCEL_REQUESTS],
     connection: { ...SEED_CONNECTION },
-    users: structuredClone(MOCK_USERS),
     session: null,
     faults: Object.fromEntries(FAULT_KEYS.map((k) => [k, false])) as Record<
       FaultKey,
@@ -237,61 +234,6 @@ export function stockTotal(s: AppState, sku: string) {
 
 /** สถานะที่ถือว่า Order ปิดแล้ว (7A Pre-Condition, 10A) */
 export const CLOSED_STATUSES: OrderStatus[] = ["จัดส่งสำเร็จ", "ยกเลิกแล้ว"];
-
-// 1A เข้าสู่ระบบ
-
-export const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
-
-export type LoginResult =
-  "incomplete" | "email-format" | "locked" | "wrong" | "ok";
-
-export function login(
-  s: AppState,
-  email: string,
-  password: string,
-): { state: AppState; result: LoginResult } {
-  if (!email.trim() || !password.trim())
-    return { state: s, result: "incomplete" };
-  if (!EMAIL_PATTERN.test(email.trim()))
-    return { state: s, result: "email-format" };
-
-  // Q1A.1
-  const user = s.users.find((u) => u.user_email === email.trim());
-  if (user && user.fail_attempts >= 5) return { state: s, result: "locked" };
-  if (!user) return { state: s, result: "wrong" };
-  if (user.user_password !== password) {
-    // รหัสผ่านผิด: +1 ให้ fail_attempts
-    return {
-      state: {
-        ...s,
-        users: s.users.map((u) =>
-          u.user_id === user.user_id
-            ? { ...u, fail_attempts: u.fail_attempts + 1 }
-            : u,
-        ),
-      },
-      result: "wrong",
-    };
-  }
-  // สำเร็จ: fail_attempts = 0, last_login = ตอนนี้
-  return {
-    state: {
-      ...s,
-      users: s.users.map((u) =>
-        u.user_id === user.user_id
-          ? { ...u, fail_attempts: 0, last_login: nowIso() }
-          : u,
-      ),
-      session: { user_id: user.user_id, user_email: user.user_email },
-    },
-    result: "ok",
-  };
-}
-
-export function logout(s: AppState): AppState {
-  // ยกเลิก session อย่างเดียว ไม่แตะข้อมูลอื่น
-  return { ...s, session: null };
-}
 
 // 4A ดึง Order เข้าระบบ
 

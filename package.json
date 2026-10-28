@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "tsx --env-file=.env.local db/seed/cli.ts migrate",
+    "db:seed": "tsx --env-file=.env.local db/seed/cli.ts seed",
+    "db:setup": "tsx --env-file=.env.local db/seed/cli.ts setup",
+    "db:reset": "tsx --env-file=.env.local db/seed/cli.ts reset"
   },
   "dependencies": {
     "@tanstack/react-table": "^9.2.6",
@@ -33,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
