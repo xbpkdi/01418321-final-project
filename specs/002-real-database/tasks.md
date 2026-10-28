@@ -21,13 +21,13 @@
 
 **Purpose**: ปิดข้อกำหนดที่ยังคลุมเครือและสร้างโครงสร้างร่วมก่อนทำ migration หรือ query
 
-- [ ] T003 ยืนยันจาก `docs/source/use-case-description.pdf` ว่า UC 5S ส่ง tracking notification ผ่านระบบใด แล้วแก้ operation/เจ้าของ interface ใน `specs/002-real-database/contracts/external-adapters.md`
-- [ ] T004 ระบุที่เก็บถาวรของสถานะ Rakuten stock sync ที่ 7S ใช้ retry (เช่น field/table ตามข้อกำหนด ER) แล้วปรับ `specs/002-real-database/data-model.md` และ `specs/002-real-database/spec.md` ให้สอดคล้อง; เพิ่ม schema extension ในรายการส่งทีมเอกสารถ้า ER ไม่มี field ที่ต้องใช้
-- [ ] T005 ตรวจ Q-number กับเอกสาร use case ฉบับล่าสุดใน `docs/source/use-case-description.pdf`; บันทึก mapping UC → Q-number ใน `src/lib/queries/README.md` และระบุหมายเลขที่ยัง provisional ห้ามเริ่ม SQL ของแอปจน mapping ผ่านเกณฑ์ constitution
-- [ ] T006 อ่านคู่มือ Next.js ที่เกี่ยวข้องจาก `node_modules/next/dist/docs/` ก่อนสร้าง server actions, handlers หรือ server guards แล้วบันทึกข้อกำหนดที่เกี่ยวข้องใน `specs/002-real-database/research.md`
-- [ ] T007 กำหนดชนิดผลลัพธ์กลางและ factory สำหรับเลือก adapter ตามค่าตั้งใน `src/lib/adapters/contracts.ts` และ `src/lib/adapters/index.ts` โดยยึด `specs/002-real-database/contracts/external-adapters.md`
-- [ ] T008 เพิ่ม transaction helper ที่ใช้ connection เดียวและ rollback เมื่อเกิด error ใน `src/lib/db.ts`; ใช้ raw SQL ผ่าน `pg` เท่านั้น
-- [ ] T009 เพิ่มการแปลง DB/adapter error เป็น result code ปลอดภัยและข้อความ i18n ใน `src/lib/db/errors.ts` และ `src/lib/i18n/dict.ts`
+- [x] T003 ยืนยันจาก `docs/source/use-case-description.pdf` ว่า UC 5S ส่ง tracking notification ผ่านระบบใด แล้วแก้ operation/เจ้าของ interface ใน `specs/002-real-database/contracts/external-adapters.md`
+- [x] T004 ระบุที่เก็บถาวรของสถานะ Rakuten stock sync ที่ 7S ใช้ retry (เช่น field/table ตามข้อกำหนด ER) แล้วปรับ `specs/002-real-database/data-model.md` และ `specs/002-real-database/spec.md` ให้สอดคล้อง; เพิ่ม schema extension ในรายการส่งทีมเอกสารถ้า ER ไม่มี field ที่ต้องใช้
+- [x] T005 ตรวจ Q-number กับเอกสาร use case ฉบับล่าสุดใน `docs/source/use-case-description.pdf`; บันทึก mapping UC → Q-number ใน `src/lib/queries/README.md` และระบุหมายเลขที่ยัง provisional ห้ามเริ่ม SQL ของแอปจน mapping ผ่านเกณฑ์ constitution
+- [x] T006 อ่านคู่มือ Next.js ที่เกี่ยวข้องจาก `node_modules/next/dist/docs/` ก่อนสร้าง server actions, handlers หรือ server guards แล้วบันทึกข้อกำหนดที่เกี่ยวข้องใน `specs/002-real-database/research.md`
+- [x] T007 กำหนดชนิดผลลัพธ์กลางและ factory สำหรับเลือก adapter ตามค่าตั้งใน `src/lib/adapters/contracts.ts` และ `src/lib/adapters/index.ts` โดยยึด `specs/002-real-database/contracts/external-adapters.md`
+- [x] T008 เพิ่ม transaction helper ที่ใช้ connection เดียวและ rollback เมื่อเกิด error ใน `src/lib/db.ts`; ใช้ raw SQL ผ่าน `pg` เท่านั้น
+- [x] T009 เพิ่มการแปลง DB/adapter error เป็น result code ปลอดภัยและข้อความ i18n ใน `src/lib/db/errors.ts` และ `src/lib/i18n/dict.ts`
 
 **Gate**: T003–T005 ต้องเสร็จก่อนทำ SQL/migrations ที่เกี่ยวข้อง; ห้ามเดา UC, Q-number หรือปลายทาง integration ที่ยังไม่ยืนยัน
 

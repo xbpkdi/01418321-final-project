@@ -25,6 +25,7 @@
 | `deletion_history` | UC 10A, order reference snapshot, actor, deleted_at | ร่องรอยการลบเมื่อ Order ที่เข้าเงื่อนไขถูกลบ |
 | `cost_history` | SKU/cost reference, ค่าเดิม/ใหม่ที่จำเป็น, actor, changed_at | ประวัติการเปลี่ยนต้นทุน UC 4S |
 | `tracking_notification_logs` | order reference, tracking reference, outcome, sent_at | ป้องกัน/บันทึกการแจ้งเลขติดตามซ้ำ UC 5S; ข้อความไม่เก็บข้อมูลส่วนเกิน |
+| `rakuten_stock_sync_states` | `stock_id` (PK/FK), `sync_status`, `last_synced_qty`, `last_attempt_at`, `last_synced_at`, `last_error_code` | สถานะคงค้างสำหรับ retry 7S ต่อรายการ stock ของ Rakuten; เมื่อ stock เปลี่ยนให้เป็น pending และ retry คำนวณยอดล่าสุดจาก `in_house_qty + rsl_qty`; บันทึกยอดล่าสุดที่ sync สำเร็จเพื่อไม่ให้คำขอเก่าทับยอดใหม่. เป็น schema extension ที่ต้องส่งทีมปรับ ER. |
 
 ชื่อตารางเพิ่มเติมเป็นชื่อเสนอสำหรับ plan; ต้องบันทึกลง ER change list และยืนยันชื่อ/คอลัมน์ใน tasks ก่อนเขียน migration. เพิ่ม migration ใหม่เสมอ.
 
@@ -34,5 +35,6 @@
 - `orders.order_status` รับเฉพาะค่าใน `order-status.ts`; status ของใบปะและ reorder ใช้คอลัมน์สถานะของตนเอง.
 - การตัด/คืน stock และการเปลี่ยน `stock_deducted` เกิดใน transaction เดียวและทำซ้ำแล้วไม่เพิ่ม/ลดซ้ำ.
 - การสร้าง session ต้องผูกกับ Admin ที่มีอยู่; session หมดอายุหรือถูก revoke ใช้ไม่ได้ทันที.
+- การซิงค์ stock ของ Rakuten ใน 7S ใช้แถว `rakuten_stock_sync_states` เป็น durable state; retry ส่งยอด absolute ล่าสุดที่คำนวณจาก stock ปัจจุบัน. อย่าล้าง pending หาก stock เปลี่ยนระหว่างเรียก adapter; เมื่อสำเร็จให้บันทึกยอดที่ส่งและล้าง pending เฉพาะเมื่อยอดปัจจุบันยังตรงกัน.
 - Query ใช้ parameterized SQL และมี UC id + Q-number; ต้องตรวจ mapping Q-number กับ use case document ฉบับใหม่ก่อนเริ่มเขียน SQL.
 
