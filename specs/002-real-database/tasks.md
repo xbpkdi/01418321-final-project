@@ -12,8 +12,8 @@
 
 **Purpose**: เตรียมข้อมูลอ้างอิงและการตั้งค่าฐานข้อมูลสำหรับเครื่องพัฒนา โดยยังไม่เปลี่ยนพฤติกรรมแอป
 
-- [ ] T001 [P] ตรวจ ER diagram, BizFlow และเอกสาร use case ล่าสุดใน `docs/source/`; สรุปเวอร์ชัน, UC/alternative flow ที่กระทบ feature 002 และข้อขัดแย้งลง `specs/002-real-database/research.md`
-- [ ] T002 [P] ระบุขั้นตอนตั้ง PostgreSQL และค่าตั้งที่ต้องใช้ โดยไม่ใส่ secret ลง repo ใน `.env.local.example` และ `README.md`
+- [x] T001 [P] ตรวจ ER diagram, BizFlow และเอกสาร use case ล่าสุดใน `docs/source/`; สรุปเวอร์ชัน, UC/alternative flow ที่กระทบ feature 002 และข้อขัดแย้งลง `specs/002-real-database/research.md`
+- [x] T002 [P] ระบุขั้นตอนตั้ง PostgreSQL และค่าตั้งที่ต้องใช้ โดยไม่ใส่ secret ลง repo ใน `.env.local.example` และ `README.md`
 
 ---
 
