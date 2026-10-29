@@ -39,16 +39,16 @@
 
 **Independent Test**: จากฐานข้อมูลว่าง รันคำสั่ง setup/seed, รันซ้ำสามครั้งโดยจำนวนแถวไม่เพิ่ม, login ด้วย `admin@colorado.jp`, ปฏิเสธ `locked@colorado.jp`, restart แล้วยังมีข้อมูล และตรวจว่า password ใน DB เป็น hash
 
-- [ ] T010 [US1] สร้าง migration สำหรับตารางและคอลัมน์ ER ทั้งหมด โดยใช้ชื่อจาก `docs/source/er-diagram.drawio.xml` ใน `db/migrations/001_core_schema.sql`
-- [ ] T011 [US1] สร้าง migration ใหม่สำหรับ sessions และ history/sync schema extensions ที่อนุมัติใน `db/migrations/002_runtime_records.sql`; ระบุเหตุผลและตารางที่ทีมเอกสารต้องเพิ่มใน `specs/002-real-database/data-model.md`
-- [ ] T012 [US1] เพิ่ม query แบบ parameterized สำหรับ Admin และ session พร้อม UC/Q-number comments ใน `src/lib/queries/admin.ts` และ `src/lib/queries/sessions.ts`
-- [ ] T013 [US1] สร้าง seed ที่แปลงข้อมูลจาก `src/mock/` ครอบคลุม use case paths, hash รหัสผ่านด้วย scrypt และรันซ้ำแบบไม่ซ้ำข้อมูลใน `db/seed/index.ts`
-- [ ] T014 [US1] เพิ่มคำสั่ง setup/seed แบบปกติและ reset แบบ explicit ใน `package.json` และ `db/seed/cli.ts`
-- [ ] T015 [US1] เพิ่ม hash/verify password โดยใช้ Node `scrypt` โดยไม่เพิ่ม dependency ใน `src/lib/auth/password.ts`
-- [ ] T016 [US1] เพิ่มการสร้าง, ตรวจ, หมดอายุ และ revoke session โดยเก็บ token hash ใน `src/lib/auth/sessions.ts`
-- [ ] T017 [US1] เพิ่ม login/logout server actions ที่ใช้ UC 1A, บันทึก `fail_attempts` และ `last_login` ตาม `src/app/login/actions.ts`
-- [ ] T018 [US1] ป้องกันการเข้าถึงหน้า app และ report ฝั่ง server ด้วย session guard ใน `src/lib/auth/require-session.ts`, `src/app/(app)/layout.tsx` และ `src/app/reports/layout.tsx`
-- [ ] T019 [US1] อัปเดตคำแนะนำติดตั้งและ login ตัวอย่างหลังเปลี่ยนเป็น DB ใน `README.md` โดยไม่เปิดเผยค่าเชื่อมต่อจริง
+- [x] T010 [US1] สร้าง migration สำหรับตารางและคอลัมน์ ER ทั้งหมด โดยใช้ชื่อจาก `docs/source/er-diagram.drawio.xml` ใน `db/migrations/001_core_schema.sql`
+- [x] T011 [US1] สร้าง migration ใหม่สำหรับ sessions และ history/sync schema extensions ที่อนุมัติใน `db/migrations/002_runtime_records.sql`; ระบุเหตุผลและตารางที่ทีมเอกสารต้องเพิ่มใน `specs/002-real-database/data-model.md`
+- [x] T012 [US1] เพิ่ม query แบบ parameterized สำหรับ Admin และ session พร้อม UC/Q-number comments ใน `src/lib/queries/admin.ts` และ `src/lib/queries/sessions.ts`
+- [x] T013 [US1] สร้าง seed ที่แปลงข้อมูลจาก `src/mock/` ครอบคลุม use case paths, hash รหัสผ่านด้วย scrypt และรันซ้ำแบบไม่ซ้ำข้อมูลใน `db/seed/index.ts`
+- [x] T014 [US1] เพิ่มคำสั่ง setup/seed แบบปกติและ reset แบบ explicit ใน `package.json` และ `db/seed/cli.ts`
+- [x] T015 [US1] เพิ่ม hash/verify password โดยใช้ Node `scrypt` โดยไม่เพิ่ม dependency ใน `src/lib/auth/password.ts`
+- [x] T016 [US1] เพิ่มการสร้าง, ตรวจ, หมดอายุ และ revoke session โดยเก็บ token hash ใน `src/lib/auth/sessions.ts`
+- [x] T017 [US1] เพิ่ม login/logout server actions ที่ใช้ UC 1A, บันทึก `fail_attempts` และ `last_login` ตาม `src/app/login/actions.ts`
+- [x] T018 [US1] ป้องกันการเข้าถึงหน้า app และ report ฝั่ง server ด้วย session guard ใน `src/lib/auth/require-session.ts`, `src/app/(app)/layout.tsx` และ `src/app/reports/layout.tsx`
+- [x] T019 [US1] อัปเดตคำแนะนำติดตั้งและ login ตัวอย่างหลังเปลี่ยนเป็น DB ใน `README.md` โดยไม่เปิดเผยค่าเชื่อมต่อจริง
 
 ---
 

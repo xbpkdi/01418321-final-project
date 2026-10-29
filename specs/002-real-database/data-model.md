@@ -27,7 +27,17 @@
 | `tracking_notification_logs` | order reference, tracking reference, outcome, sent_at | ป้องกัน/บันทึกการแจ้งเลขติดตามซ้ำ UC 5S; ข้อความไม่เก็บข้อมูลส่วนเกิน |
 | `rakuten_stock_sync_states` | `stock_id` (PK/FK), `sync_status`, `last_synced_qty`, `last_attempt_at`, `last_synced_at`, `last_error_code` | สถานะคงค้างสำหรับ retry 7S ต่อรายการ stock ของ Rakuten; เมื่อ stock เปลี่ยนให้เป็น pending และ retry คำนวณยอดล่าสุดจาก `in_house_qty + rsl_qty`; บันทึกยอดล่าสุดที่ sync สำเร็จเพื่อไม่ให้คำขอเก่าทับยอดใหม่. เป็น schema extension ที่ต้องส่งทีมปรับ ER. |
 
-ชื่อตารางเพิ่มเติมเป็นชื่อเสนอสำหรับ plan; ต้องบันทึกลง ER change list และยืนยันชื่อ/คอลัมน์ใน tasks ก่อนเขียน migration. เพิ่ม migration ใหม่เสมอ.
+### Schema extension ที่ใช้จริงใน `002_runtime_records.sql`
+
+- `sessions`: `session_id`, `admin_id`, `token_hash`, `created_at`, `expires_at`, `revoked_at`; เก็บเฉพาะ hash ของ opaque token และผูก FK กับ `admins`.
+- `auto_error_logs`: `auto_error_log_id`, `use_case_id`, `context_key`, `error_code`, `safe_message`, `occurred_at` สำหรับ 2S/3S/6S/7S.
+- `deletion_history`: `deletion_history_id`, `order_reference`, `order_snapshot`, `admin_id`, `deleted_at` สำหรับ 10A.
+- `cost_history`: `cost_history_id`, `sku_id`, `cost_id`, `previous_value`, `new_value`, `admin_id`, `changed_at` สำหรับ 4S และเพิ่ม `costs.exchange_rate_updated_at` ซึ่งจำเป็นต่อทางเลือกอัตราแลกเปลี่ยนเกิน 24 ชั่วโมง แต่ไม่มีใน ER ปัจจุบัน.
+- `tracking_notification_logs`: `tracking_notification_log_id`, `order_id`, `tracking_number`, `outcome`, `sent_at`, `admin_id` สำหรับ 5S และการส่งซ้ำ.
+- `rakuten_stock_sync_states`: ใช้คอลัมน์ตามตารางด้านบนและ FK ไป `stock`; เป็นสถานะคงค้างของ 7S ทางเลือก #1.
+- `schema_migrations`: `migration_name`, `applied_at`; เป็น catalog เชิงเทคนิคเพื่อให้ setup รันซ้ำได้ ไม่ใช่ business entity.
+
+รายการนี้คือ ER change list ที่ต้องส่งทีมเอกสาร. Migration ที่ merge แล้วห้ามแก้; การปรับตาม ER ฉบับถัดไปต้องสร้าง migration ใหม่เสมอ.
 
 ## กฎความสอดคล้อง
 
@@ -37,4 +47,3 @@
 - การสร้าง session ต้องผูกกับ Admin ที่มีอยู่; session หมดอายุหรือถูก revoke ใช้ไม่ได้ทันที.
 - การซิงค์ stock ของ Rakuten ใน 7S ใช้แถว `rakuten_stock_sync_states` เป็น durable state; retry ส่งยอด absolute ล่าสุดที่คำนวณจาก stock ปัจจุบัน. อย่าล้าง pending หาก stock เปลี่ยนระหว่างเรียก adapter; เมื่อสำเร็จให้บันทึกยอดที่ส่งและล้าง pending เฉพาะเมื่อยอดปัจจุบันยังตรงกัน.
 - Query ใช้ parameterized SQL และมี UC id + Q-number; ต้องตรวจ mapping Q-number กับ use case document ฉบับใหม่ก่อนเริ่มเขียน SQL.
-
