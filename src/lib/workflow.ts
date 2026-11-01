@@ -29,6 +29,7 @@ import {
   type Supplier,
 } from "@/types/product";
 import {
+  MOCK_DAILY_VOLUME,
   SEED_CONNECTION,
   SEED_ORDERS,
   SEED_RMS_CANCEL_REQUESTS,
@@ -79,6 +80,7 @@ export type AppState = {
   costs: CostComponents[];
   costLog: CostLog[];
   purchaseOrders: PurchaseOrder[];
+  dailyVolume: { date: string; count: number }[];
   rmsInbox: Omit<Order, "order_id" | "order_status">[];
   rmsCancelRequests: string[];
   connection: ChannelConnection;
@@ -122,6 +124,7 @@ export function createSeed(now = Date.now()): AppState {
         status: "สั่งซื้อแล้ว",
       },
     ],
+    dailyVolume: MOCK_DAILY_VOLUME,
     rmsInbox: structuredClone(SEED_RMS_INBOX),
     rmsCancelRequests: [...SEED_RMS_CANCEL_REQUESTS],
     connection: { ...SEED_CONNECTION },

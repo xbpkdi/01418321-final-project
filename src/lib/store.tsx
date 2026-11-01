@@ -2,13 +2,12 @@
 
 /**
  * ข้อมูลกลางของทั้งระบบ ใช้ร่วมกันทุกหน้า
- * ระหว่างยังไม่ต่อฐานข้อมูล เก็บใน localStorage เพื่อให้เดิน flow ข้ามหน้าได้ต่อเนื่อง
- * ทุก action ผ่าน run() ซึ่งรันงานของ System (Auto) ต่อให้ทันที แล้วแจ้งผลด้วย toast
+ * Phase 3 รับ snapshot ที่อ่านจาก PostgreSQL ใน Server Component.
+ * การเขียนยังเป็น state ชั่วคราวจนกว่า Phase 4-6 จะย้ายแต่ละ use case ไป Server Action.
  */
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/lib/i18n/context";
 import type { Dict } from "@/lib/i18n/dict";
 import {
@@ -17,8 +16,6 @@ import {
   type AppState,
   type AutoEvent,
 } from "@/lib/workflow";
-
-const STORAGE_KEY = "rsl-hub-state-v3";
 
 type StoreValue = {
   state: AppState;
@@ -34,55 +31,15 @@ type StoreValue = {
 
 const StoreContext = React.createContext<StoreValue | null>(null);
 
-function load(): AppState {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as AppState;
-      if (parsed.version === 3) return parsed;
-    }
-  } catch {
-    // private window หรือข้อมูลเสีย — เริ่มจากข้อมูลตั้งต้น
-  }
-  return runAutomation(createSeed()).state;
-}
-
-function save(state: AppState) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // บันทึกไม่ได้ก็ยังใช้งานต่อได้ในหน้านี้
-  }
-}
-
-/**
- * localStorage เป็น external store จึงอ่านผ่าน useSyncExternalStore (แบบเดียวกับ i18n/context)
- * ฝั่ง server ยังไม่มีข้อมูล จึงคืน null แล้วให้ browser โหลดเองตอน hydrate
- */
-let snapshot: AppState | null = null;
-const listeners = new Set<() => void>();
-
-function subscribe(onChange: () => void) {
-  listeners.add(onChange);
-  return () => listeners.delete(onChange);
-}
-
-function getSnapshot(): AppState {
-  if (snapshot === null) snapshot = load();
-  return snapshot;
-}
-
-function getServerSnapshot(): AppState | null {
-  return null;
-}
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
+export function StoreProvider({
+  children,
+  initialState,
+}: {
+  children: React.ReactNode;
+  initialState: AppState;
+}) {
   const t = useT();
-  const state = React.useSyncExternalStore<AppState | null>(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const [state, setState] = React.useState(initialState);
   const dirty = React.useRef(new Set<string>());
   const tRef = React.useRef(t);
   React.useEffect(() => {
@@ -91,9 +48,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const commit = React.useCallback((next: AppState) => {
     const auto = runAutomation(next);
-    snapshot = auto.state;
-    save(auto.state);
-    listeners.forEach((l) => l());
+    setState(auto.state);
     announce(tRef.current, auto.events);
   }, []);
 
@@ -101,12 +56,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <R extends object = Record<never, never>>(
       fn: (s: AppState) => { state: AppState } & R,
     ): R => {
-      const current = getSnapshot();
-      const { state: next, ...result } = fn(current);
-      if (next !== current) commit(next);
+      const { state: next, ...result } = fn(state);
+      if (next !== state) commit(next);
       return result as unknown as R;
     },
-    [commit],
+    [commit, state],
   );
 
   const reset = React.useCallback(() => {
@@ -119,14 +73,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     else dirty.current.delete(key);
   }, []);
   const isDirty = React.useCallback(() => dirty.current.size > 0, []);
-
-  if (!state) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
-        <Spinner className="size-6" />
-      </div>
-    );
-  }
 
   return (
     <StoreContext.Provider value={{ state, run, reset, setDirty, isDirty }}>

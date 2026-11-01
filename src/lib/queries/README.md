@@ -48,6 +48,23 @@ export const Q2A_2 = `UPDATE orders SET order_status='รอจับคู่�
 
 `src/lib/queries/admin.ts` และ `sessions.ts` ใช้ `Q1A_2`–`Q1A_6` (นับ fail attempts, บันทึก login สำเร็จ, สร้าง/ตรวจ/ยกเลิก session) แต่ PDF มีเพียง `Q1A.1` สำหรับ UC 1A. ตามกฎ "ถ้า SQL ต่างจาก use case description ให้แก้ description ก่อน" เลขเหล่านี้จึงยัง **provisional** จนกว่าทีมจะเพิ่มลงเอกสาร (หรือยืนยันว่านอกขอบเขตเอกสาร เช่น session ซึ่งเป็น schema extension ตาม `research.md`).
 
+## Phase 3 read model
+
+หน้าธุรกิจอ่านข้อมูลผ่าน `src/lib/queries/app-state.ts` ที่ประกอบ DTO จาก query ตามเจ้าของ use case เดิม โดยไม่สร้าง use case ใหม่:
+
+| ไฟล์ | Q-number / เจ้าของข้อมูล |
+|---|---|
+| `dashboard.ts` | `Q2A.1` projection สำหรับ totals, 7-day volume และ recent orders |
+| `orders.ts` | `Q2A.1`–`Q2A.2` |
+| `skus.ts` | `Q3A.1`, `Q6A.2` |
+| `stock.ts` | `Q3S.1` |
+| `costs.ts` | `Q4S.1`–`Q4S.2` |
+| `reorders.ts` | `Q5A.1`, `Q6A.1` |
+| `shipping.ts` | `Q9A.1` |
+| `cleanup.ts` | `Q10A.6` |
+
+ชื่อ constant ที่มี suffix เช่น `Q2A_1_DASHBOARD_TOTALS` คือ projection หลายชุดของ query เจ้าของเดียวกัน ไม่ใช่ Q-number ใหม่.
+
 ## เปลี่ยนจากฉบับก่อน (2026-10-28)
 
 เลขที่เปลี่ยน: 1S `Q4.1`–`Q4.2` → `Q1S.1`; 3A `Q13.1` → `Q3A.1`; 4A `Q11.1` → `Q4A.1`; 6A `Q7.1`–`Q7.2` → `Q6A.1`–`Q6A.2`; 7A `Q10.1`–`Q10.2` → `Q7A.1`–`Q7A.2`; 8A `Q8.1`–`Q8.3` → `Q8A.1`; 9A `Q6.1`–`Q6.2` → `Q9A.1`–`Q9A.2`; 10A `Q10A.1`–`Q10A.12` → `Q10A.1`–`Q10A.6`; 2S เพิ่ม `Q2S.3`; 3S `Q3.1` → `Q3S.1`; 4S `Q5.1`–`Q5.3` → `Q4S.1`–`Q4S.2`; 5S `Q9.1`–`Q9.2` → `Q5S.1`–`Q5S.2`; 6S `Q6S.1`–`Q6S.3` → `Q6S.1`–`Q6S.2`. ที่เหลือไม่เปลี่ยน.
