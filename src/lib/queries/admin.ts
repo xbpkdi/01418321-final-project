@@ -10,7 +10,7 @@ export interface AdminCredentialRow extends QueryResultRow {
   last_login: Date | null;
 }
 
-// UC 1A / Q1A.1 (provisional): find the registered Admin by email.
+// UC 1A / Q1A.1: find the registered Admin by email.
 export const Q1A_1 = `
   SELECT admin_id, user_email, user_password, fail_attempts, last_login
   FROM admins
