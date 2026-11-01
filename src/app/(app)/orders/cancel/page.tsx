@@ -4,7 +4,7 @@
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู checkCancel / cancelOrder ใน lib/workflow.ts)
 
 import * as React from "react";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -38,20 +38,20 @@ import { useStore, useUnsavedChanges } from "@/lib/store";
 import { issueOf } from "@/lib/issues";
 import { formatDateTime } from "@/lib/format";
 import {
-  cancelOrder,
   checkCancel,
   findOrder,
   type CancelCheck,
 } from "@/lib/workflow";
 import { ORDER_STATUSES } from "@/lib/order-status";
 import type { Order } from "@/types/order";
+import { cancelOrderAction } from "@/app/(app)/actions";
 
 const ALL = "all";
 
 function CancelOrderContent() {
   const searchParams = useSearchParams();
   const { lang, t } = useLanguage();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [target, setTarget] = useState<{
     orderId: string;
     check: CancelCheck;
@@ -61,6 +61,7 @@ function CancelOrderContent() {
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState(searchParams.get("status") ?? ALL);
+  const [submitting, startSubmitting] = useTransition();
   useUnsavedChanges("cancel", target !== null && reason.trim() !== "");
 
   // ขั้นตอนที่ 2: เลือก Order แล้วกด "ยกเลิก Order" → ตรวจสอบสถานะปัจจุบันก่อน
@@ -89,11 +90,18 @@ function CancelOrderContent() {
   // ขั้นตอนที่ 3: ระบุเหตุผลแล้วกด "ยืนยันการยกเลิก"
   function confirmCancel() {
     if (!target) return;
-    const { result } = run((s) => {
-      const r = cancelOrder(s, target.orderId, reason, alsoCancelPo);
-      return { state: r.state, result: r.result };
-    });
-    switch (result.kind) {
+    startSubmitting(async () => {
+      const action = await cancelOrderAction(
+        target.orderId,
+        reason,
+        alsoCancelPo,
+      );
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
+      switch (result.kind) {
       case "no-reason":
         setError(t.cancel.errNoReason);
         return;
@@ -115,18 +123,19 @@ function CancelOrderContent() {
           ),
         );
         return;
-      case "ok": {
-        setTarget(null);
-        const notes = [
-          result.labelPrinted ? t.cancel.labelWarning : null,
-          result.restocked > 0 ? t.cancel.restocked(result.restocked) : null,
-          result.poCancelled ? t.cancel.poCancelled : null,
-        ].filter(Boolean);
-        toast.success(t.cancel.okCancelled, {
-          description: notes.join(" · ") || undefined,
-        });
+        case "ok": {
+          setTarget(null);
+          const notes = [
+            result.labelPrinted ? t.cancel.labelWarning : null,
+            result.restocked > 0 ? t.cancel.restocked(result.restocked) : null,
+            result.poCancelled ? t.cancel.poCancelled : null,
+          ].filter(Boolean);
+          toast.success(t.cancel.okCancelled, {
+            description: notes.join(" · ") || undefined,
+          });
+        }
       }
-    }
+    });
   }
 
   const columns = React.useMemo(
@@ -261,7 +270,9 @@ function CancelOrderContent() {
             <Button variant="outline" onClick={() => setTarget(null)}>
               {t.common.cancel}
             </Button>
-            <Button onClick={confirmCancel}>{t.cancel.submit}</Button>
+            <Button onClick={confirmCancel} disabled={submitting}>
+              {t.cancel.submit}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

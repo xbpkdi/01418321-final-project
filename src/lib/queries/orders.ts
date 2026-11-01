@@ -16,6 +16,7 @@ interface OrderReadRow extends QueryResultRow {
   shipping_address: string;
   shipping_method: string;
   order_status: OrderStatus;
+  manual_reason: ManualReason | null;
   rsl_no: string | null;
   tracking_number: string | null;
   carrier_name: string | null;
@@ -25,6 +26,8 @@ interface OrderReadRow extends QueryResultRow {
   cancel_reason: string | null;
   cancelled_at: Date | string | null;
   verified_at: Date | string | null;
+  customer_cancel_requested: boolean;
+  edit_log: { field: string; by: string; at: string }[] | null;
   channel_sku: string | null;
   variation: string | null;
   qty: number | string | null;
@@ -63,6 +66,9 @@ export const Q2A_1 = `
     o.cancel_reason,
     o.cancelled_at,
     o.verified_at,
+    o.manual_reason,
+    o.customer_cancel_requested,
+    o.edit_log,
     item.channel_sku,
     item.variation,
     item.qty,
@@ -124,6 +130,7 @@ function iso(value: Date | string | null): string | undefined {
 }
 
 function manualReason(row: OrderReadRow): ManualReason | undefined {
+  if (row.manual_reason) return row.manual_reason;
   if (row.order_status !== "รอดำเนินการด้วยตนเอง") return undefined;
   if (!row.shipping_address.trim()) return "address";
   if (!row.sku_id) return "sku-rule";
@@ -181,6 +188,8 @@ function toOrder(row: OrderReadRow): Order {
     cancel_reason: row.cancel_reason ?? undefined,
     cancelled_at: iso(row.cancelled_at),
     verified_at: iso(row.verified_at),
+    customer_cancel_request: row.customer_cancel_requested,
+    edit_log: row.edit_log ?? undefined,
   };
 }
 
@@ -189,4 +198,363 @@ export async function listOrders(
 ): Promise<Order[]> {
   const result = await executor.query<OrderReadRow>(Q2A_1);
   return result.rows.map(toOrder);
+}
+
+export interface OrderWorkflowRow extends QueryResultRow {
+  order_id: string;
+  marketplace_order_id: string;
+  sales_channel: "Rakuten Ichiba";
+  order_status: OrderStatus;
+  manual_reason: ManualReason | null;
+  shipping_address: string;
+  shipping_method: string;
+  cancelled_at: Date | string | null;
+  customer_cancel_requested: boolean;
+  channel_sku: string;
+  variation: string;
+  qty: number;
+  fulfill_source: "in_house" | "rsl";
+  stock_deducted: boolean;
+  sku_id: string | null;
+  sku: string | null;
+  label_printed: boolean;
+  reorder_id: string | null;
+  reorder_status: string | null;
+}
+
+export interface SkuRuleRow extends QueryResultRow {
+  sku_id: string;
+  sku: string;
+  product_name: string;
+  variation: string;
+}
+
+// UC 4A / Q4A.1: insert one valid marketplace order and its first item
+// atomically. marketplace_order_id is the concurrency-safe deduplication key.
+export const Q4A_1 = `
+  WITH inserted_order AS (
+    INSERT INTO orders (
+      order_id, marketplace_order_id, sales_channel, order_date,
+      shipping_address, shipping_method, order_status, manual_reason,
+      created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT (marketplace_order_id) DO NOTHING
+    RETURNING order_id
+  ), inserted_item AS (
+    INSERT INTO order_items (
+      order_item_id, channel_sku, variation, qty, fulfill_source,
+      order_id, sku_id
+    )
+    SELECT $9, $10, $11, $12, $13, order_id, $14
+    FROM inserted_order
+    RETURNING order_id
+  )
+  SELECT order_id FROM inserted_order
+`;
+
+export async function insertImportedOrder(
+  executor: QueryExecutor,
+  input: {
+    orderId: string;
+    marketplaceOrderId: string;
+    salesChannel: "Rakuten Ichiba";
+    orderDate: string;
+    shippingAddress: string;
+    shippingMethod: string;
+    status: OrderStatus;
+    manualReason: ManualReason | null;
+    orderItemId: string;
+    channelSku: string;
+    variation: string;
+    quantity: number;
+    fulfillSource: "in_house" | "rsl";
+    skuId: string | null;
+  },
+): Promise<boolean> {
+  const result = await executor.query<{ order_id: string }>(Q4A_1, [
+    input.orderId,
+    input.marketplaceOrderId,
+    input.salesChannel,
+    input.orderDate,
+    input.shippingAddress,
+    input.shippingMethod,
+    input.status,
+    input.manualReason,
+    input.orderItemId,
+    input.channelSku,
+    input.variation,
+    input.quantity,
+    input.fulfillSource,
+    input.skuId,
+  ]);
+  return result.rowCount === 1;
+}
+
+// UC 4A alternative #3 / Q4A.1: persist customer cancellation notices that
+// arrive in the same marketplace batch as new orders.
+export const Q4A_1_MARK_CANCELLATION = `
+  UPDATE orders
+  SET customer_cancel_requested = TRUE, updated_at = CURRENT_TIMESTAMP
+  WHERE marketplace_order_id = $1
+    AND order_status NOT IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว')
+  RETURNING order_id, order_status
+`;
+
+export async function markMarketplaceCancellation(
+  executor: QueryExecutor,
+  marketplaceOrderId: string,
+): Promise<{ orderId: string; status: OrderStatus } | null> {
+  const result = await executor.query<{
+    order_id: string;
+    order_status: OrderStatus;
+  }>(Q4A_1_MARK_CANCELLATION, [marketplaceOrderId]);
+  const row = result.rows[0];
+  return row ? { orderId: row.order_id, status: row.order_status } : null;
+}
+
+// UC 2S / Q2S.1: resolve the marketplace channel SKU to an active SKU rule.
+export const Q2S_1 = `
+  SELECT sku_id, sku, product_name, variation
+  FROM skus
+  WHERE channel_sku = $1 AND sales_channel = $2 AND sku_status = 'active'
+  ORDER BY sku_id
+`;
+
+export async function findSkuRules(
+  executor: QueryExecutor,
+  channelSku: string,
+  salesChannel: "Rakuten Ichiba",
+): Promise<SkuRuleRow[]> {
+  const result = await executor.query<SkuRuleRow>(Q2S_1, [
+    channelSku,
+    salesChannel,
+  ]);
+  return result.rows;
+}
+
+// UC 2A / Q2A.1: lock the authoritative order header before a mutation.
+export const Q2A_1_FOR_UPDATE = `
+  SELECT
+    o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status,
+    o.manual_reason,
+    o.shipping_address, o.shipping_method, o.cancelled_at,
+    o.customer_cancel_requested, item.channel_sku, item.variation, item.qty,
+    item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku,
+    EXISTS (
+      SELECT 1 FROM labels l
+      WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL
+    ) AS label_printed,
+    reorder.reorder_id, reorder.reorder_status
+  FROM orders o
+  INNER JOIN LATERAL (
+    SELECT oi.* FROM order_items oi
+    WHERE oi.order_id = o.order_id
+    ORDER BY oi.order_item_id LIMIT 1
+  ) item ON TRUE
+  LEFT JOIN skus sku ON sku.sku_id = item.sku_id
+  LEFT JOIN LATERAL (
+    SELECT r.reorder_id, r.reorder_status
+    FROM reorders r
+    WHERE r.order_id = o.order_id
+    ORDER BY r.created_at DESC LIMIT 1
+  ) reorder ON TRUE
+  WHERE o.order_id = $1
+  FOR UPDATE OF o
+`;
+
+export async function lockOrder(
+  executor: QueryExecutor,
+  orderId: string,
+): Promise<OrderWorkflowRow | null> {
+  const result = await executor.query<OrderWorkflowRow>(Q2A_1_FOR_UPDATE, [
+    orderId,
+  ]);
+  return result.rows[0] ?? null;
+}
+
+// UC 2A / Q2A.2: save the latest marketplace fields, the allowed Admin edit,
+// verification time, and the next workflow state in one statement.
+export const Q2A_2 = `
+  WITH updated_item AS (
+    UPDATE order_items
+    SET channel_sku = $2, variation = $3, qty = $4
+    WHERE order_id = $1
+  )
+  UPDATE orders
+  SET shipping_address = $5,
+      shipping_method = $6,
+      order_status = $7,
+      manual_reason = $8,
+      customer_cancel_requested = $9,
+      verified_at = $10,
+      edit_log = CASE
+        WHEN $11::boolean THEN edit_log || jsonb_build_array(
+          jsonb_build_object('field', 'shipping_method', 'by', $12::text, 'at', $10::timestamptz)
+        )
+        ELSE edit_log
+      END,
+      cancel_reason = $13,
+      cancelled_at = $14,
+      updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1
+`;
+
+export async function saveVerifiedOrder(
+  executor: QueryExecutor,
+  input: {
+    orderId: string;
+    channelSku: string;
+    variation: string;
+    quantity: number;
+    shippingAddress: string;
+    shippingMethod: string;
+    status: OrderStatus;
+    manualReason: ManualReason | null;
+    customerCancelRequested: boolean;
+    verifiedAt: Date | null;
+    shippingMethodChanged: boolean;
+    adminId: string;
+    cancelReason: string | null;
+    cancelledAt: Date | null;
+  },
+): Promise<void> {
+  await executor.query(Q2A_2, [
+    input.orderId,
+    input.channelSku,
+    input.variation,
+    input.quantity,
+    input.shippingAddress,
+    input.shippingMethod,
+    input.status,
+    input.manualReason,
+    input.customerCancelRequested,
+    input.verifiedAt,
+    input.shippingMethodChanged,
+    input.adminId,
+    input.cancelReason,
+    input.cancelledAt,
+  ]);
+}
+
+// UC 2S / Q2S.2-Q2S.3: persist a unique SKU match or its manual exception.
+export const Q2S_2 = `
+  WITH matched_item AS (
+    UPDATE order_items SET sku_id = $2 WHERE order_id = $1
+  )
+  UPDATE orders
+  SET order_status = $3, manual_reason = $4, updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1 AND order_status = 'รอจับคู่กฎ SKU'
+`;
+
+export async function saveSkuMatch(
+  executor: QueryExecutor,
+  orderId: string,
+  skuId: string | null,
+  status: OrderStatus,
+  manualReason: ManualReason | null,
+): Promise<void> {
+  await executor.query(Q2S_2, [orderId, skuId, status, manualReason]);
+}
+
+// UC 1S / Q1S.1: persist a selected RSL reference and advance to label work.
+export const Q1S_1 = `
+  UPDATE orders
+  SET rsl_no = $2,
+      rsl_matched_at = CASE WHEN $2::text IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END,
+      order_status = $3,
+      manual_reason = $4,
+      updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1
+`;
+
+export async function saveRslMatch(
+  executor: QueryExecutor,
+  orderId: string,
+  reference: string | null,
+  status: OrderStatus,
+  manualReason: ManualReason | null,
+): Promise<void> {
+  await executor.query(Q1S_1, [orderId, reference, status, manualReason]);
+}
+
+// UC 1S / Q1S.1: list work that can be matched automatically or retried.
+export const Q1S_1_QUEUE = `
+  SELECT o.order_id
+  FROM orders o
+  WHERE o.order_status = 'ยังไม่ได้จับคู่'
+     OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl')
+  ORDER BY o.order_date, o.order_id
+`;
+
+export async function listRslQueueIds(
+  executor: QueryExecutor = getPool(),
+): Promise<string[]> {
+  const result = await executor.query<{ order_id: string }>(Q1S_1_QUEUE);
+  return result.rows.map((row) => row.order_id);
+}
+
+// UC 1S alternative #3 / Q1S.1: clear the RSL link and generated labels.
+export const Q1S_1_UNMATCH = `
+  WITH eligible AS (
+    SELECT order_id FROM orders
+    WHERE order_id = $1
+      AND (
+        order_status IN ('รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า')
+        OR (order_status = 'รอดำเนินการด้วยตนเอง' AND rsl_no IS NOT NULL)
+      )
+  ), removed_labels AS (
+    DELETE FROM labels WHERE order_id IN (SELECT order_id FROM eligible)
+  )
+  UPDATE orders
+  SET rsl_no = NULL, rsl_matched_at = NULL, order_status = 'ยังไม่ได้จับคู่',
+      manual_reason = NULL, updated_at = CURRENT_TIMESTAMP
+  WHERE order_id IN (SELECT order_id FROM eligible)
+  RETURNING order_id
+`;
+
+export async function clearRslMatch(
+  executor: QueryExecutor,
+  orderId: string,
+): Promise<boolean> {
+  const result = await executor.query<{ order_id: string }>(Q1S_1_UNMATCH, [
+    orderId,
+  ]);
+  return result.rowCount === 1;
+}
+
+// UC 7A / Q7A.1: persist the cancellation result or special handling request.
+export const Q7A_1 = `
+  UPDATE orders
+  SET order_status = $2, cancel_reason = $3, cancelled_at = $4,
+      manual_reason = NULL, updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1
+`;
+
+export async function saveCancellation(
+  executor: QueryExecutor,
+  orderId: string,
+  status: OrderStatus,
+  reason: string,
+  cancelledAt: Date | null,
+): Promise<void> {
+  await executor.query(Q7A_1, [orderId, status, reason, cancelledAt]);
+}
+
+// UC 7A alternative #2 / Q7A.1: cancel the linked replenishment on request.
+export const Q7A_1_CANCEL_REORDER = `
+  UPDATE reorders
+  SET reorder_status = 'ยกเลิกแล้ว'
+  WHERE reorder_id = $1 AND reorder_status <> 'ยกเลิกแล้ว'
+  RETURNING reorder_id
+`;
+
+export async function cancelLinkedReorder(
+  executor: QueryExecutor,
+  reorderId: string,
+): Promise<boolean> {
+  const result = await executor.query<{ reorder_id: string }>(
+    Q7A_1_CANCEL_REORDER,
+    [reorderId],
+  );
+  return result.rowCount === 1;
 }

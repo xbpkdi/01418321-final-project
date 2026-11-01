@@ -235,6 +235,62 @@ export function stockTotal(s: AppState, sku: string) {
   };
 }
 
+/** Pure 4A validation shared by the browser-era flow and the server use case. */
+export function isImportableOrder(order: {
+  marketplace_order_id: string;
+  channel_sku: string;
+  qty: number;
+  shipping_address: string;
+  shipping_method: string;
+}): boolean {
+  return Boolean(
+    order.marketplace_order_id.trim() &&
+      order.channel_sku.trim() &&
+      Number.isInteger(order.qty) &&
+      order.qty > 0 &&
+      order.shipping_address.trim() &&
+      order.shipping_method.trim(),
+  );
+}
+
+/** Pure 2S rule: a channel SKU must resolve to exactly one active SKU rule. */
+export function chooseSkuRule<T>(matches: readonly T[]):
+  | { kind: "missing" }
+  | { kind: "multiple" }
+  | { kind: "matched"; value: T } {
+  if (matches.length === 0) return { kind: "missing" };
+  if (matches.length > 1) return { kind: "multiple" };
+  return { kind: "matched", value: matches[0] };
+}
+
+/** Pure 3S rule. A missing RSL value means only confirmed in-house stock is used. */
+export function chooseStockRoute(
+  quantity: number,
+  inHouseQuantity: number,
+  rslQuantity: number | null,
+): "enough" | "low" {
+  const available = inHouseQuantity + (rslQuantity ?? 0);
+  return available >= quantity ? "enough" : "low";
+}
+
+/** Pure 1S rule shared by the server matcher and the legacy state flow. */
+export function chooseRslMatch<T extends { rsl_order_id: string }>(
+  matches: readonly T[],
+  chosen?: string,
+):
+  | { kind: "not-found" }
+  | { kind: "multiple"; options: T[] }
+  | { kind: "matched"; value: T } {
+  if (matches.length === 0) return { kind: "not-found" };
+  const selected = chosen
+    ? matches.find((match) => match.rsl_order_id === chosen)
+    : matches.length === 1
+      ? matches[0]
+      : undefined;
+  if (!selected) return { kind: "multiple", options: [...matches] };
+  return { kind: "matched", value: selected };
+}
+
 /** สถานะที่ถือว่า Order ปิดแล้ว (7A Pre-Condition, 10A) */
 export const CLOSED_STATUSES: OrderStatus[] = ["จัดส่งสำเร็จ", "ยกเลิกแล้ว"];
 

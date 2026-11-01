@@ -63,6 +63,19 @@ export const Q2A_2 = `UPDATE orders SET order_status='รอจับคู่�
 | `shipping.ts` | `Q9A.1` |
 | `cleanup.ts` | `Q10A.6` |
 
+## Phase 4 Order write model
+
+Order mutations run through authenticated Server Actions and server use cases. SQL remains in `queries/` and uses the confirmed owner query numbers:
+
+| Flow | Query owner |
+|---|---|
+| Import + concurrent duplicate guard | `Q4A.1` |
+| Verify + persist allowed edits | `Q2A.1`–`Q2A.2` |
+| SKU rule match | `Q2S.1`–`Q2S.3` |
+| Stock route | `Q3S.1` |
+| RSL match/unmatch | `Q1S.1` |
+| Cancel, linked reorder, and atomic restock | `Q7A.1`–`Q7A.2` |
+
 ชื่อ constant ที่มี suffix เช่น `Q2A_1_DASHBOARD_TOTALS` คือ projection หลายชุดของ query เจ้าของเดียวกัน ไม่ใช่ Q-number ใหม่.
 
 ## เปลี่ยนจากฉบับก่อน (2026-10-28)

@@ -4,7 +4,7 @@
 // ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู verifyOrder ใน lib/workflow.ts)
 
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -35,19 +35,20 @@ import { TableSearch } from "@/components/shared/table-search";
 import { verifyColumns } from "./columns";
 import { useLanguage } from "@/lib/i18n/context";
 import { useStore, useUnsavedChanges } from "@/lib/store";
-import { findOrder, verifyOrder, type VerifyResult } from "@/lib/workflow";
+import { findOrder, type VerifyResult } from "@/lib/workflow";
 import { SHIPPING_METHODS } from "@/mock/delivery";
 import { formatDateTime } from "@/lib/format";
 import type { Order } from "@/types/order";
+import { verifyOrderAction } from "@/app/(app)/actions";
 
 export default function OrderVerifyScreen() {
   const { lang, t } = useLanguage();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [keyword, setKeyword] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, startSubmitting] = useTransition();
 
   // ขั้นตอนที่ 1: แสดงเฉพาะ Order ที่อยู่ในสถานะ "รอตรวจสอบคำสั่งซื้อ"
   const pending = useMemo(
@@ -100,14 +101,14 @@ export default function OrderVerifyScreen() {
   function confirm() {
     if (!selected) return;
     setError(null);
-    setSubmitting(true);
     const orderId = selected.order_id;
-    window.setTimeout(() => {
-      const { result } = run((s) => {
-        const r = verifyOrder(s, orderId, { shipping_method: shippingMethod });
-        return { state: r.state, result: r.result };
-      });
-      setSubmitting(false);
+    startSubmitting(async () => {
+      const action = await verifyOrderAction(orderId, shippingMethod);
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
       if (result === "ok") {
         setSelectedId(null);
         toast.success(t.verify.okVerified);
@@ -122,7 +123,7 @@ export default function OrderVerifyScreen() {
         return;
       }
       setError(MESSAGE[result]);
-    }, 500);
+    });
   }
 
   return (
