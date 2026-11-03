@@ -20,6 +20,12 @@ npm run db:setup
 npm run dev
 ```
 
+ใน environment แบบ sandbox ที่ไม่อนุญาตให้ Turbopack เปิด local IPC/port สามารถตรวจ production build ด้วย webpack fallback โดยไม่เปลี่ยนค่าเริ่มต้นของโปรเจกต์:
+
+```bash
+npm run build:webpack
+```
+
 เปิด http://localhost:3000 (จะ redirect ไปหน้า `/login` ซึ่งเป็น root ของ site map)
 
 ## PostgreSQL สำหรับพัฒนา
@@ -55,6 +61,12 @@ npm run db:setup
 
 หน้า `/dev` (ไม่อยู่ในเมนู) ใช้รีเซ็ตข้อมูลตัวอย่าง และจำลองข้อผิดพลาดจากระบบภายนอกตาม "ทางเลือก" ของแต่ละ UC
 เพื่อทดสอบและ capture รูปลงรายงาน
+
+ทดสอบ reset โดยไม่แตะข้อมูล dev ปัจจุบันได้ด้วยคำสั่งด้านล่าง คำสั่งจะสร้าง PostgreSQL schema ชั่วคราว ทดสอบ migrate/seed/reset แล้วลบ schema ทิ้งเสมอ:
+
+```bash
+npm run test:phase8-reset
+```
 
 ## โครงสร้าง
 
@@ -93,7 +105,7 @@ db/
 
 ## สถานะงาน
 
-Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน การสั่งซื้อ Supplier ใบปะ การพิมพ์ การจัดส่ง การแจ้ง tracking และ cleanup บันทึกผ่าน server use cases แล้ว งานอัตโนมัติ 2S/3S/6S/7S ทำงานใน transaction เดียวกับ action, ตัดสต๊อกแบบล็อกแถว/ทำซ้ำได้ และเก็บ Rakuten stock sync ที่รอ retry แบบถาวรแล้ว งาน mock adapter/fault controls จะทำต่อใน Phase 8 ของ feature 002.
+Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน การสั่งซื้อ Supplier ใบปะ การพิมพ์ การจัดส่ง การแจ้ง tracking และ cleanup บันทึกผ่าน server use cases แล้ว งานอัตโนมัติ 2S/3S/6S/7S ทำงานใน transaction เดียวกับ action, ตัดสต๊อกแบบล็อกแถว/ทำซ้ำได้ และเก็บ Rakuten stock sync ที่รอ retry แบบถาวรแล้ว ระบบภายนอกทั้งหมดใช้ mock adapter ที่เลือกด้วยค่าตั้ง และหน้า `/dev` ควบคุม fault/reset ฝั่งเซิร์ฟเวอร์แล้วใน Phase 8 ของ feature 002.
 
 - `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
 - `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)

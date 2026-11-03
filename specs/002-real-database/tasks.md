@@ -128,9 +128,9 @@
 
 **Independent Test**: เปลี่ยน adapter config ระหว่าง mock implementations แล้ว use case และหน้าจอไม่เปลี่ยน; เปิด fault toggle ของแต่ละระบบและตรวจผลทางเลือกตาม UC; ยืนยันว่าไม่มี network call ออกนอกระบบ
 
-- [ ] T045 [US7] เติม mock adapters สำหรับ Rakuten, RSL, label service, printer, carrier และ supplier ให้ตรง contracts ใน `src/lib/adapters/`
-- [ ] T046 [US7] เชื่อม `FAULT_KEYS` กับ mock adapter ที่เกี่ยวข้องและเพิ่ม reset/fault controls ใน `/dev` ใน `src/lib/workflow.ts`, `src/lib/adapters/` และ `src/app/(app)/dev/page.tsx`
-- [ ] T047 [US7] ยืนยันการเลือก adapter ด้วย config โดยไม่ให้ use case หรือหน้าจอ import concrete adapter ใน `src/lib/adapters/index.ts` และ `src/lib/use-cases/`
+- [x] T045 [US7] เติม mock adapters สำหรับ Rakuten, RSL, label service, printer, carrier และ supplier ให้ตรง contracts ใน `src/lib/adapters/`
+- [x] T046 [US7] เชื่อม `FAULT_KEYS` กับ mock adapter ที่เกี่ยวข้องและเพิ่ม reset/fault controls ใน `/dev` ใน `src/lib/workflow.ts`, `src/lib/adapters/` และ `src/app/(app)/dev/page.tsx`
+- [x] T047 [US7] ยืนยันการเลือก adapter ด้วย config โดยไม่ให้ use case หรือหน้าจอ import concrete adapter ใน `src/lib/adapters/index.ts` และ `src/lib/use-cases/`
 
 ---
 
