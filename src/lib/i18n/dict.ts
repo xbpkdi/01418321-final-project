@@ -27,6 +27,8 @@ const th = {
   },
 
   errors: {
+    dataLoadTitle: "ไม่สามารถโหลดข้อมูลได้",
+    retry: "ลองอีกครั้ง",
     databaseUnavailable: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
     databaseFailure: "ไม่สามารถดำเนินการกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
     externalUnavailable: "ไม่สามารถเชื่อมต่อระบบภายนอกได้ กรุณาลองใหม่ภายหลัง",
@@ -710,6 +712,8 @@ const en: typeof th = {
   },
 
   errors: {
+    dataLoadTitle: "Unable to load data",
+    retry: "Try again",
     databaseUnavailable: "The database is unavailable. Please try again later.",
     databaseFailure: "The database operation could not be completed. Please try again later.",
     externalUnavailable: "An external service is unavailable. Please try again later.",

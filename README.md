@@ -93,7 +93,7 @@ db/
 
 ## สถานะงาน
 
-Login และ session ใช้ PostgreSQL แล้ว ส่วนหน้าธุรกิจจะย้ายจาก localStorage ไปอ่าน/เขียนฐานข้อมูลเป็นลำดับใน phase ถัดไปของ feature 002.
+Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การเขียนข้อมูลจากปุ่มในหน้าธุรกิจยังเป็น state ชั่วคราวและจะย้ายไป server use cases ใน Phase 4–6 ของ feature 002.
 
 - `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
 - `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)

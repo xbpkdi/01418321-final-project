@@ -27,7 +27,6 @@ import { OrderVolumeChart } from "@/components/shared/order-volume-chart";
 import { CountUp } from "@/components/shared/count-up";
 import { SectionMessage } from "@/components/shared/section-message";
 import { RecentOrdersTable } from "./recent-orders-table";
-import { MOCK_DAILY_VOLUME } from "@/mock/orders";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import { useLanguage } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
@@ -412,7 +411,7 @@ export default function DashboardScreen() {
               <CardTitle>{t.dashboard.weeklyVolume}</CardTitle>
             </CardHeader>
             <CardContent>
-              <OrderVolumeChart data={MOCK_DAILY_VOLUME} />
+              <OrderVolumeChart data={state.dailyVolume} />
             </CardContent>
           </Card>
         </div>

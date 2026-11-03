@@ -58,12 +58,12 @@
 
 **Independent Test**: เปิดทุกหน้าที่อ่านข้อมูล, เปลี่ยนค่าฐานข้อมูลโดยตรง, refresh แล้วเห็นค่าใหม่; ปิด DB แล้วเห็น error ที่เข้าใจได้โดยไม่มี mock data fallback
 
-- [ ] T020 [US2] เพิ่ม query/read functions แบบมี Q-number สำหรับ dashboard totals, chart และ recent orders ใน `src/lib/queries/dashboard.ts`
-- [ ] T021 [US2] เปลี่ยนหน้า Dashboard ให้อ่านจาก server data loader แทน `useStore()` ใน `src/app/(app)/dashboard/page.tsx` และ `src/app/(app)/dashboard/recent-orders-table.tsx`
-- [ ] T022 [US2] เพิ่ม query/read functions สำหรับ Order, SKU, stock, cost และ reorder ใน `src/lib/queries/orders.ts`, `src/lib/queries/skus.ts`, `src/lib/queries/stock.ts`, `src/lib/queries/costs.ts` และ `src/lib/queries/reorders.ts`
-- [ ] T023 [US2] เปลี่ยนหน้า Orders, Products, Stock, Cost และ Reorder ให้รับข้อมูลจาก server loader ใน `src/app/(app)/orders/`, `src/app/(app)/products/` และ `src/app/(app)/products/reorder/`
-- [ ] T024 [US2] เพิ่ม read queries และย้าย Shipping, Labels, Cleanup และ Reports ให้อ่านจากฐานข้อมูลใน `src/lib/queries/shipping.ts`, `src/app/(app)/shipping/`, `src/app/(app)/system/cleanup/` และ `src/app/reports/`
-- [ ] T025 [US2] เพิ่ม loading/empty/DB unavailable states และข้อความไทย/อังกฤษสำหรับหน้าที่ migrate ใน `src/components/shared/` และ `src/lib/i18n/dict.ts`
+- [x] T020 [US2] เพิ่ม query/read functions แบบมี Q-number สำหรับ dashboard totals, chart และ recent orders ใน `src/lib/queries/dashboard.ts`
+- [x] T021 [US2] เปลี่ยนหน้า Dashboard ให้อ่านจาก server data loader แทน `useStore()` ใน `src/app/(app)/dashboard/page.tsx` และ `src/app/(app)/dashboard/recent-orders-table.tsx`
+- [x] T022 [US2] เพิ่ม query/read functions สำหรับ Order, SKU, stock, cost และ reorder ใน `src/lib/queries/orders.ts`, `src/lib/queries/skus.ts`, `src/lib/queries/stock.ts`, `src/lib/queries/costs.ts` และ `src/lib/queries/reorders.ts`
+- [x] T023 [US2] เปลี่ยนหน้า Orders, Products, Stock, Cost และ Reorder ให้รับข้อมูลจาก server loader ใน `src/app/(app)/orders/`, `src/app/(app)/products/` และ `src/app/(app)/products/reorder/`
+- [x] T024 [US2] เพิ่ม read queries และย้าย Shipping, Labels, Cleanup และ Reports ให้อ่านจากฐานข้อมูลใน `src/lib/queries/shipping.ts`, `src/app/(app)/shipping/`, `src/app/(app)/system/cleanup/` และ `src/app/reports/`
+- [x] T025 [US2] เพิ่ม loading/empty/DB unavailable states และข้อความไทย/อังกฤษสำหรับหน้าที่ migrate ใน `src/components/shared/` และ `src/lib/i18n/dict.ts`
 
 ---
 
