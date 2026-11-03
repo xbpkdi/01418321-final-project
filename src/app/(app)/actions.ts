@@ -117,18 +117,14 @@ export async function matchRslAction(orderId: string, chosen?: string) {
     };
   }
   return runMutation(async () => {
-    const result = await matchRslUseCase(validOrderId, validChosen ?? undefined);
-    if (result.kind === "ok") await formatLabelsUseCase([validOrderId]);
-    return result;
+    return matchRslUseCase(validOrderId, validChosen ?? undefined);
   });
 }
 
 export async function matchAllRslAction() {
   await requireSession();
   return runMutation(async () => {
-    const result = await matchAllRslUseCase();
-    await formatLabelsUseCase();
-    return result;
+    return matchAllRslUseCase();
   });
 }
 

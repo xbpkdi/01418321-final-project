@@ -18,6 +18,18 @@ export interface StockWriteRow extends QueryResultRow {
   rsl_qty: number | string | null;
 }
 
+export interface DeductibleStockRow extends QueryResultRow {
+  order_item_id: string;
+  stock_id: string;
+  sku_id: string;
+  channel_sku: string;
+  fulfill_source: "in_house" | "rsl";
+  qty: number | string;
+  stock_deducted: boolean;
+  in_house_qty: number | string;
+  rsl_qty: number | string | null;
+}
+
 // UC 3S / Q3S.1: read current in-house and RSL stock for every SKU.
 export const Q3S_1 = `
   SELECT sku.sku, stock.in_house_qty, stock.rsl_qty, stock.updated_at
@@ -137,6 +149,97 @@ export async function restoreCancelledOrderStock(
     input.quantity,
   ]);
   return result.rowCount === 1 ? input.quantity : 0;
+}
+
+// UC 7S / Q7S.1: serialize deduction attempts for every item and inventory
+// row belonging to an Order. The order lock alone is not sufficient because
+// another Order may consume the same SKU concurrently.
+export const Q7S_1 = `
+  SELECT item.order_item_id, item.sku_id, item.channel_sku,
+         item.fulfill_source, item.qty, item.stock_deducted,
+         stock.stock_id, stock.in_house_qty, stock.rsl_qty
+  FROM order_items item
+  INNER JOIN stock ON stock.sku_id = item.sku_id
+  WHERE item.order_id = $1
+  ORDER BY stock.stock_id, item.order_item_id
+  FOR UPDATE OF item, stock
+`;
+
+export async function lockOrderStock(
+  executor: QueryExecutor,
+  orderId: string,
+): Promise<DeductibleStockRow[]> {
+  return (await executor.query<DeductibleStockRow>(Q7S_1, [orderId])).rows;
+}
+
+// UC 7S / Q7S.2: the conditional update is a second non-negative guard in
+// addition to the row lock. A zero row count aborts the enclosing workflow.
+export const Q7S_2 = `
+  UPDATE stock
+  SET in_house_qty = CASE
+        WHEN $2 = 'in_house' THEN in_house_qty - $3
+        ELSE in_house_qty
+      END,
+      rsl_qty = CASE
+        WHEN $2 = 'rsl' THEN rsl_qty - $3
+        ELSE rsl_qty
+      END,
+      updated_at = CURRENT_TIMESTAMP
+  WHERE stock_id = $1
+    AND CASE
+      WHEN $2 = 'in_house' THEN in_house_qty >= $3
+      ELSE rsl_qty IS NOT NULL AND rsl_qty >= $3
+    END
+  RETURNING stock_id, sku_id, in_house_qty, rsl_qty
+`;
+
+export async function deductLockedStock(
+  executor: QueryExecutor,
+  input: {
+    stockId: string;
+    source: "in_house" | "rsl";
+    quantity: number;
+  },
+): Promise<StockWriteRow | null> {
+  const result = await executor.query<StockWriteRow>(Q7S_2, [
+    input.stockId,
+    input.source,
+    input.quantity,
+  ]);
+  return result.rows[0] ?? null;
+}
+
+// UC 7S / Q7S.3: set the idempotency guard only after every stock row has
+// passed its conditional decrement. A later error rolls both changes back.
+export const Q7S_3 = `
+  UPDATE order_items
+  SET stock_deducted = TRUE, deducted_at = CURRENT_TIMESTAMP
+  WHERE order_item_id = ANY($1::text[]) AND stock_deducted = FALSE
+`;
+
+export async function markItemsDeducted(
+  executor: QueryExecutor,
+  orderItemIds: readonly string[],
+): Promise<number> {
+  if (orderItemIds.length === 0) return 0;
+  return (await executor.query(Q7S_3, [orderItemIds])).rowCount ?? 0;
+}
+
+// UC 7S alternative #2 / Q7S.1: insufficient stock is a business outcome,
+// not a partial deduction. The caller performs this only after checking every
+// locked row and before issuing any decrement.
+export const Q7S_1_MANUAL = `
+  UPDATE orders
+  SET order_status = 'รอดำเนินการด้วยตนเอง',
+      manual_reason = 'stock-deduct', updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1 AND order_status = 'แจ้งเลขติดตามแล้ว'
+`;
+
+export async function markDeductionManual(
+  executor: QueryExecutor,
+  orderId: string,
+): Promise<void> {
+  await executor.query(Q7S_1_MANUAL, [orderId]);
 }
 
 // UC 3S / Q3S.1: lock the inventory row before an Admin adjustment.

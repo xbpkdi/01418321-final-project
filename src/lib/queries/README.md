@@ -102,6 +102,19 @@ Order mutations run through authenticated Server Actions and server use cases. S
 | แจ้ง tracking, retry attempt เดิม และ confirmed resend attempt ใหม่ | `Q5S.1`–`Q5S.2` |
 | ตรวจ eligibility, snapshot และลบข้อมูลเก่าใน transaction เดียว | `Q10A.1`–`Q10A.6` |
 
+## Phase 7 Transaction-scoped automation and stock sync
+
+`executeWorkflow` ใช้ PostgreSQL connection เดียวตั้งแต่ action write ผ่าน 2S/3S/6S/7S. การแจ้ง tracking ล็อก Order ก่อนเรียก adapter; 7S ล็อกทั้ง `order_items` และ `stock`, ตรวจยอดรวมก่อนตัด, ใช้ `stock_deducted` เป็น idempotency guard และสร้าง durable pending sync ใน transaction เดียวกัน:
+
+| Flow | Query owner |
+|---|---|
+| ล็อก Order item/stock และตรวจ guard | `Q7S.1` |
+| ตัดยอดแบบ conditional ไม่ให้ติดลบ | `Q7S.2` |
+| ตั้ง `stock_deducted` หลังตัดครบทุกแถว | `Q7S.3` |
+| สร้าง/ล็อก durable pending sync และอ่านยอด absolute ล่าสุด | `Q7S.4` |
+| บันทึก attempt/success/failure ของ Rakuten stock sync | `Q7S.5` |
+| safe automation error log | `Q2S.3`, `Q3S.1`, `Q6S.2`, `Q7S.5` ตามเจ้าของ step |
+
 ## เปลี่ยนจากฉบับก่อน (2026-10-28)
 
 เลขที่เปลี่ยน: 1S `Q4.1`–`Q4.2` → `Q1S.1`; 3A `Q13.1` → `Q3A.1`; 4A `Q11.1` → `Q4A.1`; 6A `Q7.1`–`Q7.2` → `Q6A.1`–`Q6A.2`; 7A `Q10.1`–`Q10.2` → `Q7A.1`–`Q7A.2`; 8A `Q8.1`–`Q8.3` → `Q8A.1`; 9A `Q6.1`–`Q6.2` → `Q9A.1`–`Q9A.2`; 10A `Q10A.1`–`Q10A.12` → `Q10A.1`–`Q10A.6`; 2S เพิ่ม `Q2S.3`; 3S `Q3.1` → `Q3S.1`; 4S `Q5.1`–`Q5.3` → `Q4S.1`–`Q4S.2`; 5S `Q9.1`–`Q9.2` → `Q5S.1`–`Q5S.2`; 6S `Q6S.1`–`Q6S.3` → `Q6S.1`–`Q6S.2`. ที่เหลือไม่เปลี่ยน.

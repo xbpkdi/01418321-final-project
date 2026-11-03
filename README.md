@@ -93,7 +93,7 @@ db/
 
 ## สถานะงาน
 
-Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน การสั่งซื้อ Supplier ใบปะ การพิมพ์ การจัดส่ง การแจ้ง tracking และ cleanup บันทึกผ่าน server use cases แล้ว งาน transaction-scoped automation และ stock sync จะย้ายต่อใน Phase 7 ของ feature 002.
+Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน การสั่งซื้อ Supplier ใบปะ การพิมพ์ การจัดส่ง การแจ้ง tracking และ cleanup บันทึกผ่าน server use cases แล้ว งานอัตโนมัติ 2S/3S/6S/7S ทำงานใน transaction เดียวกับ action, ตัดสต๊อกแบบล็อกแถว/ทำซ้ำได้ และเก็บ Rakuten stock sync ที่รอ retry แบบถาวรแล้ว งาน mock adapter/fault controls จะทำต่อใน Phase 8 ของ feature 002.
 
 - `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
 - `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)

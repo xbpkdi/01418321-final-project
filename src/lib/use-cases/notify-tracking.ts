@@ -2,7 +2,6 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { RakutenAdapter } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
-import { withTransaction } from "@/lib/db";
 import {
   completeNotificationAttempt,
   findRetryableNotificationAttempt,
@@ -10,19 +9,14 @@ import {
   saveNotificationAttempt,
 } from "@/lib/queries/shipping";
 import type { NotifyResult } from "@/lib/workflow";
-
-type PreparedNotification = {
-  orderRef: string;
-  trackingNumber: string;
-  attemptId: string;
-};
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 
 /** UC 5S: notify Rakuten with durable retry/resend attempt semantics. */
 export async function notifyTrackingUseCase(
   input: { orderId: string; confirmResend: boolean; adminId: string },
   rakuten: RakutenAdapter = getExternalAdapters().rakuten,
 ): Promise<NotifyResult> {
-  const prepared = await withTransaction<PreparedNotification | NotifyResult>(
+  return executeWorkflow(
     async (client) => {
       const order = await lockNotificationOrder(client, input.orderId);
       if (!order?.tracking_number || !order.carrier_name) return "incomplete";
@@ -43,28 +37,23 @@ export async function notifyTrackingUseCase(
         trackingNumber: order.tracking_number,
         adminId: input.adminId,
       });
-      return {
-        orderRef: order.marketplace_order_id,
-        trackingNumber: order.tracking_number,
+      const sent = await rakuten.notifyTracking(
+        order.marketplace_order_id,
+        order.tracking_number,
         attemptId,
-      };
+      );
+      await completeNotificationAttempt(client, {
+        attemptId,
+        sent: sent.ok,
+        errorCode: sent.ok ? null : sent.error.code,
+      });
+      return sent.ok ? "ok" : "failed";
+    },
+    {
+      orderIds: [input.orderId],
+      adapters: { ...getExternalAdapters(), rakuten },
     },
   );
-
-  if (typeof prepared === "string") return prepared;
-  const sent = await rakuten.notifyTracking(
-    prepared.orderRef,
-    prepared.trackingNumber,
-    prepared.attemptId,
-  );
-  await withTransaction((client) =>
-    completeNotificationAttempt(client, {
-      attemptId: prepared.attemptId,
-      sent: sent.ok,
-      errorCode: sent.ok ? null : sent.error.code,
-    }),
-  );
-  return sent.ok ? "ok" : "failed";
 }
 
 export const notifyTracking = notifyTrackingUseCase;

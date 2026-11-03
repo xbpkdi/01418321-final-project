@@ -1,11 +1,11 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { withTransaction } from "@/lib/db";
 import {
   adjustStock,
   insertStockAdjustmentHistory,
   lockStock,
 } from "@/lib/queries/stock";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 
 export type AdjustStockResult = "invalid" | "not-found" | "ok";
 
@@ -28,7 +28,7 @@ export async function adjustStockUseCase(input: {
     return "invalid";
   }
 
-  return withTransaction(async (client) => {
+  return executeWorkflow(async (client) => {
     const current = await lockStock(client, input.sku.trim());
     if (!current) return "not-found";
 

@@ -1633,6 +1633,28 @@ export type AutoEvent =
   | { code: "stock-insufficient"; orderId: string }
   | { code: "stock-sync"; orderId: string };
 
+/** Pure validation for label-service output before any database write. */
+export function validGeneratedLabels(
+  labels: readonly {
+    label_template: string;
+    parcel_seq: number;
+    parcel_total: number;
+  }[],
+): boolean {
+  if (labels.length === 0) return false;
+  const sequences = new Set(labels.map((label) => label.parcel_seq));
+  return (
+    labels.every(
+      (label) =>
+        label.label_template.trim().length > 0 &&
+        Number.isInteger(label.parcel_seq) &&
+        label.parcel_seq > 0 &&
+        Number.isInteger(label.parcel_total) &&
+        label.parcel_total === labels.length,
+    ) && sequences.size === labels.length
+  );
+}
+
 /**
  * ทำงานเหมือน scheduler: ประมวลผล Order ที่อยู่ในสถานะที่ระบบรับผิดชอบ จนไม่มีอะไรเปลี่ยน
  * Order ที่ล้มเหลวเพราะระบบภายนอก (auto_error) จะลองใหม่ทุกรอบ แต่แจ้งเตือนแค่ครั้งแรก
