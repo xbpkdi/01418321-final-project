@@ -21,6 +21,7 @@ interface OrderReadRow extends QueryResultRow {
   tracking_number: string | null;
   carrier_name: string | null;
   dispatched_at: Date | string | null;
+  delivery_status: DeliveryStatus | null;
   tracking_notified: boolean;
   tracking_notified_at: Date | string | null;
   cancel_reason: string | null;
@@ -63,6 +64,7 @@ export const Q2A_1 = `
     o.tracking_number,
     o.carrier_name,
     o.dispatched_at,
+    o.delivery_status,
     o.tracking_notified,
     o.tracking_notified_at,
     o.cancel_reason,
@@ -182,7 +184,7 @@ function toOrder(row: OrderReadRow): Order {
     tracking_number: row.tracking_number ?? undefined,
     carrier_name: row.carrier_name ?? undefined,
     dispatched_at: iso(row.dispatched_at),
-    delivery_status: deliveryStatus(row.order_status),
+    delivery_status: row.delivery_status ?? deliveryStatus(row.order_status),
     tracking_notified: row.tracking_notified,
     tracking_notified_at: iso(row.tracking_notified_at),
     notify_log: row.notify_log ?? undefined,

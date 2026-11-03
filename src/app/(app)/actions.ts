@@ -23,6 +23,13 @@ import {
   decideReorderUseCase,
   purchaseReorderUseCase,
 } from "@/lib/use-cases/reorders";
+import { formatLabelsUseCase } from "@/lib/use-cases/format-labels";
+import { printLabelsUseCase } from "@/lib/use-cases/print-label";
+import { dispatchOrdersUseCase } from "@/lib/use-cases/dispatch-order";
+import { pollCarrierUseCase } from "@/lib/use-cases/poll-carrier";
+import { notifyTrackingUseCase } from "@/lib/use-cases/notify-tracking";
+import { cleanupOrdersUseCase } from "@/lib/use-cases/cleanup-orders";
+import type { CleanupPlan } from "@/lib/workflow";
 import { COST_KEYS, type Product } from "@/types/product";
 import type { CostForm } from "@/lib/workflow";
 
@@ -109,14 +116,20 @@ export async function matchRslAction(orderId: string, chosen?: string) {
       result: { kind: "not-allowed" } as const,
     };
   }
-  return runMutation(() =>
-    matchRslUseCase(validOrderId, validChosen ?? undefined),
-  );
+  return runMutation(async () => {
+    const result = await matchRslUseCase(validOrderId, validChosen ?? undefined);
+    if (result.kind === "ok") await formatLabelsUseCase([validOrderId]);
+    return result;
+  });
 }
 
 export async function matchAllRslAction() {
   await requireSession();
-  return runMutation(() => matchAllRslUseCase());
+  return runMutation(async () => {
+    const result = await matchAllRslUseCase();
+    await formatLabelsUseCase();
+    return result;
+  });
 }
 
 export async function unmatchRslAction(orderId: string) {
@@ -295,5 +308,87 @@ export async function purchaseReorderAction(
       quantity,
       confirmDuplicate: confirmDuplicate === true,
     }),
+  );
+}
+
+export async function formatLabelsAction() {
+  await requireSession();
+  return runMutation(() => formatLabelsUseCase());
+}
+
+export async function printLabelsAction(
+  orderIds: string[],
+  reprint: boolean,
+) {
+  const session = await requireSession();
+  const validIds = Array.isArray(orderIds)
+    ? orderIds.map(safeId).filter((id): id is string => id !== null).slice(0, 100)
+    : [];
+  if (validIds.length === 0) return { success: true as const, result: [] };
+  return runMutation(() =>
+    printLabelsUseCase({
+      orderIds: validIds,
+      reprint: reprint === true,
+      adminId: session.adminId,
+    }),
+  );
+}
+
+export async function dispatchOrdersAction(orderIds: string[]) {
+  await requireSession();
+  const validIds = Array.isArray(orderIds)
+    ? orderIds.map(safeId).filter((id): id is string => id !== null).slice(0, 100)
+    : [];
+  if (validIds.length === 0) return { success: true as const, result: [] };
+  return runMutation(() => dispatchOrdersUseCase(validIds));
+}
+
+export async function pollCarrierAction() {
+  await requireSession();
+  return runMutation(() => pollCarrierUseCase());
+}
+
+export async function notifyTrackingAction(
+  orderId: string,
+  confirmResend: boolean,
+) {
+  const session = await requireSession();
+  const validOrderId = safeId(orderId);
+  if (!validOrderId) {
+    return { success: true as const, result: "incomplete" as const };
+  }
+  return runMutation(() =>
+    notifyTrackingUseCase({
+      orderId: validOrderId,
+      confirmResend: confirmResend === true,
+      adminId: session.adminId,
+    }),
+  );
+}
+
+export async function cleanupOrdersAction(items: CleanupPlan["items"]) {
+  const session = await requireSession();
+  const validTypes = new Set(["order", "cost", "label", "reorder"]);
+  const validItems = Array.isArray(items)
+    ? items
+        .filter(
+          (item) =>
+            item &&
+            typeof item === "object" &&
+            validTypes.has(item.data_type) &&
+            safeId(item.record_id) !== null &&
+            typeof item.detail === "string" &&
+            item.detail.length <= 2_000,
+        )
+        .slice(0, 1_000)
+    : [];
+  if (validItems.length === 0) {
+    return {
+      success: true as const,
+      result: { ok: true as const, deleted: 0, skipped: 0 },
+    };
+  }
+  return runMutation(() =>
+    cleanupOrdersUseCase({ items: validItems, adminId: session.adminId }),
   );
 }

@@ -93,7 +93,7 @@ db/
 
 ## สถานะงาน
 
-Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน และการสั่งซื้อ Supplier บันทึกผ่าน server use cases แล้ว ส่วนการเขียนข้อมูลจัดส่งยังเป็น state ชั่วคราวจนกว่าจะย้ายใน Phase 6 ของ feature 002.
+Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order รวมถึงสินค้า สต๊อก ต้นทุน การสั่งซื้อ Supplier ใบปะ การพิมพ์ การจัดส่ง การแจ้ง tracking และ cleanup บันทึกผ่าน server use cases แล้ว งาน transaction-scoped automation และ stock sync จะย้ายต่อใน Phase 7 ของ feature 002.
 
 - `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
 - `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)

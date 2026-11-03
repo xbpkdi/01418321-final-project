@@ -40,18 +40,18 @@ import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import {
   cleanupCsv,
-  commitCleanup,
   planClosedCleanup,
   planRangeCleanup,
   type CleanupPlan,
   type CleanupType,
 } from "@/lib/workflow";
+import { cleanupOrdersAction } from "@/app/(app)/actions";
 
 const DATA_TYPES: CleanupType[] = ["order", "cost", "label", "reorder"];
 
 export default function DataCleanupScreen() {
   const t = useT();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [mode, setMode] = useState<"range" | "closed">("range");
   const [types, setTypes] = useState<CleanupType[]>([]);
   const [cutoff, setCutoff] = useState("");
@@ -125,18 +125,15 @@ export default function DataCleanupScreen() {
   }
 
   // Q10A.5–9 / Q10A.12–14 — ล้มเหลวแล้ว rollback ทั้งชุด
-  function commit() {
+  async function commit() {
     if (!plan) return;
-    const { ok } = run((s) => {
-      const r = commitCleanup(s, plan);
-      return { state: r.state, ok: r.ok };
-    });
-    if (!ok) {
+    const action = await cleanupOrdersAction(plan.items);
+    if (!action.success) {
       setPlan(null);
-      toast.error(t.cleanup.errFailed);
+      toast.error(t.errors[action.error]);
       return;
     }
-    const total = plan.items.length;
+    const result = action.result;
     if (mode === "closed") {
       toast.success(
         t.cleanup.okDeletedClosed(
@@ -144,13 +141,16 @@ export default function DataCleanupScreen() {
         ),
       );
     } else {
-      toast.success(t.cleanup.okDeleted(total), {
+      toast.success(t.cleanup.okDeleted(result.deleted), {
         description: summary(plan),
       });
     }
-    if (plan.blocked.length > 0) {
+    if (plan.blocked.length > 0 || result.skipped > 0) {
       toast.warning(t.cleanup.errReferenced, {
-        description: plan.blocked.map((b) => b.record_id).join(", "),
+        description: [
+          ...plan.blocked.map((b) => b.record_id),
+          ...(result.skipped > 0 ? [`${result.skipped}`] : []),
+        ].join(", "),
       });
     }
     setPlan(null);

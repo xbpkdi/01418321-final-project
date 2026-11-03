@@ -81,7 +81,7 @@ export type LabelOrder = Pick<
   | "rsl_reference_id"
   | "shipping_address"
   | "shipping_method"
->;
+> & Pick<Order, "qty">;
 
 export type LabelRule = {
   shipping_method: string;
@@ -114,6 +114,10 @@ export interface PrinterAdapter {
 }
 
 export interface CarrierAdapter {
+  /** UC 8A Q8A.1: tracking assigned when the carrier accepts a parcel. */
+  getTrackingInfo(orderId: string): Promise<
+    AdapterResult<{ trackingNumber: string; carrierName: string } | null>
+  >;
   /** UC 8A alternative #4. */
   getDeliveryStatus(
     trackingNumber: string,

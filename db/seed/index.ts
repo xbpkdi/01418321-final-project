@@ -81,6 +81,7 @@ export async function migrateDatabase(): Promise<void> {
 // Explicit reset mode only. Normal setup never removes or overwrites rows.
 const RESET_SEED_DATA = `
   TRUNCATE TABLE
+    label_print_history,
     tracking_notification_logs,
     rakuten_stock_sync_states,
     stock_adjustment_history,
@@ -153,10 +154,11 @@ const INSERT_ORDER = `
     shipping_address, shipping_method, order_status, rsl_no,
     tracking_number, carrier_name, dispatched_at, tracking_notified,
     tracking_notified_at, cancel_reason, cancelled_at, verified_at,
-    created_at, updated_at, manual_reason, customer_cancel_requested, edit_log
+    created_at, updated_at, manual_reason, customer_cancel_requested, edit_log,
+    delivery_status
   ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-    $15, $16, $17, $18, $19, $20, $21
+    $15, $16, $17, $18, $19, $20, $21, $22
   )
   ON CONFLICT (order_id) DO NOTHING
 `;
@@ -192,8 +194,8 @@ const INSERT_REORDER = `
 const INSERT_TRACKING_LOG = `
   INSERT INTO tracking_notification_logs (
     tracking_notification_log_id, order_id, tracking_number, outcome,
-    sent_at, admin_id
-  ) VALUES ($1, $2, $3, $4, $5, $6)
+    sent_at, admin_id, attempt_id
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7)
   ON CONFLICT (tracking_notification_log_id) DO NOTHING
 `;
 
@@ -323,6 +325,7 @@ async function seedOrders(client: PoolClient, now: Date): Promise<void> {
       order.manual_reason ?? null,
       order.customer_cancel_request ?? false,
       JSON.stringify(order.edit_log ?? []),
+      order.delivery_status ?? null,
     ]);
 
     await client.query(INSERT_ORDER_ITEM, [
@@ -361,6 +364,7 @@ async function seedOrders(client: PoolClient, now: Date): Promise<void> {
         "sent",
         order.tracking_notified_at ?? order.dispatched_at ?? now,
         "U001",
+        `${order.order_id}-NOTIFY-1`,
       ]);
     }
   }

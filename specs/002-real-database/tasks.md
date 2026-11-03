@@ -100,12 +100,12 @@
 
 **Independent Test**: เดินสถานการณ์ 1–6, 9, 10 และ 13 ใน quickstart feature 001; ตรวจการแจ้ง tracking ซ้ำ, carrier failure, deletion history และไม่ให้ 7S ตั้งสถานะจัดส่งสำเร็จ
 
-- [ ] T035 [US5] เพิ่ม use case สร้างใบปะอัตโนมัติ 6S ผ่าน label service และ persist ใบปะใน `src/lib/use-cases/format-labels.ts`
-- [ ] T036 [US5] เพิ่ม use case พิมพ์/พิมพ์ซ้ำ 9A พร้อม printer result และ print history ใน `src/lib/use-cases/print-label.ts`
-- [ ] T037 [US5] เพิ่ม use case ส่งมอบ Order 8A และดึง carrier status; ให้เฉพาะ carrier confirmation ทำสถานะ `จัดส่งสำเร็จ` ใน `src/lib/use-cases/dispatch-order.ts` และ `src/lib/use-cases/poll-carrier.ts`
-- [ ] T038 [US5] เพิ่ม use case แจ้ง tracking 5S ผ่าน adapter ที่ยืนยันแล้ว; persist tracking notification log และให้ resend ที่ Admin ยืนยันเป็น attempt ใหม่ใน `src/lib/use-cases/notify-tracking.ts`
-- [ ] T039 [US5] เพิ่ม use case ลบ Order เก่าตาม 10A และบันทึก deletion history ใน transaction เดียวกันใน `src/lib/use-cases/cleanup-orders.ts`
-- [ ] T040 [US5] เชื่อมหน้าจัดส่ง, ใบปะ, รายงานพิมพ์ และ cleanup กับ use cases ใน `src/app/(app)/shipping/`, `src/app/reports/` และ `src/app/(app)/system/cleanup/`
+- [x] T035 [US5] เพิ่ม use case สร้างใบปะอัตโนมัติ 6S ผ่าน label service และ persist ใบปะใน `src/lib/use-cases/format-labels.ts`
+- [x] T036 [US5] เพิ่ม use case พิมพ์/พิมพ์ซ้ำ 9A พร้อม printer result และ print history ใน `src/lib/use-cases/print-label.ts`
+- [x] T037 [US5] เพิ่ม use case ส่งมอบ Order 8A และดึง carrier status; ให้เฉพาะ carrier confirmation ทำสถานะ `จัดส่งสำเร็จ` ใน `src/lib/use-cases/dispatch-order.ts` และ `src/lib/use-cases/poll-carrier.ts`
+- [x] T038 [US5] เพิ่ม use case แจ้ง tracking 5S ผ่าน adapter ที่ยืนยันแล้ว; persist tracking notification log และให้ resend ที่ Admin ยืนยันเป็น attempt ใหม่ใน `src/lib/use-cases/notify-tracking.ts`
+- [x] T039 [US5] เพิ่ม use case ลบ Order เก่าตาม 10A และบันทึก deletion history ใน transaction เดียวกันใน `src/lib/use-cases/cleanup-orders.ts`
+- [x] T040 [US5] เชื่อมหน้าจัดส่ง, ใบปะ, รายงานพิมพ์ และ cleanup กับ use cases ใน `src/app/(app)/shipping/`, `src/app/reports/` และ `src/app/(app)/system/cleanup/`
 
 ---
 
