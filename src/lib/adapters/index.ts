@@ -1,9 +1,11 @@
+import "server-only";
 import type {
   AdapterConfig,
   AdapterFactories,
   AdapterName,
   ExternalAdapters,
 } from "@/lib/adapters/contracts";
+import { mockAdapterFactories } from "@/lib/adapters/mock";
 
 const ADAPTER_ENV: Record<AdapterName, string> = {
   rakuten: "RAKUTEN_ADAPTER",
@@ -46,4 +48,12 @@ export function createAdapters(
     carrier: factories.carrier[config.carrier](),
     supplier: factories.supplier[config.supplier](),
   };
+}
+
+let configuredAdapters: ExternalAdapters | undefined;
+
+/** Lazily build the server-only adapter set selected by environment config. */
+export function getExternalAdapters(): ExternalAdapters {
+  configuredAdapters ??= createAdapters(mockAdapterFactories);
+  return configuredAdapters;
 }

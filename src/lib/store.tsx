@@ -2,8 +2,9 @@
 
 /**
  * ข้อมูลกลางของทั้งระบบ ใช้ร่วมกันทุกหน้า
- * Phase 3 รับ snapshot ที่อ่านจาก PostgreSQL ใน Server Component.
- * การเขียนยังเป็น state ชั่วคราวจนกว่า Phase 4-6 จะย้ายแต่ละ use case ไป Server Action.
+ * รับ snapshot ที่อ่านจาก PostgreSQL ใน Server Component.
+ * Phase 4 ย้าย Order flows ไป Server Action แล้ว; การเขียนของ Phase 5-6
+ * ยังใช้ state ชั่วคราวจนกว่า use case ของแต่ละ phase จะย้ายครบ.
  */
 
 import * as React from "react";

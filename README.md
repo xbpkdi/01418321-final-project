@@ -93,7 +93,7 @@ db/
 
 ## สถานะงาน
 
-Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การเขียนข้อมูลจากปุ่มในหน้าธุรกิจยังเป็น state ชั่วคราวและจะย้ายไป server use cases ใน Phase 4–6 ของ feature 002.
+Login, session และข้อมูลที่ทุกหน้าธุรกิจแสดงอ่านจาก PostgreSQL แล้ว การนำเข้า/ตรวจสอบ/จับคู่ RSL/ยกเลิก Order ใน Phase 4 บันทึกผ่าน server use cases แล้ว ส่วนการเขียนข้อมูลสินค้าและการจัดส่งยังเป็น state ชั่วคราวจนกว่าจะย้ายใน Phase 5–6 ของ feature 002.
 
 - `report-doc/content/usecases.json` (repo 321-sa-proj) — Use Case Description ทุกข้อ ทุกปุ่ม/ข้อความในหน้าจอต้องตรงคำต่อคำ
 - `report-doc/build_report.py` (repo 321-sa-proj) — สร้างเล่มรายงาน (.docx/.pdf)

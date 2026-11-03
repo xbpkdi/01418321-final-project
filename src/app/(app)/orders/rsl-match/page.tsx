@@ -3,7 +3,7 @@
 // RslMatchScreen — UC 1S จับคู่ Order กับเลข RSL
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู matchRsl ใน lib/workflow.ts)
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Link2 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,25 +26,28 @@ import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import {
   findOrder,
-  matchAllRsl,
-  matchRsl,
   rslMatched,
   rslQueue,
-  unmatchRsl,
 } from "@/lib/workflow";
-import type { RslShipment } from "@/mock/rsl";
+import type { RslMatch } from "@/lib/adapters/contracts";
+import {
+  matchAllRslAction,
+  matchRslAction,
+  unmatchRslAction,
+} from "@/app/(app)/actions";
 
 export default function RslMatchScreen() {
   const router = useRouter();
   const t = useT();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [candidates, setCandidates] = useState<{
     orderId: string;
-    options: RslShipment[];
+    options: RslMatch[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [working, setWorking] = useState<string | null>(null);
+  const [, startWorking] = useTransition();
 
   const queue = rslQueue(state);
   const matched = rslMatched(state);
@@ -52,12 +55,14 @@ export default function RslMatchScreen() {
   function match(orderId: string, chosen?: string) {
     setError(null);
     setWorking(orderId);
-    window.setTimeout(() => {
-      const { result } = run((s) => {
-        const r = matchRsl(s, orderId, chosen);
-        return { state: r.state, result: r.result };
-      });
+    startWorking(async () => {
+      const action = await matchRslAction(orderId, chosen);
       setWorking(null);
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
       switch (result.kind) {
         case "not-found": // ทางเลือก #1
           setCandidates(null);
@@ -81,34 +86,48 @@ export default function RslMatchScreen() {
             },
           });
           break;
+        case "not-allowed":
+          setCandidates(null);
+          setError(t.rslMatch.errNotFound);
+          break;
       }
-    }, 450);
+    });
   }
 
   function matchAll() {
     setError(null);
     setCandidates(null);
-    const { summary } = run((s) => {
-      const r = matchAllRsl(s);
-      return { state: r.state, summary: r.summary };
+    startWorking(async () => {
+      const action = await matchAllRslAction();
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      const summary = action.result;
+      if (summary.connection) {
+        setError(t.rslMatch.errConnection);
+        return;
+      }
+      toast.info(
+        t.rslMatch.matchAllSummary(
+          summary.matched,
+          summary.multiple,
+          summary.notFound,
+        ),
+      );
     });
-    if (summary.connection) {
-      setError(t.rslMatch.errConnection);
-      return;
-    }
-    toast.info(
-      t.rslMatch.matchAllSummary(
-        summary.matched,
-        summary.multiple,
-        summary.notFound,
-      ),
-    );
   }
 
   // ทางเลือก #3: ยกเลิกการจับคู่ที่ทำไปแล้ว
   function unmatch(orderId: string) {
-    run((s) => unmatchRsl(s, orderId));
-    toast.success(t.rslMatch.okUnmatched(orderId));
+    startWorking(async () => {
+      const action = await unmatchRslAction(orderId);
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      if (action.result) toast.success(t.rslMatch.okUnmatched(orderId));
+    });
   }
 
   const queueCols = queueColumns(t, (o) => match(o.order_id), working);

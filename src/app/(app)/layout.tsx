@@ -1,6 +1,7 @@
 // โครงหน้าอิง shadcn block sidebar-16 (sticky site header เต็มความกว้าง + sidebar ด้านล่าง)
 
 import { Suspense } from "react";
+import { createHash } from "node:crypto";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-shell/app-sidebar";
@@ -36,9 +37,12 @@ async function AuthenticatedAppShell({
   } catch (error) {
     return <DatabaseErrorState error={mapDatabaseError(error)} />;
   }
+  const snapshotKey = createHash("sha256")
+    .update(JSON.stringify(initialState))
+    .digest("base64url");
 
   return (
-    <StoreProvider initialState={initialState}>
+    <StoreProvider key={snapshotKey} initialState={initialState}>
       <TooltipProvider>
         <div className="[--header-height:calc(--spacing(14))]">
           <SidebarProvider className="flex flex-col">

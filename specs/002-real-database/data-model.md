@@ -37,6 +37,12 @@
 - `rakuten_stock_sync_states`: ใช้คอลัมน์ตามตารางด้านบนและ FK ไป `stock`; เป็นสถานะคงค้างของ 7S ทางเลือก #1.
 - `schema_migrations`: `migration_name`, `applied_at`; เป็น catalog เชิงเทคนิคเพื่อให้ setup รันซ้ำได้ ไม่ใช่ business entity.
 
+### Schema extension ที่ใช้จริงใน `003_order_workflow_state.sql`
+
+- `orders.manual_reason`: เก็บเหตุผลที่ Order อยู่สถานะ `รอดำเนินการด้วยตนเอง` เพื่อให้ 2A, 2S, 1S และหน้าที่เกี่ยวข้องแสดงเส้นทางแก้ไขเดิมได้หลัง refresh/restart.
+- `orders.customer_cancel_requested`: เก็บคำขอยกเลิกที่ 4A ดึงมาจาก Rakuten จนกว่า 2A/7A จะดำเนินการ.
+- `orders.edit_log`: เก็บรายการแก้ฟิลด์ที่ 2A อนุญาต พร้อมผู้แก้และเวลา; ใช้ JSONB เพราะเป็น schema extension ของ audit detail ที่ ER ปัจจุบันยังไม่มีตารางแยก.
+
 รายการนี้คือ ER change list ที่ต้องส่งทีมเอกสาร. Migration ที่ merge แล้วห้ามแก้; การปรับตาม ER ฉบับถัดไปต้องสร้าง migration ใหม่เสมอ.
 
 ## กฎความสอดคล้อง

@@ -152,10 +152,10 @@ const INSERT_ORDER = `
     shipping_address, shipping_method, order_status, rsl_no,
     tracking_number, carrier_name, dispatched_at, tracking_notified,
     tracking_notified_at, cancel_reason, cancelled_at, verified_at,
-    created_at, updated_at
+    created_at, updated_at, manual_reason, customer_cancel_requested, edit_log
   ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-    $15, $16, $17, $18
+    $15, $16, $17, $18, $19, $20, $21
   )
   ON CONFLICT (order_id) DO NOTHING
 `;
@@ -319,6 +319,9 @@ async function seedOrders(client: PoolClient, now: Date): Promise<void> {
       order.verified_at ?? null,
       order.order_date,
       now,
+      order.manual_reason ?? null,
+      order.customer_cancel_request ?? false,
+      JSON.stringify(order.edit_log ?? []),
     ]);
 
     await client.query(INSERT_ORDER_ITEM, [

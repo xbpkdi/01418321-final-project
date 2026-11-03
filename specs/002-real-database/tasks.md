@@ -73,11 +73,11 @@
 
 **Independent Test**: เดินสถานการณ์ 7, 8, 11 และ 12 ของ `specs/001-order-status-alignment/quickstart.md`; ตรวจสถานะและข้อมูล Order หลัง refresh/restart รวมกรณีนำเข้าซ้ำพร้อมกัน
 
-- [ ] T026 [US3] เพิ่ม server use case นำเข้า Order 4A พร้อมข้าม `marketplace_order_id` ซ้ำและบันทึกเฉพาะรายการถูกต้องใน `src/lib/use-cases/import-orders.ts`
-- [ ] T027 [US3] เพิ่ม server use case ตรวจ Order 2A และดึงข้อมูลล่าสุดผ่าน interface ใน `src/lib/use-cases/verify-order.ts`
-- [ ] T028 [US3] ย้ายการเรียก adapter สำหรับ SKU matching 2S, stock check 3S และ RSL matching 1S ไป server use cases; คง pure rules ใน `src/lib/workflow.ts` และเพิ่ม `src/lib/use-cases/match-order.ts` กับ `src/lib/use-cases/check-stock.ts`
-- [ ] T029 [US3] เพิ่ม server use case ยกเลิก Order 7A พร้อมคืน stock ตาม flow, คงเงื่อนไข Order ที่ส่งมอบแล้ว และ persist เหตุผล/เวลาใน `src/lib/use-cases/cancel-order.ts`
-- [ ] T030 [US3] เชื่อมหน้า import, verify, RSL match และ cancel กับ server actions/use cases แทน `run()` ใน `src/app/(app)/dashboard/`, `src/app/(app)/orders/` และ `src/lib/store.tsx`
+- [x] T026 [US3] เพิ่ม server use case นำเข้า Order 4A พร้อมข้าม `marketplace_order_id` ซ้ำและบันทึกเฉพาะรายการถูกต้องใน `src/lib/use-cases/import-orders.ts`
+- [x] T027 [US3] เพิ่ม server use case ตรวจ Order 2A และดึงข้อมูลล่าสุดผ่าน interface ใน `src/lib/use-cases/verify-order.ts`
+- [x] T028 [US3] ย้ายการเรียก adapter สำหรับ SKU matching 2S, stock check 3S และ RSL matching 1S ไป server use cases; คง pure rules ใน `src/lib/workflow.ts` และเพิ่ม `src/lib/use-cases/match-order.ts` กับ `src/lib/use-cases/check-stock.ts`
+- [x] T029 [US3] เพิ่ม server use case ยกเลิก Order 7A พร้อมคืน stock ตาม flow, คงเงื่อนไข Order ที่ส่งมอบแล้ว และ persist เหตุผล/เวลาใน `src/lib/use-cases/cancel-order.ts`
+- [x] T030 [US3] เชื่อมหน้า import, verify, RSL match และ cancel กับ server actions/use cases แทน `run()` ใน `src/app/(app)/dashboard/`, `src/app/(app)/orders/` และ `src/lib/store.tsx`
 
 ---
 

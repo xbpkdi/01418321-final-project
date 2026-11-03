@@ -6,7 +6,7 @@
 // ต้นทุนต่อหน่วย และ action ที่ล้มเหลวต้องเห็นชัดในที่เดียว
 // ปุ่ม "นำเข้า Order" และสถานะการเชื่อมต่อมาจาก UC 4A
 
-import { useState } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
 import { ArrowRight, DownloadCloud } from "lucide-react";
 import { toast } from "sonner";
@@ -31,8 +31,9 @@ import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import { useLanguage } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import { issueOf } from "@/lib/issues";
-import { importOrders, stockTotal, unitCostOf } from "@/lib/workflow";
+import { stockTotal, unitCostOf } from "@/lib/workflow";
 import { formatBaht, formatDate, formatDateTime } from "@/lib/format";
+import { importOrdersAction } from "@/app/(app)/actions";
 
 // ส่ง status ไปกรองปลายทางด้วย ไม่งั้นพอรายการเยอะจะหาไม่เจอว่ากดมาจากใบไหน
 const WATCHED: { status: OrderStatus; href: string }[] = [
@@ -44,8 +45,8 @@ const WATCHED: { status: OrderStatus; href: string }[] = [
 
 export default function DashboardScreen() {
   const { lang, t } = useLanguage();
-  const { state, run } = useStore();
-  const [importing, setImporting] = useState(false);
+  const { state } = useStore();
+  const [importing, startImport] = useTransition();
 
   const counts = WATCHED.map((item) => ({
     ...item,
@@ -77,13 +78,13 @@ export default function DashboardScreen() {
 
   // UC 4A ขั้นตอนที่ 2–3
   function handleImport() {
-    setImporting(true);
-    window.setTimeout(() => {
-      const { result } = run((s) => {
-        const r = importOrders(s);
-        return { state: r.state, result: r.result };
-      });
-      setImporting(false);
+    startImport(async () => {
+      const action = await importOrdersAction();
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
       if (!result.ok) {
         toast.error(t.dashboard.connectionFailed(state.connection.channel));
         return;
@@ -109,7 +110,7 @@ export default function DashboardScreen() {
           t.dashboard.importCancelRequest(result.cancelRequested.join(", ")),
         );
       }
-    }, 500);
+    });
   }
 
   return (
