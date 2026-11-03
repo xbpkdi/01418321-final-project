@@ -44,6 +44,8 @@ interface OrderReadRow extends QueryResultRow {
   label_printed_at: Date | string | null;
   sync_status: "pending" | "synced" | null;
   notify_log: { by: string; at: string }[] | null;
+  reorder_decision: "คุ้มค่า" | "ไม่คุ้มค่า" | null;
+  decided_qty: number | string | null;
 }
 
 // UC 2A / Q2A.1-Q2A.2: read the current order list and the detail fields
@@ -69,6 +71,8 @@ export const Q2A_1 = `
     o.manual_reason,
     o.customer_cancel_requested,
     o.edit_log,
+    o.reorder_decision,
+    o.decided_qty,
     item.channel_sku,
     item.variation,
     item.qty,
@@ -190,6 +194,8 @@ function toOrder(row: OrderReadRow): Order {
     verified_at: iso(row.verified_at),
     customer_cancel_request: row.customer_cancel_requested,
     edit_log: row.edit_log ?? undefined,
+    decision: row.reorder_decision ?? undefined,
+    decided_qty: row.decided_qty === null ? undefined : Number(row.decided_qty),
   };
 }
 

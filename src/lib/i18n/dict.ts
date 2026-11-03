@@ -393,6 +393,12 @@ const th = {
     errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล",
     errRsl: "ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง",
     partialHint: "แสดงเฉพาะข้อมูลสต๊อกในคลังบริษัท",
+    adjustTitle: "ปรับยอดสต๊อก",
+    adjustReason: "เหตุผลที่ปรับ",
+    adjustReasonPlaceholder: "เช่น ตรวจนับสินค้าจริงประจำเดือน",
+    adjustSave: "บันทึกยอดสต๊อก",
+    adjustOk: "บันทึกยอดสต๊อกและประวัติแล้ว",
+    adjustInvalid: "กรอกจำนวนเต็มตั้งแต่ 0 ขึ้นไปและระบุเหตุผล",
   },
 
   cost: {
@@ -1084,6 +1090,12 @@ const en: typeof th = {
     errIncomplete: "Stock data is incomplete. Please check the data source",
     errRsl: "Cannot fetch stock from RSL. Please try again later",
     partialHint: "Showing in-house stock only",
+    adjustTitle: "Adjust stock",
+    adjustReason: "Adjustment reason",
+    adjustReasonPlaceholder: "For example, monthly physical count",
+    adjustSave: "Save stock levels",
+    adjustOk: "Stock levels and history saved",
+    adjustInvalid: "Enter whole numbers of 0 or more and provide a reason",
   },
 
   cost: {

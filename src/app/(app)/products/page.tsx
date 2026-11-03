@@ -3,7 +3,7 @@
 // ProductScreen — UC 3A ตั้งกฎ SKU
 // ข้อความและเงื่อนไขตรวจสอบทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู saveProduct ใน lib/workflow.ts)
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { FileUp, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -49,16 +49,18 @@ import { useT } from "@/lib/i18n/context";
 import { useStore, useUnsavedChanges } from "@/lib/store";
 import {
   costToForm,
-  deleteProduct,
   findSupplier,
-  importProductsCsv,
-  saveProduct,
-  setProductActive,
   type CostForm,
   type CsvRowResult,
   type ProductResult,
 } from "@/lib/workflow";
 import { COST_KEYS, type Product } from "@/types/product";
+import {
+  deleteProductAction,
+  importProductsAction,
+  saveProductAction,
+  setProductActiveAction,
+} from "@/app/(app)/actions";
 
 const NO_SUPPLIER = "none";
 
@@ -77,7 +79,7 @@ const BLANK: Product = {
 
 export default function ProductScreen() {
   const t = useT();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [draft, setDraft] = useState<Product | null>(null);
   const [costDraft, setCostDraft] = useState<CostForm | null>(null);
   const [editingSku, setEditingSku] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export default function ProductScreen() {
   const [error, setError] = useState<string | null>(null);
   const [csvRows, setCsvRows] = useState<CsvRowResult[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [submitting, startSubmitting] = useTransition();
   useUnsavedChanges("product", draft !== null);
 
   const MESSAGE: Record<Exclude<ProductResult, "ok">, string> = {
@@ -125,78 +128,73 @@ export default function ProductScreen() {
   // ขั้นตอนที่ 3: กรอกข้อมูลแล้วกด "บันทึก" (Q3A.2 เพิ่มใหม่ / Q3A.3 แก้ไข)
   function save() {
     if (!draft || !costDraft) return;
-    const { result, requeued } = run((s) => {
-      const r = saveProduct(s, draft, editingSku);
-      if (r.result !== "ok") return r;
-      // องค์ประกอบต้นทุนที่กรอกในฟอร์มนี้เป็นค่าตั้งต้นของหน้าคำนวณต้นทุน
-      const num = (v: string) =>
-        v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v);
-      const old = r.state.costs.find(
-        (c) => c.sku === (editingSku ?? draft.sku),
-      );
-      const cost = {
-        sku: draft.sku.trim(),
-        currency: costDraft.currency || "CNY",
-        exchange_rate_updated_at:
-          old && old.exchange_rate === num(costDraft.exchange_rate)
-            ? old.exchange_rate_updated_at
-            : num(costDraft.exchange_rate) === null
-              ? null
-              : new Date().toISOString(),
-        ...Object.fromEntries(COST_KEYS.map((k) => [k, num(costDraft[k])])),
-      } as (typeof r.state.costs)[number];
-      const others = r.state.costs.filter(
-        (c) => c.sku !== (editingSku ?? draft.sku),
-      );
-      return { ...r, state: { ...r.state, costs: [...others, cost] } };
-    });
-    if (result !== "ok") {
-      setError(MESSAGE[result]);
-      return;
-    }
-    setDraft(null);
-    toast.success(t.products.okSaved, {
-      description: requeued > 0 ? t.products.requeued(requeued) : undefined,
+    startSubmitting(async () => {
+      const action = await saveProductAction(draft, editingSku, costDraft);
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      if (action.result.result !== "ok") {
+        setError(MESSAGE[action.result.result]);
+        return;
+      }
+      setDraft(null);
+      toast.success(t.products.okSaved, {
+        description:
+          action.result.requeued > 0
+            ? t.products.requeued(action.result.requeued)
+            : undefined,
+      });
     });
   }
 
   function toggleActive(product: Product) {
-    run((s) => ({ state: setProductActive(s, product.sku, !product.active) }));
+    startSubmitting(async () => {
+      const action = await setProductActiveAction(product.sku, !product.active);
+      if (!action.success) toast.error(t.errors[action.error]);
+    });
   }
 
   // ทางเลือก #1: ลบไม่ได้ถ้ายังมีรายการที่เกี่ยวข้อง เสนอให้ปิดการขายแทน
   function remove(product: Product) {
-    const { result } = run((s) => {
-      const r = deleteProduct(s, product.sku);
-      return { state: r.state, result: r.result };
+    startSubmitting(async () => {
+      const action = await deleteProductAction(product.sku);
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      if (action.result === "has-related") {
+        toast.error(t.products.errHasRelated, {
+          action: product.active
+            ? {
+                label: t.products.switchToInactive,
+                onClick: () => toggleActive(product),
+              }
+            : undefined,
+        });
+        return;
+      }
+      if (action.result === "ok") toast.success(t.products.okDeleted(product.sku));
     });
-    if (result === "has-related") {
-      toast.error(t.products.errHasRelated, {
-        action: product.active
-          ? {
-              label: t.products.switchToInactive,
-              onClick: () => toggleActive(product),
-            }
-          : undefined,
-      });
-      return;
-    }
-    toast.success(t.products.okDeleted(product.sku));
   }
 
   // ทางเลือก #2: นำเข้าข้อมูลสินค้าจำนวนมากจากไฟล์ CSV
   async function importCsv(file: File) {
     const text = await file.text();
-    const { rows } = run((s) => {
-      const r = importProductsCsv(s, text);
-      return { state: r.state, rows: r.rows };
+    startSubmitting(async () => {
+      const action = await importProductsAction(text);
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      const rows = action.result;
+      setCsvRows(rows);
+      const ok = rows.filter((row) => row.result === "ok").length;
+      if (ok > 0) toast.success(t.products.importOk(ok));
+      if (ok < rows.length)
+        toast.error(t.products.importFailed(rows.length - ok));
+      if (fileRef.current) fileRef.current.value = "";
     });
-    setCsvRows(rows);
-    const ok = rows.filter((r) => r.result === "ok").length;
-    if (ok > 0) toast.success(t.products.importOk(ok));
-    if (ok < rows.length)
-      toast.error(t.products.importFailed(rows.length - ok));
-    if (fileRef.current) fileRef.current.value = "";
   }
 
   const columns = productColumns(
@@ -248,11 +246,11 @@ export default function ProductScreen() {
                 e.target.files?.[0] && importCsv(e.target.files[0])
               }
             />
-            <Button variant="outline" onClick={() => fileRef.current?.click()}>
+            <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={submitting}>
               <FileUp />
               {t.products.importCsv}
             </Button>
-            <Button onClick={openCreate}>{t.products.create}</Button>
+            <Button onClick={openCreate} disabled={submitting}>{t.products.create}</Button>
           </div>
         }
       />
@@ -550,7 +548,7 @@ export default function ProductScreen() {
             <Button variant="outline" onClick={() => setDraft(null)}>
               {t.common.cancel}
             </Button>
-            <Button onClick={save}>{t.common.save}</Button>
+            <Button onClick={save} disabled={submitting}>{t.common.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

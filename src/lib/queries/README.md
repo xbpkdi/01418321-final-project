@@ -76,6 +76,18 @@ Order mutations run through authenticated Server Actions and server use cases. S
 | RSL match/unmatch | `Q1S.1` |
 | Cancel, linked reorder, and atomic restock | `Q7A.1`–`Q7A.2` |
 
+## Phase 5 Product, inventory, cost, and reorder write model
+
+ทุก mutation ตรวจ session ใน Server Action, validate input ฝั่ง server และเขียนผ่าน transaction:
+
+| Flow | Query owner |
+|---|---|
+| เพิ่ม/แก้ไข/นำเข้า/ปิดขาย/ลบกฎ SKU | `Q3A.1` |
+| ปรับยอด stock และเก็บ adjustment history | `Q3S.1` |
+| บันทึกองค์ประกอบ/ผลคำนวณ/ประวัติต้นทุน | `Q4S.1`–`Q4S.2` |
+| ตัดสินใจสั่งซื้อเพิ่ม | `Q5A.1`–`Q5A.4` |
+| สร้าง ส่ง และ retry คำสั่งซื้อ Supplier ด้วย request id เดิม | `Q6A.1`–`Q6A.2` |
+
 ชื่อ constant ที่มี suffix เช่น `Q2A_1_DASHBOARD_TOTALS` คือ projection หลายชุดของ query เจ้าของเดียวกัน ไม่ใช่ Q-number ใหม่.
 
 ## เปลี่ยนจากฉบับก่อน (2026-10-28)

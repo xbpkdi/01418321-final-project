@@ -5,6 +5,7 @@ import { listOrders } from "@/lib/queries/orders";
 import { listSkus, listSuppliers } from "@/lib/queries/skus";
 import { listStock } from "@/lib/queries/stock";
 import { listCosts } from "@/lib/queries/costs";
+import { listCostHistory } from "@/lib/queries/cost-history";
 import { listReorders } from "@/lib/queries/reorders";
 import { listLabels } from "@/lib/queries/shipping";
 import { listDeletionHistory } from "@/lib/queries/cleanup";
@@ -20,6 +21,7 @@ export async function loadAppState(session: {
     suppliers,
     stock,
     costData,
+    costHistory,
     purchaseOrders,
     labels,
     deletionLog,
@@ -30,6 +32,7 @@ export async function loadAppState(session: {
     listSuppliers(),
     listStock(),
     listCosts(),
+    listCostHistory(),
     listReorders(),
     listLabels(),
     listDeletionHistory(),
@@ -58,6 +61,7 @@ export async function loadAppState(session: {
     const sequence = Number(reorder.po_id.match(/(\d+)$/)?.[1] ?? 0);
     return Math.max(max, sequence);
   }, 0);
+  const skusWithCostHistory = new Set(costHistory.map((entry) => entry.sku));
 
   return {
     version: 3,
@@ -66,7 +70,12 @@ export async function loadAppState(session: {
     suppliers,
     stock,
     costs: costData.costs,
-    costLog: costData.costLog,
+    costLog: [
+      ...costData.costLog.filter(
+        (entry) => !skusWithCostHistory.has(entry.sku),
+      ),
+      ...costHistory,
+    ].sort((a, b) => a.calculated_at.localeCompare(b.calculated_at)),
     purchaseOrders,
     dailyVolume: dashboard.dailyVolume,
     rmsInbox: [],
