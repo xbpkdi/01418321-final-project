@@ -24,6 +24,7 @@
 | `auto_error_logs` | UC, context key, error code/message ที่ปลอดภัย, occurred_at | ประวัติข้อผิดพลาด automation ตาม FR-017; ไม่บันทึกรหัสผ่าน/secret |
 | `deletion_history` | UC 10A, order reference snapshot, actor, deleted_at | ร่องรอยการลบเมื่อ Order ที่เข้าเงื่อนไขถูกลบ |
 | `cost_history` | SKU/cost reference, ค่าเดิม/ใหม่ที่จำเป็น, actor, changed_at | ประวัติการเปลี่ยนต้นทุน UC 4S |
+| `stock_adjustment_history` | stock reference, ยอดเดิม/ใหม่ของคลังบริษัทและ RSL, เหตุผล, actor, adjusted_at | ประวัติการปรับสต๊อกโดย Admin; ยอดปัจจุบันยังอยู่ใน `stock` |
 | `tracking_notification_logs` | order reference, tracking reference, outcome, sent_at | ป้องกัน/บันทึกการแจ้งเลขติดตามซ้ำ UC 5S; ข้อความไม่เก็บข้อมูลส่วนเกิน |
 | `rakuten_stock_sync_states` | `stock_id` (PK/FK), `sync_status`, `last_synced_qty`, `last_attempt_at`, `last_synced_at`, `last_error_code` | สถานะคงค้างสำหรับ retry 7S ต่อรายการ stock ของ Rakuten; เมื่อ stock เปลี่ยนให้เป็น pending และ retry คำนวณยอดล่าสุดจาก `in_house_qty + rsl_qty`; บันทึกยอดล่าสุดที่ sync สำเร็จเพื่อไม่ให้คำขอเก่าทับยอดใหม่. เป็น schema extension ที่ต้องส่งทีมปรับ ER. |
 
@@ -33,6 +34,7 @@
 - `auto_error_logs`: `auto_error_log_id`, `use_case_id`, `context_key`, `error_code`, `safe_message`, `occurred_at` สำหรับ 2S/3S/6S/7S.
 - `deletion_history`: `deletion_history_id`, `order_reference`, `order_snapshot`, `admin_id`, `deleted_at` สำหรับ 10A.
 - `cost_history`: `cost_history_id`, `sku_id`, `cost_id`, `previous_value`, `new_value`, `admin_id`, `changed_at` สำหรับ 4S และเพิ่ม `costs.exchange_rate_updated_at` ซึ่งจำเป็นต่อทางเลือกอัตราแลกเปลี่ยนเกิน 24 ชั่วโมง แต่ไม่มีใน ER ปัจจุบัน.
+- `stock_adjustment_history`: เพิ่มใน Phase 5 เพื่อเก็บ before/after, เหตุผล และ Admin ของการปรับยอดสต๊อก; migration เดียวกันเพิ่ม `orders.reorder_decision`/`decided_qty` สำหรับ 5A และ `reorders.supplier_request_id`/ผลตอบกลับสำหรับ retry แบบ idempotent ใน 6A.
 - `tracking_notification_logs`: `tracking_notification_log_id`, `order_id`, `tracking_number`, `outcome`, `sent_at`, `admin_id` สำหรับ 5S และการส่งซ้ำ.
 - `rakuten_stock_sync_states`: ใช้คอลัมน์ตามตารางด้านบนและ FK ไป `stock`; เป็นสถานะคงค้างของ 7S ทางเลือก #1.
 - `schema_migrations`: `migration_name`, `applied_at`; เป็น catalog เชิงเทคนิคเพื่อให้ setup รันซ้ำได้ ไม่ใช่ business entity.

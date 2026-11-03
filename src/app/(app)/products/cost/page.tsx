@@ -3,7 +3,7 @@
 // CostCalculatorScreen — UC 4S คำนวณ Cost ในการสั่งสินค้าเติม stock เอง
 // สูตรและข้อความทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู calculateCost ใน lib/workflow.ts)
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Calculator, FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -39,7 +39,6 @@ import { useLanguage } from "@/lib/i18n/context";
 import { useStore, useUnsavedChanges } from "@/lib/store";
 import { formatBaht, formatDateTime } from "@/lib/format";
 import {
-  calculateCost,
   costToForm,
   findProduct,
   findSupplier,
@@ -49,10 +48,11 @@ import {
 } from "@/lib/workflow";
 import { SEED_SUPPLIER_QUOTES } from "@/mock/products";
 import { calcUnitCost, COST_KEYS, type CostKey } from "@/types/product";
+import { calculateCostAction } from "@/app/(app)/actions";
 
 export default function CostCalculatorScreen() {
   const { lang, t } = useLanguage();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [sku, setSku] = useState<string>("");
   const [form, setForm] = useState<CostForm | null>(null);
   const [initial, setInitial] = useState<CostForm | null>(null);
@@ -63,6 +63,7 @@ export default function CostCalculatorScreen() {
   > | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [submitting, startSubmitting] = useTransition();
   useUnsavedChanges(
     "cost",
     form !== null && JSON.stringify(form) !== JSON.stringify(initial),
@@ -117,18 +118,26 @@ export default function CostCalculatorScreen() {
   function calculate() {
     if (!form) return;
     setError(null);
-    const { result: r } = run((s) => {
-      const out = calculateCost(s, sku, form, remember);
-      return { state: out.state, result: out.result };
+    startSubmitting(async () => {
+      const action = await calculateCostAction(sku, form, remember);
+      if (!action.success) {
+        setError(t.errors[action.error]);
+        return;
+      }
+      const calculated = action.result;
+      if (!calculated.ok) {
+        setResult(null);
+        setError(
+          calculated.reason === "no-rate"
+            ? t.cost.errNoRate
+            : t.cost.errInvalid,
+        );
+        return;
+      }
+      setResult(calculated);
+      setInitial(form);
+      toast.success(t.cost.okCalculated);
     });
-    if (!r.ok) {
-      setResult(null);
-      setError(r.reason === "no-rate" ? t.cost.errNoRate : t.cost.errInvalid);
-      return;
-    }
-    setResult(r);
-    setInitial(form);
-    toast.success(t.cost.okCalculated);
   }
 
   // องค์ประกอบที่ยังไม่เคยตั้งค่า (ทางเลือก #1) และอัตราแลกเปลี่ยน
@@ -310,7 +319,7 @@ export default function CostCalculatorScreen() {
                 <SectionMessage appearance="error">{error}</SectionMessage>
               )}
 
-              <Button onClick={calculate} className="w-fit">
+              <Button onClick={calculate} className="w-fit" disabled={submitting}>
                 {t.cost.calculate}
               </Button>
             </div>

@@ -19,6 +19,13 @@ interface CostRow extends QueryResultRow {
   calculated_at: Date | string | null;
 }
 
+export interface CostWriteRow extends QueryResultRow {
+  cost_id: string;
+  snapshot: Record<string, unknown>;
+  exchange_rate: string | number | null;
+  exchange_rate_updated_at: Date | string | null;
+}
+
 // UC 4S / Q4S.1-Q4S.2: read cost components and the last persisted result.
 export const Q4S_1 = `
   SELECT
@@ -103,4 +110,95 @@ export async function listCosts(
   });
 
   return { costs, costLog };
+}
+
+// UC 4S / Q4S.1: lock the current saved components before a cost change.
+export const Q4S_1_FOR_UPDATE = `
+  SELECT
+    costs.cost_id,
+    to_jsonb(costs) AS snapshot,
+    costs.exchange_rate,
+    costs.exchange_rate_updated_at
+  FROM costs
+  WHERE costs.sku_id = $1
+  ORDER BY costs.calculated_at DESC NULLS LAST, costs.cost_id
+  LIMIT 1
+  FOR UPDATE
+`;
+
+export async function lockCost(
+  executor: QueryExecutor,
+  skuId: string,
+): Promise<CostWriteRow | null> {
+  const result = await executor.query<CostWriteRow>(Q4S_1_FOR_UPDATE, [skuId]);
+  return result.rows[0] ?? null;
+}
+
+// UC 4S / Q4S.1-Q4S.2: save remembered components and the latest calculated
+// unit cost. A new SKU gets one canonical cost row.
+export const Q4S_2_SAVE = `
+  INSERT INTO costs (
+    cost_id, purchase_price, currency, exchange_rate, exchange_rate_updated_at,
+    intl_freight, duty_fee, marketplace_fee, domestic_shipping, rsl_charge,
+    order_qty, unit_cost, calculated_at, sku_id
+  ) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, $13
+  )
+  ON CONFLICT (cost_id) DO UPDATE SET
+    purchase_price = EXCLUDED.purchase_price,
+    currency = EXCLUDED.currency,
+    exchange_rate = EXCLUDED.exchange_rate,
+    exchange_rate_updated_at = EXCLUDED.exchange_rate_updated_at,
+    intl_freight = EXCLUDED.intl_freight,
+    duty_fee = EXCLUDED.duty_fee,
+    marketplace_fee = EXCLUDED.marketplace_fee,
+    domestic_shipping = EXCLUDED.domestic_shipping,
+    rsl_charge = EXCLUDED.rsl_charge,
+    order_qty = EXCLUDED.order_qty,
+    unit_cost = EXCLUDED.unit_cost,
+    calculated_at = CURRENT_TIMESTAMP
+  RETURNING cost_id
+`;
+
+export async function saveCost(
+  executor: QueryExecutor,
+  input: {
+    costId: string;
+    skuId: string;
+    cost: CostComponents;
+    unitCost: number | null;
+  },
+): Promise<string> {
+  const result = await executor.query<{ cost_id: string }>(Q4S_2_SAVE, [
+    input.costId,
+    input.cost.purchase_price,
+    input.cost.currency,
+    input.cost.exchange_rate,
+    input.cost.exchange_rate_updated_at,
+    input.cost.intl_freight,
+    input.cost.duty_fee,
+    input.cost.marketplace_fee,
+    input.cost.domestic_shipping,
+    input.cost.rsl_charge,
+    input.cost.order_qty,
+    input.unitCost,
+    input.skuId,
+  ]);
+  return result.rows[0].cost_id;
+}
+
+export const Q4S_1_SELLING_PRICE = `
+  SELECT selling_price FROM skus WHERE sku_id = $1
+`;
+
+export async function getSkuSellingPrice(
+  executor: QueryExecutor,
+  skuId: string,
+): Promise<number | null> {
+  const result = await executor.query<{ selling_price: string | number | null }>(
+    Q4S_1_SELLING_PRICE,
+    [skuId],
+  );
+  const value = result.rows[0]?.selling_price;
+  return value === null || value === undefined ? null : Number(value);
 }

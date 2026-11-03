@@ -3,9 +3,12 @@
 // StockCheckScreen — UC 3S ตรวจสอบของสินค้าใน stock + RSL
 // ข้อความและเกณฑ์ทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู checkStock ใน lib/workflow.ts)
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
@@ -22,12 +25,17 @@ import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import { checkStock, type StockCheck } from "@/lib/workflow";
 import { StockBadge, type StockRow } from "./columns";
+import { adjustStockAction } from "@/app/(app)/actions";
 
 export default function StockCheckScreen() {
   const t = useT();
   const { state } = useStore();
   const [sku, setSku] = useState("");
   const [result, setResult] = useState<StockCheck | null>(null);
+  const [inHouse, setInHouse] = useState("");
+  const [rsl, setRsl] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, startSubmitting] = useTransition();
 
   // ทางเลือก #2: ภาพรวมทุก SKU เรียงรายการที่ต่ำกว่าเกณฑ์ไว้บนสุด
   const rows: StockRow[] = state.products
@@ -45,6 +53,38 @@ export default function StockCheckScreen() {
   // ขั้นตอนที่ 1–2: เลือกสินค้า แล้วกด "เช็คสต๊อก" (Q3S.1)
   function check() {
     setResult(checkStock(state, sku));
+  }
+
+  function selectStock(value: string) {
+    const checked = checkStock(state, value);
+    setSku(value);
+    setResult(checked);
+    if (checked.found) {
+      setInHouse(String(checked.in_house_qty));
+      setRsl(checked.rsl_qty === null ? "" : String(checked.rsl_qty));
+    }
+    setReason("");
+  }
+
+  function saveAdjustment() {
+    startSubmitting(async () => {
+      const action = await adjustStockAction({
+        sku,
+        inHouseQuantity: inHouse.trim() === "" ? -1 : Number(inHouse),
+        rslQuantity: rsl.trim() === "" ? null : Number(rsl),
+        reason,
+      });
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      if (action.result !== "ok") {
+        toast.error(t.stock.adjustInvalid);
+        return;
+      }
+      setReason("");
+      toast.success(t.stock.adjustOk);
+    });
   }
 
   return (
@@ -74,11 +114,7 @@ export default function StockCheckScreen() {
             <FieldLabel htmlFor="stock_sku">{t.stock.selectProduct}</FieldLabel>
             <Select
               value={sku}
-              onValueChange={(v) => {
-                setSku(v);
-                // ระบบแสดงผลอัตโนมัติเมื่อเลือกสินค้า
-                setResult(checkStock(state, v));
-              }}
+              onValueChange={selectStock}
             >
               <SelectTrigger id="stock_sku" className="w-full">
                 <SelectValue placeholder={t.stock.selectPlaceholder} />
@@ -138,6 +174,54 @@ export default function StockCheckScreen() {
           </CardContent>
         )}
       </Card>
+
+      {result?.found && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.stock.adjustTitle}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="adjust_in_house">{t.stock.inHouse}</FieldLabel>
+              <Input
+                id="adjust_in_house"
+                type="number"
+                min={0}
+                step={1}
+                value={inHouse}
+                onChange={(event) => setInHouse(event.target.value)}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="adjust_rsl">{t.stock.rsl}</FieldLabel>
+              <Input
+                id="adjust_rsl"
+                type="number"
+                min={0}
+                step={1}
+                value={rsl}
+                onChange={(event) => setRsl(event.target.value)}
+              />
+            </Field>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="adjust_reason">{t.stock.adjustReason}</FieldLabel>
+              <Textarea
+                id="adjust_reason"
+                value={reason}
+                placeholder={t.stock.adjustReasonPlaceholder}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </Field>
+            <Button
+              className="w-fit sm:col-span-2"
+              onClick={saveAdjustment}
+              disabled={submitting}
+            >
+              {t.stock.adjustSave}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

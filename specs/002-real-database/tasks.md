@@ -87,10 +87,10 @@
 
 **Independent Test**: ปรับ SKU/stock/cost และตัดสินใจสั่งซื้อเพิ่ม; reload แล้วข้อมูลและประวัติยังอยู่ครบ; fault ของ Supplier แสดงผลตาม UC และไม่ทำรายการซ้ำ
 
-- [ ] T031 [US4] เพิ่ม server use cases สำหรับเพิ่ม/แก้ไข/นำเข้าสินค้าและกฎ SKU ตาม UC 3A ใน `src/lib/use-cases/products.ts`
-- [ ] T032 [US4] เพิ่มการบันทึก stock adjustment และ cost change พร้อมประวัติ UC 4S ใน `src/lib/use-cases/stock.ts`, `src/lib/use-cases/costs.ts` และ `src/lib/queries/cost-history.ts`
-- [ ] T033 [US4] เพิ่ม server use cases สำหรับการตัดสินใจ 5A และส่งคำสั่งซื้อ Supplier 6A พร้อมผล accepted/failure ใน `src/lib/use-cases/reorders.ts`
-- [ ] T034 [US4] เชื่อมหน้า Products, Stock, Cost และ Reorder กับ server use cases ใน `src/app/(app)/products/` และ `src/app/(app)/products/reorder/`
+- [x] T031 [US4] เพิ่ม server use cases สำหรับเพิ่ม/แก้ไข/นำเข้าสินค้าและกฎ SKU ตาม UC 3A ใน `src/lib/use-cases/products.ts`
+- [x] T032 [US4] เพิ่มการบันทึก stock adjustment และ cost change พร้อมประวัติ UC 4S ใน `src/lib/use-cases/stock.ts`, `src/lib/use-cases/costs.ts` และ `src/lib/queries/cost-history.ts`
+- [x] T033 [US4] เพิ่ม server use cases สำหรับการตัดสินใจ 5A และส่งคำสั่งซื้อ Supplier 6A พร้อมผล accepted/failure ใน `src/lib/use-cases/reorders.ts`
+- [x] T034 [US4] เชื่อมหน้า Products, Stock, Cost และ Reorder กับ server use cases ใน `src/app/(app)/products/` และ `src/app/(app)/products/reorder/`
 
 ---
 

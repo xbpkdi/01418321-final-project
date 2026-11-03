@@ -83,6 +83,7 @@ const RESET_SEED_DATA = `
   TRUNCATE TABLE
     tracking_notification_logs,
     rakuten_stock_sync_states,
+    stock_adjustment_history,
     cost_history,
     deletion_history,
     auto_error_logs,

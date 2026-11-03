@@ -5,7 +5,7 @@
 // Order ที่ตัดสินใจ "คุ้มค่า" ใน 5A จะไปรออยู่ในแท็บ "รอสั่งซื้อเติมสต๊อก" ของ 6A ทันที
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู decide / purchase ใน lib/workflow.ts)
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PackageCheck, ReceiptText, ShoppingCart } from "lucide-react";
@@ -32,24 +32,26 @@ import { useLanguage } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import { formatBaht, formatDate } from "@/lib/format";
 import {
-  decide,
   findProduct,
   findSupplier,
   pendingPo,
-  purchase,
   purchaseQueue,
   unitCostOf,
   type DecideResult,
   type PurchaseRow,
 } from "@/lib/workflow";
 import type { Order } from "@/types/order";
+import {
+  decideReorderAction,
+  purchaseReorderAction,
+} from "@/app/(app)/actions";
 
 type Decision = "คุ้มค่า" | "ไม่คุ้มค่า";
 
 export default function ReorderDecisionScreen() {
   const router = useRouter();
   const { lang, t } = useLanguage();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [tab, setTab] = useState("decide");
   const [confirming, setConfirming] = useState<{
     orderId: string;
@@ -62,6 +64,7 @@ export default function ReorderDecisionScreen() {
     qty: number;
     duplicateEta: string | null;
   } | null>(null);
+  const [submitting, startSubmitting] = useTransition();
 
   // 5A ขั้นตอนที่ 1: Order ที่รอการตัดสินใจ รวม Order ที่ไม่มีราคาขาย (รอดำเนินการด้วยตนเอง)
   const candidates = state.orders.filter(
@@ -97,34 +100,37 @@ export default function ReorderDecisionScreen() {
   function commitDecision() {
     if (!confirming) return;
     const { orderId, decision, qty } = confirming;
-    const { result } = run((s) => {
-      const r = decide(s, orderId, decision, qty);
-      return { state: r.state, result: r.result };
+    startSubmitting(async () => {
+      const action = await decideReorderAction(orderId, decision, qty);
+      if (!action.success) {
+        setDialogError(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
+      if (result === "ok") {
+        setConfirming(null);
+        toast.success(t.reorder.okDecided, {
+          description:
+            decision === "คุ้มค่า"
+              ? t.reorder.okDecidedApprove
+              : t.reorder.okDecidedReject,
+          action:
+            decision === "คุ้มค่า"
+              ? {
+                  label: t.reorder.tabPurchase(queue.length + 1),
+                  onClick: () => setTab("purchase"),
+                }
+              : undefined,
+        });
+        return;
+      }
+      if (result === "no-price" || result === "not-pending") {
+        setConfirming(null);
+        toast.error(DECIDE_ERROR[result]);
+        return;
+      }
+      setDialogError(DECIDE_ERROR[result]);
     });
-    if (result === "ok") {
-      setConfirming(null);
-      toast.success(t.reorder.okDecided, {
-        description:
-          decision === "คุ้มค่า"
-            ? t.reorder.okDecidedApprove
-            : t.reorder.okDecidedReject,
-        action:
-          decision === "คุ้มค่า"
-            ? {
-                label: t.reorder.tabPurchase(queue.length + 1),
-                onClick: () => setTab("purchase"),
-              }
-            : undefined,
-      });
-      return;
-    }
-    if (result === "no-price" || result === "not-pending") {
-      setConfirming(null);
-      toast.error(DECIDE_ERROR[result]);
-      return;
-    }
-    // บันทึกไม่สำเร็จ: คง dialog ไว้ให้กดยืนยันซ้ำได้
-    setDialogError(DECIDE_ERROR[result]);
   }
 
   // 6A ขั้นตอนที่ 3 + ทางเลือก #2: เปิดให้แก้จำนวนก่อนกด "สั่งซื้อ"
@@ -139,38 +145,46 @@ export default function ReorderDecisionScreen() {
   function commitPurchase() {
     if (!buying) return;
     const { row, qty, duplicateEta } = buying;
-    const { result } = run((s) => {
-      const r = purchase(s, row.sku, qty, duplicateEta !== null);
-      return { state: r.state, result: r.result };
+    startSubmitting(async () => {
+      const action = await purchaseReorderAction(
+        row.sku,
+        qty,
+        duplicateEta !== null,
+      );
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
+      switch (result.kind) {
+        case "pending-po": // ทางเลือก #4: ให้ Admin ยืนยันก่อนสั่งซ้ำ
+          setBuying({ ...buying, duplicateEta: result.eta });
+          return;
+        case "not-configured": // ทางเลือก #1
+          setBuying(null);
+          toast.error(t.reorder.errNotConfigured, {
+            action: {
+              label: t.reorder.goProducts,
+              onClick: () => router.push("/products"),
+            },
+          });
+          return;
+        case "send-failed": // ทางเลือก #3
+          setBuying(null);
+          toast.error(t.reorder.errSendFailed);
+          return;
+        case "ok":
+          setBuying(null);
+          toast.success(
+            t.reorder.okPurchased(row.sku, result.supplier.supplier_name),
+            {
+              description: t.reorder.okPurchasedHint(
+                formatDate(result.po.eta, lang),
+              ),
+            },
+          );
+      }
     });
-    switch (result.kind) {
-      case "pending-po": // ทางเลือก #4: ให้ Admin ยืนยันก่อนสั่งซ้ำ
-        setBuying({ ...buying, duplicateEta: result.eta });
-        return;
-      case "not-configured": // ทางเลือก #1
-        setBuying(null);
-        toast.error(t.reorder.errNotConfigured, {
-          action: {
-            label: t.reorder.goProducts,
-            onClick: () => router.push("/products"),
-          },
-        });
-        return;
-      case "send-failed": // ทางเลือก #3
-        setBuying(null);
-        toast.error(t.reorder.errSendFailed);
-        return;
-      case "ok":
-        setBuying(null);
-        toast.success(
-          t.reorder.okPurchased(row.sku, result.supplier.supplier_name),
-          {
-            description: t.reorder.okPurchasedHint(
-              formatDate(result.po.eta, lang),
-            ),
-          },
-        );
-    }
   }
 
   const confirmingOrder = confirming
@@ -428,7 +442,8 @@ export default function ReorderDecisionScreen() {
             <Button
               onClick={commitDecision}
               disabled={
-                confirming?.decision === "คุ้มค่า" && !(confirming.qty > 0)
+                submitting ||
+                (confirming?.decision === "คุ้มค่า" && !(confirming.qty > 0))
               }
             >
               {t.common.confirm}
@@ -486,7 +501,7 @@ export default function ReorderDecisionScreen() {
             <Button variant="outline" onClick={() => setBuying(null)}>
               {t.common.cancel}
             </Button>
-            <Button onClick={commitPurchase}>
+            <Button onClick={commitPurchase} disabled={submitting}>
               {buying?.duplicateEta ? t.common.confirm : t.reorder.purchase}
             </Button>
           </DialogFooter>

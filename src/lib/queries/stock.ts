@@ -11,6 +11,13 @@ interface StockRow extends QueryResultRow {
   updated_at: Date | string;
 }
 
+export interface StockWriteRow extends QueryResultRow {
+  stock_id: string;
+  sku_id: string;
+  in_house_qty: number | string;
+  rsl_qty: number | string | null;
+}
+
 // UC 3S / Q3S.1: read current in-house and RSL stock for every SKU.
 export const Q3S_1 = `
   SELECT sku.sku, stock.in_house_qty, stock.rsl_qty, stock.updated_at
@@ -130,4 +137,82 @@ export async function restoreCancelledOrderStock(
     input.quantity,
   ]);
   return result.rowCount === 1 ? input.quantity : 0;
+}
+
+// UC 3S / Q3S.1: lock the inventory row before an Admin adjustment.
+export const Q3S_1_FOR_UPDATE = `
+  SELECT stock.stock_id, stock.sku_id, stock.in_house_qty, stock.rsl_qty
+  FROM stock
+  INNER JOIN skus ON skus.sku_id = stock.sku_id
+  WHERE skus.sku = $1
+  FOR UPDATE OF stock
+`;
+
+export async function lockStock(
+  executor: QueryExecutor,
+  sku: string,
+): Promise<StockWriteRow | null> {
+  const result = await executor.query<StockWriteRow>(Q3S_1_FOR_UPDATE, [sku]);
+  return result.rows[0] ?? null;
+}
+
+// UC 3S / Q3S.1: persist absolute adjusted values and mark the Rakuten sync
+// state pending so the later 7S retry always sends the latest quantity.
+export const Q3S_1_ADJUST = `
+  WITH adjusted AS (
+    UPDATE stock
+    SET in_house_qty = $2, rsl_qty = $3, updated_at = CURRENT_TIMESTAMP
+    WHERE stock_id = $1
+    RETURNING stock_id
+  )
+  INSERT INTO rakuten_stock_sync_states (stock_id, sync_status)
+  SELECT stock_id, 'pending' FROM adjusted
+  ON CONFLICT (stock_id) DO UPDATE SET
+    sync_status = 'pending', last_error_code = NULL
+`;
+
+export async function adjustStock(
+  executor: QueryExecutor,
+  stockId: string,
+  inHouseQuantity: number,
+  rslQuantity: number | null,
+): Promise<void> {
+  await executor.query(Q3S_1_ADJUST, [
+    stockId,
+    inHouseQuantity,
+    rslQuantity,
+  ]);
+}
+
+export const Q3S_1_INSERT_HISTORY = `
+  INSERT INTO stock_adjustment_history (
+    stock_adjustment_history_id, stock_id,
+    previous_in_house_qty, new_in_house_qty,
+    previous_rsl_qty, new_rsl_qty, reason, admin_id
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+`;
+
+export async function insertStockAdjustmentHistory(
+  executor: QueryExecutor,
+  input: {
+    historyId: string;
+    stockId: string;
+    previousInHouseQuantity: number;
+    inHouseQuantity: number;
+    previousRslQuantity: number | null;
+    rslQuantity: number | null;
+    reason: string;
+    adminId: string;
+  },
+): Promise<void> {
+  await executor.query(Q3S_1_INSERT_HISTORY, [
+    input.historyId,
+    input.stockId,
+    input.previousInHouseQuantity,
+    input.inHouseQuantity,
+    input.previousRslQuantity,
+    input.rslQuantity,
+    input.reason,
+    input.adminId,
+  ]);
 }

@@ -11,6 +11,20 @@ import {
   unmatchRslUseCase,
 } from "@/lib/use-cases/match-order";
 import { cancelOrderUseCase } from "@/lib/use-cases/cancel-order";
+import {
+  deleteProductUseCase,
+  importProductsUseCase,
+  saveProductUseCase,
+  setProductActiveUseCase,
+} from "@/lib/use-cases/products";
+import { adjustStockUseCase } from "@/lib/use-cases/stock";
+import { calculateCostUseCase } from "@/lib/use-cases/costs";
+import {
+  decideReorderUseCase,
+  purchaseReorderUseCase,
+} from "@/lib/use-cases/reorders";
+import { COST_KEYS, type Product } from "@/types/product";
+import type { CostForm } from "@/lib/workflow";
 
 type MutationResult<T> =
   | { success: true; result: T }
@@ -30,6 +44,35 @@ function safeId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed && trimmed.length <= 100 ? trimmed : null;
+}
+
+function isCostForm(value: unknown): value is CostForm {
+  if (!value || typeof value !== "object") return false;
+  const form = value as Record<string, unknown>;
+  return (
+    typeof form.currency === "string" &&
+    form.currency.length <= 20 &&
+    COST_KEYS.every(
+      (key) => typeof form[key] === "string" && form[key].length <= 100,
+    )
+  );
+}
+
+function isProduct(value: unknown): value is Product {
+  if (!value || typeof value !== "object") return false;
+  const product = value as Record<string, unknown>;
+  return (
+    ["sku", "product_name", "variation", "channel_sku", "supplier_id"].every(
+      (key) =>
+        typeof product[key] === "string" && product[key].length <= 500,
+    ) &&
+    product.sales_channel === "Rakuten Ichiba" &&
+    typeof product.reorder_threshold === "number" &&
+    typeof product.reorder_qty === "number" &&
+    (product.selling_price === null ||
+      typeof product.selling_price === "number") &&
+    typeof product.active === "boolean"
+  );
 }
 
 export async function importOrdersAction() {
@@ -101,6 +144,156 @@ export async function cancelOrderAction(
       orderId: validOrderId,
       reason,
       alsoCancelPo: alsoCancelPo === true,
+    }),
+  );
+}
+
+export async function saveProductAction(
+  draft: Product,
+  originalSku: string | null,
+  costForm: CostForm,
+) {
+  const session = await requireSession();
+  if (
+    !isProduct(draft) ||
+    !isCostForm(costForm) ||
+    (originalSku !== null && !safeId(originalSku))
+  ) {
+    return {
+      success: true as const,
+      result: { result: "incomplete" as const, requeued: 0 },
+    };
+  }
+  return runMutation(() =>
+    saveProductUseCase({
+      draft,
+      originalSku,
+      costForm,
+      adminId: session.adminId,
+    }),
+  );
+}
+
+export async function setProductActiveAction(sku: string, active: boolean) {
+  await requireSession();
+  const validSku = safeId(sku);
+  if (!validSku) return { success: true as const, result: false };
+  return runMutation(() =>
+    setProductActiveUseCase({ sku: validSku, active: active === true }),
+  );
+}
+
+export async function deleteProductAction(sku: string) {
+  await requireSession();
+  const validSku = safeId(sku);
+  if (!validSku) {
+    return { success: true as const, result: "not-found" as const };
+  }
+  return runMutation(() => deleteProductUseCase(validSku));
+}
+
+export async function importProductsAction(csv: string) {
+  const session = await requireSession();
+  if (typeof csv !== "string" || csv.length > 900_000) {
+    return { success: true as const, result: [] };
+  }
+  return runMutation(() =>
+    importProductsUseCase({ csv, adminId: session.adminId }),
+  );
+}
+
+export async function adjustStockAction(input: {
+  sku: string;
+  inHouseQuantity: number;
+  rslQuantity: number | null;
+  reason: string;
+}) {
+  const session = await requireSession();
+  if (!input) return { success: true as const, result: "invalid" as const };
+  const validSku = safeId(input?.sku);
+  if (
+    !validSku ||
+    typeof input.inHouseQuantity !== "number" ||
+    (input.rslQuantity !== null && typeof input.rslQuantity !== "number") ||
+    typeof input.reason !== "string"
+  ) {
+    return { success: true as const, result: "invalid" as const };
+  }
+  return runMutation(() =>
+    adjustStockUseCase({
+      ...input,
+      sku: validSku,
+      adminId: session.adminId,
+    }),
+  );
+}
+
+export async function calculateCostAction(
+  sku: string,
+  form: CostForm,
+  remember: boolean,
+) {
+  const session = await requireSession();
+  const validSku = safeId(sku);
+  if (!validSku) {
+    return {
+      success: true as const,
+      result: { ok: false as const, reason: "not-found" as const },
+    };
+  }
+  if (!isCostForm(form)) {
+    return {
+      success: true as const,
+      result: { ok: false as const, reason: "invalid" as const },
+    };
+  }
+  return runMutation(() =>
+    calculateCostUseCase({
+      sku: validSku,
+      form,
+      remember: remember === true,
+      adminId: session.adminId,
+    }),
+  );
+}
+
+export async function decideReorderAction(
+  orderId: string,
+  decision: "คุ้มค่า" | "ไม่คุ้มค่า",
+  quantity: number,
+) {
+  await requireSession();
+  const validOrderId = safeId(orderId);
+  if (
+    !validOrderId ||
+    (decision !== "คุ้มค่า" && decision !== "ไม่คุ้มค่า") ||
+    typeof quantity !== "number"
+  ) {
+    return { success: true as const, result: "not-pending" as const };
+  }
+  return runMutation(() =>
+    decideReorderUseCase({ orderId: validOrderId, decision, quantity }),
+  );
+}
+
+export async function purchaseReorderAction(
+  sku: string,
+  quantity: number,
+  confirmDuplicate: boolean,
+) {
+  await requireSession();
+  const validSku = safeId(sku);
+  if (!validSku || typeof quantity !== "number") {
+    return {
+      success: true as const,
+      result: { kind: "not-configured" as const },
+    };
+  }
+  return runMutation(() =>
+    purchaseReorderUseCase({
+      sku: validSku,
+      quantity,
+      confirmDuplicate: confirmDuplicate === true,
     }),
   );
 }
