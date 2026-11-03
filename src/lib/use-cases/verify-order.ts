@@ -3,8 +3,7 @@ import type { RakutenAdapter } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
 import { withTransaction } from "@/lib/db";
 import { lockOrder, saveVerifiedOrder } from "@/lib/queries/orders";
-import { matchSkuUseCase } from "@/lib/use-cases/match-order";
-import { checkStockUseCase } from "@/lib/use-cases/check-stock";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 import type { VerifyResult } from "@/lib/workflow";
 
 export async function verifyOrderUseCase(
@@ -83,7 +82,7 @@ export async function verifyOrderUseCase(
     return "customer-cancelled";
   }
 
-  await withTransaction(async (client) => {
+  await executeWorkflow(async (client) => {
     const current = await lockOrder(client, input.orderId);
     if (!current || current.order_status !== "รอตรวจสอบคำสั่งซื้อ") return;
     await saveVerifiedOrder(client, {
@@ -102,11 +101,10 @@ export async function verifyOrderUseCase(
       cancelReason: null,
       cancelledAt: null,
     });
+  }, {
+    orderIds: [input.orderId],
+    adapters: { ...getExternalAdapters(), rakuten },
   });
-
-  if ((await matchSkuUseCase(input.orderId)) === "ok") {
-    await checkStockUseCase(input.orderId);
-  }
   return "ok";
 }
 

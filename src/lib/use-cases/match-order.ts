@@ -11,6 +11,7 @@ import {
   saveSkuMatch,
 } from "@/lib/queries/orders";
 import { chooseRslMatch, chooseSkuRule } from "@/lib/workflow";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 
 export type SkuMatchResult = "not-pending" | "missing" | "multiple" | "ok";
 
@@ -89,7 +90,7 @@ export async function matchRslUseCase(
     return selected;
   }
 
-  await withTransaction(async (client) => {
+  await executeWorkflow(async (client) => {
     const current = await lockOrder(client, orderId);
     if (!current || current.order_status !== order.order_status) return;
     await saveRslMatch(
@@ -99,6 +100,9 @@ export async function matchRslUseCase(
       "รอจัดรูปแบบใบปะสินค้า",
       null,
     );
+  }, {
+    orderIds: [orderId],
+    adapters: { ...getExternalAdapters(), rsl },
   });
   return { kind: "ok", reference: selected.value.rsl_order_id };
 }

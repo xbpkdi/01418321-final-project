@@ -11,6 +11,7 @@ import {
   toLabelOrder,
 } from "@/lib/queries/shipping";
 import { SHIPPING_RULES } from "@/mock/delivery";
+import { validGeneratedLabels } from "@/lib/workflow";
 
 export type FormatLabelEvent =
   | { code: "label-created"; orderId: string; count: number }
@@ -22,25 +23,6 @@ const labelRules: LabelRule[] = SHIPPING_RULES.map((rule) => ({
   ...rule,
   sales_channel: "Rakuten Ichiba",
 }));
-
-function validGeneratedLabels(
-  labels: readonly {
-    label_template: string;
-    parcel_seq: number;
-    parcel_total: number;
-  }[],
-): boolean {
-  if (labels.length === 0) return false;
-  const sequences = new Set(labels.map((label) => label.parcel_seq));
-  return labels.every(
-    (label) =>
-      label.label_template.trim().length > 0 &&
-      Number.isInteger(label.parcel_seq) &&
-      label.parcel_seq > 0 &&
-      Number.isInteger(label.parcel_total) &&
-      label.parcel_total === labels.length,
-  ) && sequences.size === labels.length;
-}
 
 /** UC 6S: generate and persist each pending Order's labels idempotently. */
 export async function formatLabelsUseCase(

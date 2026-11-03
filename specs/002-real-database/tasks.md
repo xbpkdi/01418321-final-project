@@ -115,10 +115,10 @@
 
 **Independent Test**: แจ้ง tracking ของ Order เดียวกันพร้อมกันจาก 2 tabs 20 ครั้ง; stock ลดครั้งเดียวทุกครั้ง; บังคับ failure กลาง automation แล้วไม่มีข้อมูลเปลี่ยนบางส่วน
 
-- [ ] T041 [US6] เพิ่ม transaction-scoped runner ที่เรียก action และ `runAutomation` ใน transaction เดียว โดยส่งผล adapter ให้ pure rules ใน `src/lib/use-cases/execute-workflow.ts`
-- [ ] T042 [US6] เพิ่ม row locking/conditional updates สำหรับ stock และ `stock_deducted` เพื่อป้องกันยอดติดลบและตัดซ้ำใน `src/lib/queries/stock.ts` และ `src/lib/use-cases/deduct-stock.ts`
-- [ ] T043 [US6] เพิ่ม Rakuten stock sync 7S ทางเลือก #1 พร้อม durable pending state และ retry ยอดล่าสุดหลัง failure ใน `src/lib/use-cases/sync-rakuten-stock.ts` และ `src/lib/queries/stock-sync.ts`
-- [ ] T044 [US6] ทำให้ transaction rollback ครอบคลุม action และ auto steps พร้อม safe error logging ตาม UC ใน `src/lib/db.ts`, `src/lib/use-cases/execute-workflow.ts` และ `src/lib/queries/auto-error-logs.ts`
+- [x] T041 [US6] เพิ่ม transaction-scoped runner ที่เรียก action และ `runAutomation` ใน transaction เดียว โดยส่งผล adapter ให้ pure rules ใน `src/lib/use-cases/execute-workflow.ts`
+- [x] T042 [US6] เพิ่ม row locking/conditional updates สำหรับ stock และ `stock_deducted` เพื่อป้องกันยอดติดลบและตัดซ้ำใน `src/lib/queries/stock.ts` และ `src/lib/use-cases/deduct-stock.ts`
+- [x] T043 [US6] เพิ่ม Rakuten stock sync 7S ทางเลือก #1 พร้อม durable pending state และ retry ยอดล่าสุดหลัง failure ใน `src/lib/use-cases/sync-rakuten-stock.ts` และ `src/lib/queries/stock-sync.ts`
+- [x] T044 [US6] ทำให้ transaction rollback ครอบคลุม action และ auto steps พร้อม safe error logging ตาม UC ใน `src/lib/db.ts`, `src/lib/use-cases/execute-workflow.ts` และ `src/lib/queries/auto-error-logs.ts`
 
 ---
 

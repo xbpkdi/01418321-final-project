@@ -216,6 +216,7 @@ export interface OrderWorkflowRow extends QueryResultRow {
   manual_reason: ManualReason | null;
   shipping_address: string;
   shipping_method: string;
+  rsl_no: string | null;
   cancelled_at: Date | string | null;
   customer_cancel_requested: boolean;
   channel_sku: string;
@@ -345,7 +346,7 @@ export const Q2A_1_FOR_UPDATE = `
   SELECT
     o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status,
     o.manual_reason,
-    o.shipping_address, o.shipping_method, o.cancelled_at,
+    o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at,
     o.customer_cancel_requested, item.channel_sku, item.variation, item.qty,
     item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku,
     EXISTS (

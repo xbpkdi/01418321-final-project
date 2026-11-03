@@ -25,4 +25,11 @@
 | 10 | ตรวจ catalog ของ SQL | ทุก statement มี UC และ Q-number ที่ตรวจย้อนกลับได้ | SC-007 |
 | 11 | ตรวจ browser storage หลังครบทุกหน้าที่ migrate | ไม่มีข้อมูลธุรกิจใน localStorage; คงได้เฉพาะ preference UI | FR-016, SC-006 |
 
+## ผลตรวจ Phase 7 (2026-11-04)
+
+- `npm run db:setup` ผ่านกับ PostgreSQL ในเครื่องโดยไม่ reset ข้อมูล.
+- Integration check สร้าง Order ชั่วคราวแล้วเรียก 5S พร้อมกัน 20 ครั้ง: สำเร็จ 1 ครั้ง, อีก 19 ครั้งได้ผล `already`, notification log 1 แถว และ stock ลด 1 หน่วยเพียงครั้งเดียว; ลบ Order ทดสอบและคืน snapshot ของ stock/sync state หลังตรวจ.
+- Integration check บังคับ exception ใน Rakuten sync หลัง 5S และ stock deduction: transaction ย้อนกลับ notification log, `tracking_notified`, stock และ `stock_deducted` ทั้งหมด; บันทึก safe `auto_error_logs` 1 แถวหลัง rollback แล้วลบข้อมูลทดสอบ.
+- `npm run lint` และ `npx tsc --noEmit` ผ่าน. `npm run build` แบบ Turbopack ติดข้อจำกัด runner ที่ห้าม PostCSS bind พอร์ต (`Operation not permitted`) แม้รันนอก sandbox; production build ทางเลือกที่ Next.js 16 รองรับด้วย `npx next build --webpack` compile, typecheck และ generate 18 static pages ผ่าน.
+
 **เสร็จเมื่อ** ทุกสถานการณ์ข้างต้นผ่าน, lint/typecheck/build ผ่าน, และเดิน use case ที่ได้รับผลกระทบด้วยมือ; ไม่มีระบบภายนอกจริงถูกเรียก.
