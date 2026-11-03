@@ -1,5 +1,6 @@
 import "server-only";
-import { FAULT_KEYS, type AppState, type FaultKey } from "@/lib/workflow";
+import type { AppState } from "@/lib/workflow";
+import { getFaultSnapshot } from "@/lib/adapters/faults";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { listOrders } from "@/lib/queries/orders";
 import { listSkus, listSuppliers } from "@/lib/queries/skus";
@@ -89,9 +90,7 @@ export async function loadAppState(session: {
       user_id: session.adminId,
       user_email: session.userEmail,
     },
-    faults: Object.fromEntries(
-      FAULT_KEYS.map((key) => [key, false]),
-    ) as Record<FaultKey, boolean>,
+    faults: getFaultSnapshot(),
     deletionLog,
     errorLog: [],
     nextOrderSeq: maxOrderSequence + 1,

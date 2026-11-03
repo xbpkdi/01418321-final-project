@@ -682,9 +682,17 @@ const th = {
     description:
       'ใช้จำลองข้อผิดพลาดจากระบบภายนอกตาม "ทางเลือก" ของแต่ละ UC เพื่อทดสอบและ capture รูปลงรายงาน (rubric ข้อ 33) — ไม่ใช่หน้าจอของระบบจริง',
     faultsTitle: "จำลองข้อผิดพลาด",
+    faultsHint:
+      "ค่าเหล่านี้ควบคุม mock adapter ฝั่งเซิร์ฟเวอร์และจะปิดทั้งหมดเมื่อรีสตาร์ทเซิร์ฟเวอร์",
+    resetFaults: "ปิดข้อผิดพลาดทั้งหมด",
+    faultsResetDone: "ปิดข้อผิดพลาดจำลองทั้งหมดแล้ว",
     reset: "รีเซ็ตข้อมูลตัวอย่าง",
-    resetHint: "ล้างทุกอย่างที่ทำไว้ กลับไปเป็นข้อมูลตั้งต้น",
+    resetHint:
+      "ล้างข้อมูลใน PostgreSQL แล้วโหลดข้อมูลตัวอย่างใหม่ โดยคงการเข้าสู่ระบบนี้ไว้",
+    resetConfirm:
+      "ยืนยันรีเซ็ตข้อมูลทั้งหมดใน PostgreSQL และโหลดข้อมูลตัวอย่างใหม่หรือไม่?",
     resetDone: "รีเซ็ตข้อมูลตัวอย่างแล้ว",
+    actionFailed: "ดำเนินการไม่สำเร็จ กรุณาลองใหม่",
     faults: {
       rms: "4A · เชื่อมต่อ Rakuten RMS ไม่ได้",
       marketplaceVerify: "2A · ดึงข้อมูลล่าสุดจาก Marketplace ไม่ได้",
@@ -1382,9 +1390,16 @@ const en: typeof th = {
     description:
       "Simulate external-system failures from each use case's alternative flows for testing and report screenshots (rubric item 33). Not part of the real system",
     faultsTitle: "Simulate failures",
+    faultsHint:
+      "These controls drive the server-side mock adapters and all turn off when the server restarts",
+    resetFaults: "Clear all failures",
+    faultsResetDone: "All simulated failures cleared",
     reset: "Reset sample data",
-    resetHint: "Clear everything you did and go back to the starting data",
+    resetHint:
+      "Clear PostgreSQL and reload the sample data while keeping this session signed in",
+    resetConfirm: "Reset all PostgreSQL data and reload the sample data?",
     resetDone: "Sample data reset",
+    actionFailed: "The action failed. Please try again",
     faults: {
       rms: "4A · Cannot connect to Rakuten RMS",
       marketplaceVerify: "2A · Cannot fetch latest marketplace data",

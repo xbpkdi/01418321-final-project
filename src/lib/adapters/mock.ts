@@ -1,9 +1,12 @@
 import "server-only";
 import type {
+  AdapterFailure,
   AdapterFactories,
   MarketplaceOrderUpdate,
   NewMarketplaceOrder,
 } from "@/lib/adapters/contracts";
+import { isFaultEnabled } from "@/lib/adapters/faults";
+import type { FaultKey } from "@/lib/workflow";
 import {
   SEED_ORDERS,
   SEED_RMS_CANCEL_REQUESTS,
@@ -12,6 +15,17 @@ import {
 import { findRslMatches } from "@/mock/rsl";
 import { findTracking, trackCarrier } from "@/mock/delivery";
 import { SEED_STOCK } from "@/mock/products";
+
+function unavailable(key: FaultKey): { ok: false; error: AdapterFailure } {
+  return {
+    ok: false,
+    error: {
+      code: "unavailable",
+      retryable: true,
+      referenceId: `mock-fault-${key}`,
+    },
+  };
+}
 
 function marketplaceOrder(
   order: (typeof SEED_RMS_INBOX)[number],
@@ -33,6 +47,7 @@ export const mockAdapterFactories: AdapterFactories = {
   rakuten: {
     mock: () => ({
       async fetchOrders() {
+        if (isFaultEnabled("rms")) return unavailable("rms");
         return {
           ok: true,
           data: {
@@ -42,6 +57,9 @@ export const mockAdapterFactories: AdapterFactories = {
         };
       },
       async fetchOrderState(marketplaceOrderId) {
+        if (isFaultEnabled("marketplaceVerify")) {
+          return unavailable("marketplaceVerify");
+        }
         const source = [...SEED_RMS_INBOX, ...SEED_ORDERS].find(
           (order) => order.marketplace_order_id === marketplaceOrderId,
         );
@@ -55,9 +73,15 @@ export const mockAdapterFactories: AdapterFactories = {
         return { ok: true, data };
       },
       async notifyTracking() {
+        if (isFaultEnabled("trackingNotify")) {
+          return unavailable("trackingNotify");
+        }
         return { ok: true, data: undefined };
       },
       async syncStock() {
+        if (isFaultEnabled("mpStockSync")) {
+          return unavailable("mpStockSync");
+        }
         return { ok: true, data: undefined };
       },
     }),
@@ -65,9 +89,11 @@ export const mockAdapterFactories: AdapterFactories = {
   rsl: {
     mock: () => ({
       async matchOrder(order) {
+        if (isFaultEnabled("rsl")) return unavailable("rsl");
         return { ok: true, data: findRslMatches(order.sku, order.variation) };
       },
       async getStock(sku) {
+        if (isFaultEnabled("rsl")) return unavailable("rsl");
         const row = SEED_STOCK.find((stock) => stock.sku === sku);
         return row?.rsl_qty === null || row?.rsl_qty === undefined
           ? {
@@ -81,6 +107,9 @@ export const mockAdapterFactories: AdapterFactories = {
   labelService: {
     mock: () => ({
       async generateLabels(order, parcelRules) {
+        if (isFaultEnabled("labelService")) {
+          return unavailable("labelService");
+        }
         const rule = parcelRules.find(
           (candidate) =>
             candidate.shipping_method === order.shipping_method &&
@@ -111,6 +140,7 @@ export const mockAdapterFactories: AdapterFactories = {
   printer: {
     mock: () => ({
       async printLabel() {
+        if (isFaultEnabled("printer")) return unavailable("printer");
         return { ok: true, data: undefined };
       },
     }),
@@ -118,6 +148,7 @@ export const mockAdapterFactories: AdapterFactories = {
   carrier: {
     mock: () => ({
       async getTrackingInfo(orderId) {
+        if (isFaultEnabled("carrier")) return unavailable("carrier");
         const info = findTracking(orderId);
         return {
           ok: true,
@@ -130,6 +161,7 @@ export const mockAdapterFactories: AdapterFactories = {
         };
       },
       async getDeliveryStatus(trackingNumber) {
+        if (isFaultEnabled("carrier")) return unavailable("carrier");
         return {
           ok: true,
           data: trackCarrier(trackingNumber).delivery_status,
@@ -140,6 +172,9 @@ export const mockAdapterFactories: AdapterFactories = {
   supplier: {
     mock: () => ({
       async sendPurchaseOrder(_reorder, requestId) {
+        if (isFaultEnabled("supplierSend")) {
+          return unavailable("supplierSend");
+        }
         return {
           ok: true,
           data: { supplierReference: `MOCK-${requestId}` },

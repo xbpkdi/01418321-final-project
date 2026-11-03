@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:webpack": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "tsx --env-file=.env.local db/seed/cli.ts migrate",
     "db:seed": "tsx --env-file=.env.local db/seed/cli.ts seed",
     "db:setup": "tsx --env-file=.env.local db/seed/cli.ts setup",
-    "db:reset": "tsx --env-file=.env.local db/seed/cli.ts reset"
+    "db:reset": "tsx --env-file=.env.local db/seed/cli.ts reset",
+    "test:phase8-reset": "tsx --env-file=.env.local db/seed/reset-smoke.ts"
   },
   "dependencies": {
     "@tanstack/react-table": "^9.2.6",

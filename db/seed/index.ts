@@ -1,5 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { Pool, type PoolClient } from "pg";
 import { hashPasswordValue } from "../../src/lib/auth/password-core";
 import { SEED_ORDERS } from "../../src/mock/orders";
@@ -15,9 +15,7 @@ import {
   isCompleteCost,
 } from "../../src/types/product";
 
-const migrationsDirectory = fileURLToPath(
-  new URL("../migrations/", import.meta.url),
-);
+const migrationsDirectory = join(process.cwd(), "db", "migrations");
 
 const seedPool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -68,10 +66,7 @@ export async function migrateDatabase(): Promise<void> {
       const existing = await client.query(FIND_MIGRATION, [migrationName]);
       if (existing.rowCount) continue;
 
-      const sql = await readFile(
-        new URL(`../migrations/${migrationName}`, import.meta.url),
-        "utf8",
-      );
+      const sql = await readFile(join(migrationsDirectory, migrationName), "utf8");
       await client.query(sql);
       await client.query(RECORD_MIGRATION, [migrationName]);
     }
