@@ -3,8 +3,9 @@
 /**
  * ข้อมูลกลางของทั้งระบบ ใช้ร่วมกันทุกหน้า
  * รับ snapshot ที่อ่านจาก PostgreSQL ใน Server Component.
- * Phase 4-5 ย้าย Order, Product, Stock, Cost และ Reorder flows ไป Server Action
- * แล้ว; การเขียนของ Phase 6 ยังใช้ state ชั่วคราวจนกว่า use case จะย้ายครบ.
+ * Phase 4-6 ย้าย Order, Product, Stock, Cost, Reorder, Shipping, Label และ
+ * Cleanup flows ไป Server Action แล้ว; automation แบบ transaction เดียวของ
+ * Phase 7 ยังใช้ state ชั่วคราวในส่วนที่ยังไม่ถูกย้าย.
  */
 
 import * as React from "react";

@@ -34,16 +34,18 @@ import { shippedColumns, waitingColumns } from "./columns";
 import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 import {
-  dispatch,
-  notifyTracking,
-  pollCarrier,
   shipmentQueue,
   shippedOrders,
 } from "@/lib/workflow";
+import {
+  dispatchOrdersAction,
+  notifyTrackingAction,
+  pollCarrierAction,
+} from "@/app/(app)/actions";
 
 export default function ShipmentScreen() {
   const t = useT();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [keyword, setKeyword] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [confirming, setConfirming] = useState(false);
@@ -57,18 +59,20 @@ export default function ShipmentScreen() {
   React.useEffect(() => {
     if (polled.current) return;
     polled.current = true;
-    const { events } = run((s) => {
-      const r = pollCarrier(s);
-      return { state: r.state, events: r.events };
+    void pollCarrierAction().then((action) => {
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      for (const e of action.result) {
+        if (e.kind === "connection")
+          toast.error(t.shipping.errCarrier); // ทางเลือก #4
+        else if (e.kind === "failed")
+          toast.error(t.shipping.deliveryFailed(e.orderId)); // ทางเลือก #2
+        else toast.warning(t.shipping.returned(e.orderId, e.restocked)); // ทางเลือก #3
+      }
     });
-    for (const e of events) {
-      if (e.kind === "connection")
-        toast.error(t.shipping.errCarrier); // ทางเลือก #4
-      else if (e.kind === "failed")
-        toast.error(t.shipping.deliveryFailed(e.orderId)); // ทางเลือก #2
-      else toast.warning(t.shipping.returned(e.orderId, e.restocked)); // ทางเลือก #3
-    }
-  }, [run, t]);
+  }, [t]);
 
   // ค้นด้วย Order ID หรือชื่อสินค้า เฉพาะคิวรอส่งมอบ
   const visibleWaiting = useMemo(() => {
@@ -90,11 +94,13 @@ export default function ShipmentScreen() {
   }
 
   // ขั้นตอนที่ 3: ยืนยันรายการพัสดุที่ส่งมอบ (Q8A.1 + Q8A.2)
-  function confirmDispatch() {
-    const { results } = run((s) => {
-      const r = dispatch(s, selected);
-      return { state: r.state, results: r.results };
-    });
+  async function confirmDispatch() {
+    const action = await dispatchOrdersAction(selected);
+    if (!action.success) {
+      toast.error(t.errors[action.error]);
+      return;
+    }
+    const results = action.result;
     setConfirming(false);
     setSelected([]);
     for (const r of results) {
@@ -115,11 +121,13 @@ export default function ShipmentScreen() {
   }
 
   // UC 5S ขั้นตอนที่ 3: ส่งเลขติดตามให้ลูกค้า (Q5S.1 + Q5S.2)
-  function notify(orderId: string, confirmResend = false) {
-    const { result } = run((s) => {
-      const r = notifyTracking(s, orderId, confirmResend);
-      return { state: r.state, result: r.result };
-    });
+  async function notify(orderId: string, confirmResend = false) {
+    const action = await notifyTrackingAction(orderId, confirmResend);
+    if (!action.success) {
+      toast.error(t.errors[action.error]);
+      return;
+    }
+    const result = action.result;
     switch (result) {
       case "already": // ทางเลือก #2: ส่งซ้ำต้องยืนยัน
         setResend(orderId);

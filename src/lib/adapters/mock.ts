@@ -10,7 +10,7 @@ import {
   SEED_RMS_INBOX,
 } from "@/mock/orders";
 import { findRslMatches } from "@/mock/rsl";
-import { trackCarrier } from "@/mock/delivery";
+import { findTracking, trackCarrier } from "@/mock/delivery";
 import { SEED_STOCK } from "@/mock/products";
 
 function marketplaceOrder(
@@ -92,16 +92,18 @@ export const mockAdapterFactories: AdapterFactories = {
             error: { code: "invalid_response", retryable: false },
           };
         }
+        const parcels = Math.max(
+          1,
+          Math.ceil(order.qty / rule.max_items_per_parcel),
+        );
         return {
           ok: true,
-          data: [
-            {
-              label_template: rule.label_template,
-              rsl_no: order.rsl_reference_id ?? "",
-              parcel_seq: 1,
-              parcel_total: 1,
-            },
-          ],
+          data: Array.from({ length: parcels }, (_, index) => ({
+            label_template: rule.label_template,
+            rsl_no: order.rsl_reference_id ?? "",
+            parcel_seq: index + 1,
+            parcel_total: parcels,
+          })),
         };
       },
     }),
@@ -115,6 +117,18 @@ export const mockAdapterFactories: AdapterFactories = {
   },
   carrier: {
     mock: () => ({
+      async getTrackingInfo(orderId) {
+        const info = findTracking(orderId);
+        return {
+          ok: true,
+          data: info
+            ? {
+                trackingNumber: info.tracking_number,
+                carrierName: info.carrier_name,
+              }
+            : null,
+        };
+      },
       async getDeliveryStatus(trackingNumber) {
         return {
           ok: true,

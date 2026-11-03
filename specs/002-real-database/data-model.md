@@ -26,6 +26,7 @@
 | `cost_history` | SKU/cost reference, ค่าเดิม/ใหม่ที่จำเป็น, actor, changed_at | ประวัติการเปลี่ยนต้นทุน UC 4S |
 | `stock_adjustment_history` | stock reference, ยอดเดิม/ใหม่ของคลังบริษัทและ RSL, เหตุผล, actor, adjusted_at | ประวัติการปรับสต๊อกโดย Admin; ยอดปัจจุบันยังอยู่ใน `stock` |
 | `tracking_notification_logs` | order reference, tracking reference, outcome, sent_at | ป้องกัน/บันทึกการแจ้งเลขติดตามซ้ำ UC 5S; ข้อความไม่เก็บข้อมูลส่วนเกิน |
+| `label_print_history` | print attempt, label, actor, outcome, error, attempted_at | ประวัติการพิมพ์/พิมพ์ซ้ำ UC 9A; หนึ่ง attempt มีได้หลายใบปะสำหรับ multi-parcel |
 | `rakuten_stock_sync_states` | `stock_id` (PK/FK), `sync_status`, `last_synced_qty`, `last_attempt_at`, `last_synced_at`, `last_error_code` | สถานะคงค้างสำหรับ retry 7S ต่อรายการ stock ของ Rakuten; เมื่อ stock เปลี่ยนให้เป็น pending และ retry คำนวณยอดล่าสุดจาก `in_house_qty + rsl_qty`; บันทึกยอดล่าสุดที่ sync สำเร็จเพื่อไม่ให้คำขอเก่าทับยอดใหม่. เป็น schema extension ที่ต้องส่งทีมปรับ ER. |
 
 ### Schema extension ที่ใช้จริงใน `002_runtime_records.sql`
@@ -36,6 +37,7 @@
 - `cost_history`: `cost_history_id`, `sku_id`, `cost_id`, `previous_value`, `new_value`, `admin_id`, `changed_at` สำหรับ 4S และเพิ่ม `costs.exchange_rate_updated_at` ซึ่งจำเป็นต่อทางเลือกอัตราแลกเปลี่ยนเกิน 24 ชั่วโมง แต่ไม่มีใน ER ปัจจุบัน.
 - `stock_adjustment_history`: เพิ่มใน Phase 5 เพื่อเก็บ before/after, เหตุผล และ Admin ของการปรับยอดสต๊อก; migration เดียวกันเพิ่ม `orders.reorder_decision`/`decided_qty` สำหรับ 5A และ `reorders.supplier_request_id`/ผลตอบกลับสำหรับ retry แบบ idempotent ใน 6A.
 - `tracking_notification_logs`: `tracking_notification_log_id`, `order_id`, `tracking_number`, `outcome`, `sent_at`, `admin_id` สำหรับ 5S และการส่งซ้ำ.
+- `label_print_history`: เพิ่มใน Phase 6 เพื่อเก็บ `print_attempt_id`, ใบปะ, Admin, ผลพิมพ์ และ error code; Phase เดียวกันเพิ่ม `tracking_notification_logs.attempt_id`/`error_code` เพื่อ retry ด้วย attempt เดิมและแยก confirmed resend เป็น attempt ใหม่ รวมถึง `orders.delivery_status` เพื่อเก็บ carrier confirmation แยกจาก workflow status.
 - `rakuten_stock_sync_states`: ใช้คอลัมน์ตามตารางด้านบนและ FK ไป `stock`; เป็นสถานะคงค้างของ 7S ทางเลือก #1.
 - `schema_migrations`: `migration_name`, `applied_at`; เป็น catalog เชิงเทคนิคเพื่อให้ setup รันซ้ำได้ ไม่ใช่ business entity.
 
@@ -46,6 +48,12 @@
 - `orders.edit_log`: เก็บรายการแก้ฟิลด์ที่ 2A อนุญาต พร้อมผู้แก้และเวลา; ใช้ JSONB เพราะเป็น schema extension ของ audit detail ที่ ER ปัจจุบันยังไม่มีตารางแยก.
 
 รายการนี้คือ ER change list ที่ต้องส่งทีมเอกสาร. Migration ที่ merge แล้วห้ามแก้; การปรับตาม ER ฉบับถัดไปต้องสร้าง migration ใหม่เสมอ.
+
+### Schema extension ที่ใช้จริงใน `005_shipping_labels_cleanup.sql`
+
+- `orders.delivery_status`: สถานะล่าสุดที่ carrier ยืนยัน (`in_transit`, `delivered`, `failed`, `returned`) แยกจาก `order_status` เพื่อไม่ปิด Order ก่อน 5S/7S เสร็จ.
+- `label_print_history`: append-only history ของทุก printer attempt และ confirmed reprint.
+- `tracking_notification_logs.attempt_id`/`error_code`: ทำ retry ของความพยายามเดิมแบบ idempotent และเก็บ confirmed resend เป็นความพยายามใหม่.
 
 ## กฎความสอดคล้อง
 
