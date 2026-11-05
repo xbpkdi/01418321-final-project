@@ -1,54 +1,60 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
+import type { PoolClient } from "pg";
 import type { RslAdapter } from "@/lib/adapters/contracts";
-import { getExternalAdapters } from "@/lib/adapters";
-import { getPool, withTransaction } from "@/lib/db";
-import { lockOrder } from "@/lib/queries/orders";
+import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
+import type { OrderWorkflowRow } from "@/lib/queries/orders";
 import {
   getOrderStock,
   saveStockRoute,
 } from "@/lib/queries/stock";
+import { logAdapterFailure } from "@/lib/use-cases/log-auto-error";
 import { chooseStockRoute } from "@/lib/workflow";
 
-export type StockCheckResult =
-  | "not-pending"
-  | "missing-stock"
-  | "enough"
-  | "low";
+export type StockCheckResult = "missing-stock" | "enough" | "low";
 
-/** UC 3S: combine confirmed in-house stock with the RSL adapter reading. */
+/**
+ * UC 3S: compare in-house stock and the RSL adapter reading with the Order
+ * quantity, then save the shipping source. Runs inside `executeWorkflow` on
+ * an Order locked at "รอตรวจสอบสต๊อก".
+ */
 export async function checkStockUseCase(
-  orderId: string,
-  rsl: RslAdapter = getExternalAdapters().rsl,
+  client: PoolClient,
+  order: OrderWorkflowRow & { sku: string },
+  rsl: RslAdapter,
 ): Promise<StockCheckResult> {
-  const order = await withTransaction((client) => lockOrder(client, orderId));
-  if (!order || order.order_status !== "รอตรวจสอบสต๊อก" || !order.sku) {
-    return "not-pending";
+  const stock = await getOrderStock(client, order.sku);
+  if (!stock) {
+    await insertAutoErrorLog(client, {
+      logId: randomUUID(),
+      useCaseId: "3S",
+      contextKey: order.order_id,
+      errorCode: "stock_missing",
+      safeMessage: "Stock record is unavailable",
+    });
+    return "missing-stock";
   }
-
-  const stock = await getOrderStock(getPool(), order.sku);
-  if (!stock) return "missing-stock";
-
   const external = await rsl.getStock(order.sku);
+  if (!external.ok) {
+    await logAdapterFailure(client, {
+      useCaseId: "3S",
+      contextKey: order.order_id,
+      failure: external.error,
+    });
+  }
   const rslQuantity = external.ok ? external.data : null;
   const route = chooseStockRoute(
-    order.qty,
+    Number(order.qty),
     stock.inHouseQuantity,
     rslQuantity,
   );
-
-  await withTransaction(async (client) => {
-    const current = await lockOrder(client, orderId);
-    if (!current || current.order_status !== "รอตรวจสอบสต๊อก") return;
-    await saveStockRoute(
-      client,
-      stock.stockId,
-      rslQuantity,
-      orderId,
-      route === "low" ? "รอ Admin ตัดสินใจสั่งซื้อ" : "ยังไม่ได้จับคู่",
-      route === "low" ? null : route,
-    );
-  });
+  await saveStockRoute(
+    client,
+    stock.stockId,
+    rslQuantity,
+    order.order_id,
+    route === "low" ? "รอ Admin ตัดสินใจสั่งซื้อ" : "ยังไม่ได้จับคู่",
+    route === "low" ? null : route,
+  );
   return route === "low" ? "low" : "enough";
 }
-
-export const checkStock = checkStockUseCase;

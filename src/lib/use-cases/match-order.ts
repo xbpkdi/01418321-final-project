@@ -4,47 +4,12 @@ import { getExternalAdapters } from "@/lib/adapters";
 import { getPool, withTransaction } from "@/lib/db";
 import {
   clearRslMatch,
-  findSkuRules,
   listRslQueueIds,
   lockOrder,
   saveRslMatch,
-  saveSkuMatch,
 } from "@/lib/queries/orders";
-import { chooseRslMatch, chooseSkuRule } from "@/lib/workflow";
+import { chooseRslMatch } from "@/lib/workflow";
 import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
-
-export type SkuMatchResult = "not-pending" | "missing" | "multiple" | "ok";
-
-/** UC 2S: resolve the persisted channel SKU using database SKU rules. */
-export async function matchSkuUseCase(orderId: string): Promise<SkuMatchResult> {
-  return withTransaction(async (client) => {
-    const order = await lockOrder(client, orderId);
-    if (!order || order.order_status !== "รอจับคู่กฎ SKU") {
-      return "not-pending";
-    }
-    const selected = chooseSkuRule(
-      await findSkuRules(client, order.channel_sku, order.sales_channel),
-    );
-    if (selected.kind !== "matched") {
-      await saveSkuMatch(
-        client,
-        orderId,
-        null,
-        "รอดำเนินการด้วยตนเอง",
-        "sku-rule",
-      );
-      return selected.kind;
-    }
-    await saveSkuMatch(
-      client,
-      orderId,
-      selected.value.sku_id,
-      "รอตรวจสอบสต๊อก",
-      null,
-    );
-    return "ok";
-  });
-}
 
 export type RslMatchResult =
   | { kind: "not-found" }
@@ -136,4 +101,3 @@ export async function unmatchRslUseCase(orderId: string): Promise<boolean> {
   });
 }
 
-export const matchOrder = matchSkuUseCase;
