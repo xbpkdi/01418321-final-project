@@ -465,6 +465,25 @@ export async function saveSkuMatch(
   await executor.query(Q2S_2, [orderId, skuId, status, manualReason]);
 }
 
+// UC 2S / Q2S.1: Orders still waiting at 2S (e.g. after the SKU rule data
+// could not be read) so the next workflow action retries them. SKIP LOCKED
+// leaves rows another transaction is working on to that transaction.
+export const Q2S_1_RETRY = `
+  SELECT order_id
+  FROM orders
+  WHERE order_status = 'รอจับคู่กฎ SKU'
+  ORDER BY order_date, order_id
+  LIMIT 100
+  FOR UPDATE SKIP LOCKED
+`;
+
+export async function listSkuRetryOrderIds(
+  executor: QueryExecutor,
+): Promise<string[]> {
+  const result = await executor.query<{ order_id: string }>(Q2S_1_RETRY);
+  return result.rows.map((row) => row.order_id);
+}
+
 // UC 1S / Q1S.1: persist a selected RSL reference and advance to label work.
 export const Q1S_1 = `
   UPDATE orders

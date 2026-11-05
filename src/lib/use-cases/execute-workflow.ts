@@ -6,7 +6,7 @@ import { getExternalAdapters } from "@/lib/adapters";
 import { withTransaction } from "@/lib/db";
 import { mapDatabaseError } from "@/lib/db/errors";
 import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
-import { lockOrder } from "@/lib/queries/orders";
+import { listSkuRetryOrderIds, lockOrder } from "@/lib/queries/orders";
 import {
   completeDeliveredOrder,
   markLabelManual,
@@ -181,8 +181,18 @@ export async function runAutomation(
   adapters: ExternalAdapters = getExternalAdapters(),
 ): Promise<AutoEvent[]> {
   const events: AutoEvent[] = [];
-  for (const orderId of [...new Set(orderIds)]) {
+  const requested = new Set(orderIds);
+  for (const orderId of requested) {
     events.push(...(await runOrderAutomation(client, orderId, adapters)));
+  }
+
+  // UC 2S alternative: an Order left at "รอจับคู่กฎ SKU" because SKU rule data
+  // was unreadable is retried by any later workflow action. A retry that still
+  // fails is only logged, not reported to this unrelated action.
+  for (const orderId of await listSkuRetryOrderIds(client)) {
+    if (requested.has(orderId)) continue;
+    const retried = await runOrderAutomation(client, orderId, adapters);
+    events.push(...retried.filter((event) => event.code !== "sku-db"));
   }
 
   // Any later workflow action is also a retry opportunity for durable 7S
