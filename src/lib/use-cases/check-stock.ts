@@ -41,7 +41,7 @@ export async function checkStockUseCase(
     });
     return "missing-stock";
   }
-  const external = await rsl.getStock(order.sku);
+  const external = await rsl.getStock(order.sku, client);
   if (!external.ok) {
     await logAdapterFailure(client, {
       useCaseId: "3S",

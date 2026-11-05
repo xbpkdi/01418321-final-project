@@ -93,9 +93,11 @@ export const mockAdapterFactories: AdapterFactories = {
         if (isFaultEnabled("rsl")) return unavailable("rsl");
         return { ok: true, data: findRslMatches(order.sku, order.variation) };
       },
-      async getStock(sku) {
+      async getStock(sku, executor) {
         if (isFaultEnabled("rsl")) return unavailable("rsl");
-        const rslQuantity = await getRslQuantity(getPool(), sku);
+        // A separate pool connection would miss uncommitted changes of the
+        // 3S transaction, and Q3S_1_ROUTE would write that stale value back.
+        const rslQuantity = await getRslQuantity(executor ?? getPool(), sku);
         return rslQuantity === null
           ? {
               ok: false,
