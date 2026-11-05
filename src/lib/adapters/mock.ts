@@ -14,7 +14,8 @@ import {
 } from "@/mock/orders";
 import { findRslMatches } from "@/mock/rsl";
 import { findTracking, trackCarrier } from "@/mock/delivery";
-import { SEED_STOCK } from "@/mock/products";
+import { getPool } from "@/lib/db";
+import { getRslQuantity } from "@/lib/queries/stock";
 
 function unavailable(key: FaultKey): { ok: false; error: AdapterFailure } {
   return {
@@ -94,13 +95,13 @@ export const mockAdapterFactories: AdapterFactories = {
       },
       async getStock(sku) {
         if (isFaultEnabled("rsl")) return unavailable("rsl");
-        const row = SEED_STOCK.find((stock) => stock.sku === sku);
-        return row?.rsl_qty === null || row?.rsl_qty === undefined
+        const rslQuantity = await getRslQuantity(getPool(), sku);
+        return rslQuantity === null
           ? {
               ok: false,
               error: { code: "unavailable", retryable: true },
             }
-          : { ok: true, data: row.rsl_qty };
+          : { ok: true, data: rslQuantity };
       },
     }),
   },

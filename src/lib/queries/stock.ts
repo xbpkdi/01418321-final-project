@@ -82,6 +82,26 @@ export async function getOrderStock(
     : null;
 }
 
+// UC 3S / Q3S.1: mock RSL adapter reads the RSL quantity kept in the database.
+export const Q3S_1_RSL = `
+  SELECT stock.rsl_qty
+  FROM stock
+  INNER JOIN skus ON skus.sku_id = stock.sku_id
+  WHERE skus.sku = $1
+`;
+
+export async function getRslQuantity(
+  executor: QueryExecutor,
+  sku: string,
+): Promise<number | null> {
+  const result = await executor.query<{ rsl_qty: number | string | null }>(
+    Q3S_1_RSL,
+    [sku],
+  );
+  const value = result.rows[0]?.rsl_qty;
+  return value === null || value === undefined ? null : Number(value);
+}
+
 // UC 3S / Q3S.1: persist the latest successful RSL reading, the stock source
 // 7S will deduct from ($5, NULL on the low route) and route the Order.
 export const Q3S_1_ROUTE = `
