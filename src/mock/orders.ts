@@ -23,7 +23,7 @@ function order(
 export const SEED_ORDERS: Order[] = [
   // ── 2A ตรวจสอบคำสั่งซื้อ ──
   order({
-    // ทางปกติ: 2A → 2S → 3S (สต๊อกพอ) → ยังไม่ได้จับคู่ (1S)
+    // ทางปกติ (RSL จัดส่ง): 2A → 2S → 3S (RSL พอ) → ยังไม่ได้จับคู่ (1S)
     order_id: "ORD-24190",
     marketplace_order_id: "377841-20261005-0000190",
     order_date: "2026-10-05T09:12:00+09:00",
@@ -34,6 +34,22 @@ export const SEED_ORDERS: Order[] = [
     qty: 2,
     shipping_address: "東京都杉並区高円寺南 3-14-7 サンハイツ 402",
     shipping_method: "RSL ปกติ",
+    order_status: "รอตรวจสอบคำสั่งซื้อ",
+  }),
+  order({
+    // ทางปกติ (บริษัทจัดส่งเอง): 2A → 2S → 3S (RSL 0 ไม่พอ คลังบริษัท 1 พอ)
+    // → ข้าม 1S → 6S ใบปะ INHOUSE-YAMATO-A6 → 9A → 8A → 5S
+    // → 7S ตัดสต๊อกคลังบริษัท
+    order_id: "ORD-24194",
+    marketplace_order_id: "377841-20261005-0000194",
+    order_date: "2026-10-05T08:47:00+09:00",
+    channel_sku: "rk-stg045-28",
+    sku: "HOM-STG-045",
+    product_name: "กล่องเก็บของพับได้ ฝาใส",
+    variation: "ขนาด 28 ลิตร",
+    qty: 1,
+    shipping_address: "長野県松本市中央 2-5-11",
+    shipping_method: "จัดส่งเอง",
     order_status: "รอตรวจสอบคำสั่งซื้อ",
   }),
   order({
@@ -200,10 +216,9 @@ export const SEED_ORDERS: Order[] = [
     shipping_method: "RSL ปกติ",
     order_status: "ยังไม่ได้จับคู่",
     sku_rule_id: "RULE-HOM-KIT-108",
-    fulfill_source: "in_house",
   }),
   order({
-    // วิธีจัดส่งไม่มี Label Template → 6S ตั้งเป็นรอดำเนินการด้วยตนเอง
+    // RSL ไม่มี Label Template สำหรับวิธี "จัดส่งเอง" → 6S ตั้งเป็นรอดำเนินการด้วยตนเอง
     order_id: "ORD-24179",
     marketplace_order_id: "377841-20261003-0000179",
     order_date: "2026-10-03T09:12:00+09:00",
@@ -218,7 +233,6 @@ export const SEED_ORDERS: Order[] = [
     manual_reason: "template",
     sku_rule_id: "RULE-OUT-LMP-021",
     rsl_reference_id: "RSL-9f2231",
-    fulfill_source: "in_house",
   }),
 
   // ── 9A พิมพ์ใบปะสินค้า ──
@@ -281,6 +295,7 @@ export const SEED_ORDERS: Order[] = [
   }),
   order({
     // ผู้ให้บริการขนส่งยังไม่ออกหมายเลขติดตาม → คงไว้ที่ รอส่งมอบ
+    // บริษัทจัดส่งเองจากคลังบริษัท (ไม่มีเลข RSL)
     order_id: "ORD-24177",
     marketplace_order_id: "377841-20261002-0000177",
     order_date: "2026-10-02T09:03:00+09:00",
@@ -293,8 +308,7 @@ export const SEED_ORDERS: Order[] = [
     shipping_method: "RSL ปกติ",
     order_status: "พิมพ์ใบปะสินค้าแล้ว",
     sku_rule_id: "RULE-YDM-HRB-012",
-    rsl_reference_id: "RSL-9f21b4",
-    label_template: "RSL-STD-A6",
+    label_template: "INHOUSE-YAMATO-A6",
     parcel_total: 1,
     label_printed_at: "2026-10-04T10:31:00+09:00",
     fulfill_source: "in_house",
@@ -515,8 +529,7 @@ export const SEED_ORDERS: Order[] = [
     shipping_method: "RSL ปกติ",
     order_status: "จัดส่งสำเร็จ",
     sku_rule_id: "RULE-YDM-HRB-012",
-    rsl_reference_id: "RSL-9f21b4",
-    label_template: "RSL-STD-A6",
+    label_template: "INHOUSE-YAMATO-A6",
     parcel_total: 1,
     tracking_number: "4418-2290-0168",
     carrier_name: "Yamato Transport",
