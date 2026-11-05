@@ -59,7 +59,7 @@ export const Q2A_2 = `UPDATE orders SET order_status='รอจับคู่�
 | `skus.ts` | `Q3A.1`, `Q6A.2` |
 | `stock.ts` | `Q3S.1` |
 | `costs.ts` | `Q4S.1`–`Q4S.2` |
-| `reorders.ts` | `Q5A.1`, `Q6A.1` |
+| `reorders.ts` | `Q5A.1`, `Q6A.1`, `Q6A.10`–`Q6A.12` (6A รับสินค้า) |
 | `shipping.ts` | `Q9A.1` |
 | `cleanup.ts` | `Q10A.6` |
 

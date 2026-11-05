@@ -227,22 +227,28 @@ async function recordRolledBackAutomationError(
   }
 }
 
-export type ExecuteWorkflowOptions = {
-  orderIds?: readonly string[];
+export type ExecuteWorkflowOptions<T = unknown> = {
+  /** Orders to automate. A function reads them from the action result when
+   * the action itself finds the Orders (e.g. 6A receive goods). */
+  orderIds?: readonly string[] | ((result: T) => readonly string[]);
   adapters?: ExternalAdapters;
 };
 
 /** Execute the triggering write and every resulting auto step atomically. */
 export async function executeWorkflow<T>(
   action: (client: PoolClient) => Promise<T>,
-  options: ExecuteWorkflowOptions = {},
+  options: ExecuteWorkflowOptions<T> = {},
 ): Promise<T> {
   try {
     return await withTransaction(async (client) => {
       const result = await action(client);
+      const orderIds =
+        typeof options.orderIds === "function"
+          ? options.orderIds(result)
+          : (options.orderIds ?? []);
       await runAutomation(
         client,
-        options.orderIds ?? [],
+        orderIds,
         options.adapters ?? getExternalAdapters(),
       );
       return result;
