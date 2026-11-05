@@ -19,7 +19,7 @@ import { deductStockUseCase } from "@/lib/use-cases/deduct-stock";
 import { logAdapterFailure } from "@/lib/use-cases/log-auto-error";
 import { matchSkuUseCase } from "@/lib/use-cases/match-sku";
 import { syncRakutenStockUseCase } from "@/lib/use-cases/sync-rakuten-stock";
-import { SHIPPING_RULES } from "@/mock/delivery";
+import { findLabelRule, SHIPPING_RULES } from "@/mock/delivery";
 import {
   validGeneratedLabels,
   type AutoEvent,
@@ -86,6 +86,8 @@ async function runOrderAutomation(
             orderId,
           });
         }
+        // In-house Orders skip 1S RSL matching and go straight to 6S.
+        if (checked === "in_house") continue;
         break;
       } catch (error) {
         throw new AutomationStepError("3S", orderId, error);
@@ -99,11 +101,7 @@ async function runOrderAutomation(
           events.push({ code: "label-no-address", orderId });
           break;
         }
-        const rule = labelRules.find(
-          (candidate) =>
-            candidate.shipping_method === order.shipping_method &&
-            candidate.sales_channel === order.sales_channel,
-        );
+        const rule = findLabelRule(labelRules, order);
         if (!rule) {
           await markLabelManual(client, orderId, "template");
           events.push({ code: "label-no-template", orderId });

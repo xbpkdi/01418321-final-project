@@ -11,12 +11,14 @@ import {
 import { logAdapterFailure } from "@/lib/use-cases/log-auto-error";
 import { chooseStockRoute } from "@/lib/workflow";
 
-export type StockCheckResult = "missing-stock" | "enough" | "low";
+export type StockCheckResult = "missing-stock" | "rsl" | "in_house" | "low";
 
 /**
  * UC 3S: compare in-house stock and the RSL adapter reading with the Order
  * quantity, then save the shipping source. Runs inside `executeWorkflow` on
- * an Order locked at "รอตรวจสอบสต๊อก".
+ * an Order locked at "รอตรวจสอบสต๊อก". RSL Orders go to 1S RSL matching
+ * ("ยังไม่ได้จับคู่"); in-house Orders are shipped by the company, have no
+ * RSL reference, and go straight to 6S ("รอจัดรูปแบบใบปะสินค้า").
  */
 export async function checkStockUseCase(
   client: PoolClient,
@@ -53,8 +55,12 @@ export async function checkStockUseCase(
     stock.stockId,
     rslQuantity,
     order.order_id,
-    route === "low" ? "รอ Admin ตัดสินใจสั่งซื้อ" : "ยังไม่ได้จับคู่",
+    route === "low"
+      ? "รอ Admin ตัดสินใจสั่งซื้อ"
+      : route === "rsl"
+        ? "ยังไม่ได้จับคู่"
+        : "รอจัดรูปแบบใบปะสินค้า",
     route === "low" ? null : route,
   );
-  return route === "low" ? "low" : "enough";
+  return route;
 }
