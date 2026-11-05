@@ -57,10 +57,6 @@ export const Q10A_5_DELETE_ORDER = `
     )
     SELECT $2, order_id, snapshot, $3 FROM eligible
     RETURNING order_reference
-  ), detached_reorders AS (
-    UPDATE reorders SET order_id = NULL
-    WHERE order_id IN (SELECT order_reference FROM logged)
-    RETURNING reorder_id
   ), detached_cost_history AS (
     UPDATE cost_history SET cost_id = NULL
     WHERE cost_id IN (
@@ -76,7 +72,6 @@ export const Q10A_5_DELETE_ORDER = `
   ), deleted AS (
     DELETE FROM orders
     WHERE order_id IN (SELECT order_reference FROM logged)
-      AND (SELECT COUNT(*) FROM detached_reorders) >= 0
       AND (SELECT COUNT(*) FROM deleted_costs) >= 0
     RETURNING order_id
   )
@@ -115,12 +110,12 @@ export const Q10A_4_DELETE_REORDER = `
   DELETE FROM reorders r
   WHERE r.reorder_id = $1
     AND (
-      r.reorder_status = 'ยกเลิกแล้ว'
+      r.reorder_status IN ('ยกเลิกแล้ว', 'ได้รับสินค้าแล้ว')
       OR (r.reorder_status = 'สั่งซื้อแล้ว' AND r.expected_date < CURRENT_DATE)
     )
     AND NOT EXISTS (
       SELECT 1 FROM orders o
-      WHERE o.order_id = r.order_id
+      WHERE o.reorder_id = r.reorder_id
         AND o.order_status NOT IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว')
     )
   RETURNING r.reorder_id
