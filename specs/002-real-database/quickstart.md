@@ -32,4 +32,24 @@
 - Integration check บังคับ exception ใน Rakuten sync หลัง 5S และ stock deduction: transaction ย้อนกลับ notification log, `tracking_notified`, stock และ `stock_deducted` ทั้งหมด; บันทึก safe `auto_error_logs` 1 แถวหลัง rollback แล้วลบข้อมูลทดสอบ.
 - `npm run lint` และ `npx tsc --noEmit` ผ่าน. `npm run build` แบบ Turbopack ติดข้อจำกัด runner ที่ห้าม PostCSS bind พอร์ต (`Operation not permitted`) แม้รันนอก sandbox; production build ทางเลือกที่ Next.js 16 รองรับด้วย `npx next build --webpack` compile, typecheck และ generate 18 static pages ผ่าน.
 
+## ผลตรวจ Phase 9 (2026-11-05)
+
+**T048 — Browser storage:** `src/lib/store.tsx` เหลือเพียง snapshot จาก DB (read-only) และ dirty-flag ในหน่วยความจำ; ลบ `run`/`reset`/`runAutomation` ฝั่ง client และ `localStorage` key `rsl-hub-state-v3`; ลบ `src/components/app-shell/auth-guard.tsx`. `localStorage` ที่เหลือมีเฉพาะ `rsl-hub-lang` (ภาษา UI, `src/lib/i18n/context.tsx`) และ cookie ของ sidebar (`src/components/ui/sidebar.tsx`) ซึ่งเป็น UI preference.
+
+**T049 — Coverage ของ alternative flow:** ตรวจ comment ทุกแถวใน `src/mock/*.ts` (แหล่งของ seed) เทียบกับ `use-case-description.pdf`.
+
+| กลุ่ม | Alternative flow | วิธีครอบคลุม |
+|---|---|---|
+| แถว seed | 3S #1; 4A #2, #3; 4S #1–#4; 6A #1; 7A #2–#4 (และ #1 ผ่าน UI); 7S #2; 8A #1–#3 | comment ในแถว `src/mock/orders.ts`, `products.ts`, `delivery.ts` |
+| Fault toggle `/dev` | 4A #1 (`rms`); 2A (`marketplaceVerify`); 2S (`skuRuleDb`); 1S #4, 3S #3 (`rsl`); 6S (`labelService`); 9A #2 (`printer`); 8A #4 (`carrier`); 5S #1 (`trackingNotify`); 7S #1 (`mpStockSync`); 6A #3 (`supplierSend`); 5A, 10A rollback (`db`) | `FAULT_KEYS` ใน `src/lib/workflow.ts` |
+| ทำผ่าน UI บนแถว seed (ไม่ต้องมีแถวพิเศษ) | 3A #1–#3; 5A #1–#2; 6A #2; 9A #1, #3, #4; 1S #1–#3; 3S #2; 5S #2–#4; 10A #1–#2 | ต้องเดินด้วยมือ; ยังไม่ได้เดินใน Phase 9 |
+
+**Query catalog:** ตรวจ constant `Q…` ทั้ง 88 ตัวใน `src/lib/**/*.ts` เทียบ `src/lib/queries/README.md` — ทุกตัวอยู่ในช่วง Q-number ที่ระบุไว้ ยกเว้น `Q1A_2`–`Q1A_6` ที่ README ระบุเป็น provisional อยู่แล้ว (PDF มีเพียง `Q1A.1`). SQL ใน `db/seed/index.ts` ใช้ Q-number แบบ `(provisional)` ตามเดิม เพราะ seed ไม่ใช่ statement ของ use case.
+
+**T050 — การตรวจ:**
+- `npm run lint`, `npx tsc --noEmit`, `npm run build` (Turbopack) ผ่าน.
+- `npm run db:setup` ผ่านโดยไม่ reset ข้อมูล.
+- `next start` โดยไม่มี session: `/dashboard` และ `/reports/label/X` ส่ง `NEXT_REDIRECT` ไป `/login` ไม่มีข้อมูล Order ใน HTML (สถานการณ์ 3).
+- **ยังไม่ได้ทำ:** การเดินสถานการณ์ 4, 6, 7 (หลาย browser/หลายแท็บ), 9 และ 11 ในเบราว์เซอร์จริง และ alternative flow ผ่าน UI ในตารางด้านบน. สถานการณ์ 7–8 ผ่านแล้วใน integration check ของ Phase 7. ต้องมีคนเดินด้วยมือก่อน merge.
+
 **เสร็จเมื่อ** ทุกสถานการณ์ข้างต้นผ่าน, lint/typecheck/build ผ่าน, และเดิน use case ที่ได้รับผลกระทบด้วยมือ; ไม่มีระบบภายนอกจริงถูกเรียก.

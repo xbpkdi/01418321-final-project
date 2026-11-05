@@ -1,0 +1,9 @@
+sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price
+TST-OK-001,ถุงมือตกปลากันลื่น,ไซส์ M,rk-tst001-m,SUP-01,15,60,490
+TST-OK-002,หมวกกันแดดพับได้,สีกรม,rk-tst002-nv,SUP-02,10,40,
+TST-ERR-NAME,,ไซส์ L,rk-tst003-l,SUP-01,10,30,350
+TST-ERR-THRESHOLD,กระติกน้ำเก็บความเย็น,1 ลิตร,rk-tst004-1l,SUP-03,0,30,620
+TST-ERR-QTY,เสื่อปิกนิกกันน้ำ,สีเขียว,rk-tst005-gn,SUP-03,10,abc,540
+TST-ERR-SUPPLIER,ไฟฉายคาดหัว,แสงขาว,rk-tst006-w,SUP-99,10,30,390
+TST-ERR-CHANNEL,สินค้าซ้ำ channel_sku,ทดสอบ,rk-mlr240-sv,SUP-01,10,30,100
+,สินค้าไม่มี SKU,ทดสอบ,rk-tst008,SUP-01,10,30,100
