@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import type { ExternalAdapters } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
+import { isFaultEnabled } from "@/lib/adapters/faults";
 import { withTransaction } from "@/lib/db";
 import { mapAdapterError, mapDatabaseError } from "@/lib/db/errors";
 import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
@@ -48,7 +49,7 @@ class AutomationStepError extends Error {
 async function logAdapterFailure(
   client: PoolClient,
   input: {
-    useCaseId: "3S" | "6S";
+    useCaseId: "2S" | "3S" | "6S";
     contextKey: string;
     failure: Parameters<typeof mapAdapterError>[0];
   },
@@ -76,6 +77,21 @@ async function runOrderAutomation(
 
     if (order.order_status === "รอจับคู่กฎ SKU") {
       try {
+        // /dev fault skuRuleDb: SKU rule data is unavailable, so the Order
+        // stays at 2S and the next workflow action retries it.
+        if (isFaultEnabled("skuRuleDb")) {
+          await logAdapterFailure(client, {
+            useCaseId: "2S",
+            contextKey: orderId,
+            failure: {
+              code: "unavailable",
+              retryable: true,
+              referenceId: "mock-fault-skuRuleDb",
+            },
+          });
+          events.push({ code: "sku-db", orderId });
+          break;
+        }
         const selected = chooseSkuRule(
           await findSkuRules(client, order.channel_sku, order.sales_channel),
         );
