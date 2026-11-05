@@ -25,10 +25,12 @@ export async function matchRslUseCase(
   rsl: RslAdapter = getExternalAdapters().rsl,
 ): Promise<RslMatchResult> {
   const order = await withTransaction((client) => lockOrder(client, orderId));
+  // In-house Orders skip 1S; only RSL-fulfilled Orders are matched.
   const allowed =
-    order?.order_status === "ยังไม่ได้จับคู่" ||
-    (order?.order_status === "รอดำเนินการด้วยตนเอง" &&
-      order.manual_reason === "rsl");
+    order?.fulfill_source === "rsl" &&
+    (order.order_status === "ยังไม่ได้จับคู่" ||
+      (order.order_status === "รอดำเนินการด้วยตนเอง" &&
+        order.manual_reason === "rsl"));
   if (!order || !allowed || !order.sku) return { kind: "not-allowed" };
 
   const response = await rsl.matchOrder({

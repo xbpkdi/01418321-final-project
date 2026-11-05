@@ -1013,12 +1013,17 @@ export function purchase(
 
 // 1S จับคู่ RSL
 
-/** Order ที่รอจับคู่ RSL — รวม Order ที่ตกไปทำมือเพราะหา SKU ใน RSL ไม่เจอ */
+/**
+ * Order ที่รอจับคู่ RSL — รวม Order ที่ตกไปทำมือเพราะหา SKU ใน RSL ไม่เจอ
+ * เฉพาะ Order ที่ 3S เลือกให้ RSL จัดส่ง (Order จัดส่งจากคลังบริษัทข้าม 1S)
+ */
 export function rslQueue(s: AppState) {
   return s.orders.filter(
     (o) =>
-      o.order_status === "ยังไม่ได้จับคู่" ||
-      (o.order_status === "รอดำเนินการด้วยตนเอง" && o.manual_reason === "rsl"),
+      o.fulfill_source === "rsl" &&
+      (o.order_status === "ยังไม่ได้จับคู่" ||
+        (o.order_status === "รอดำเนินการด้วยตนเอง" &&
+          o.manual_reason === "rsl")),
   );
 }
 
@@ -1034,7 +1039,8 @@ export function matchRsl(
   chosen?: string,
 ): { state: AppState; result: MatchResult } {
   const o = findOrder(s, orderId);
-  if (!o) return { state: s, result: { kind: "not-found" } };
+  if (!o || o.fulfill_source !== "rsl")
+    return { state: s, result: { kind: "not-found" } };
   // ทางเลือก #4: คงไว้ที่ "ยังไม่ได้จับคู่" ให้ลองใหม่รอบถัดไป
   if (s.faults.rsl) return { state: s, result: { kind: "connection" } };
 
@@ -1082,7 +1088,8 @@ export function matchAllRsl(s: AppState) {
 /** ทางเลือก #3: ยกเลิกการจับคู่ — ล้าง rsl_reference_id และใบปะที่สร้างจากเลขเดิม */
 export function unmatchRsl(s: AppState, orderId: string) {
   const o = findOrder(s, orderId);
-  if (!o) return { state: s, result: "not-allowed" as const };
+  if (!o || !o.rsl_reference_id)
+    return { state: s, result: "not-allowed" as const };
   const allowed: OrderStatus[] = ["รอจัดรูปแบบใบปะสินค้า", "รอพิมพ์ใบปะสินค้า"];
   if (
     !allowed.includes(o.order_status) &&
@@ -1140,7 +1147,11 @@ export function printLabel(
     return { state: s, result: "already" };
 
   // Q9A.1
-  const rule = findShippingRule(o.shipping_method, o.sales_channel);
+  const rule = findShippingRule(
+    o.shipping_method,
+    o.sales_channel,
+    o.fulfill_source,
+  );
   if (!rule)
     return { state: toManual(s, orderId, "template"), result: "no-template" };
 
@@ -1729,9 +1740,13 @@ export function runAutomation(input: AppState): {
             )
           : "low";
         if (route !== "low") {
-          s = setStatus(s, o.order_id, "ยังไม่ได้จับคู่", {
-            fulfill_source: route,
-          });
+          // RSL → 1S จับคู่ RSL; คลังบริษัท → บริษัทจัดส่งเอง ข้าม 1S ไป 6S
+          s = setStatus(
+            s,
+            o.order_id,
+            route === "rsl" ? "ยังไม่ได้จับคู่" : "รอจัดรูปแบบใบปะสินค้า",
+            { fulfill_source: route },
+          );
           events.push({ code: "stock-enough", orderId: o.order_id });
         } else {
           // ไม่พอ → 4S คำนวณต้นทุน แล้วรอ Admin ตัดสินใจ (5A)
@@ -1749,7 +1764,11 @@ export function runAutomation(input: AppState): {
           continue;
         }
         // Q6S.1
-        const rule = findShippingRule(o.shipping_method, o.sales_channel);
+        const rule = findShippingRule(
+          o.shipping_method,
+          o.sales_channel,
+          o.fulfill_source,
+        );
         if (!rule) {
           s = toManual(s, o.order_id, "template");
           events.push({ code: "label-no-template", orderId: o.order_id });

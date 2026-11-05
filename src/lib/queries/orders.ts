@@ -506,11 +506,18 @@ export async function saveRslMatch(
 }
 
 // UC 1S / Q1S.1: list work that can be matched automatically or retried.
+// Only RSL-fulfilled Orders; in-house Orders skip 1S (3S sends them to 6S).
 export const Q1S_1_QUEUE = `
   SELECT o.order_id
   FROM orders o
-  WHERE o.order_status = 'ยังไม่ได้จับคู่'
-     OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl')
+  WHERE (
+      o.order_status = 'ยังไม่ได้จับคู่'
+      OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl')
+    )
+    AND EXISTS (
+      SELECT 1 FROM order_items oi
+      WHERE oi.order_id = o.order_id AND oi.fulfill_source = 'rsl'
+    )
   ORDER BY o.order_date, o.order_id
 `;
 
@@ -522,10 +529,12 @@ export async function listRslQueueIds(
 }
 
 // UC 1S alternative #3 / Q1S.1: clear the RSL link and generated labels.
+// Only Orders that carry an RSL reference; in-house Orders were never matched.
 export const Q1S_1_UNMATCH = `
   WITH eligible AS (
     SELECT order_id FROM orders
     WHERE order_id = $1
+      AND rsl_no IS NOT NULL
       AND (
         order_status IN ('รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า')
         OR (order_status = 'รอดำเนินการด้วยตนเอง' AND rsl_no IS NOT NULL)
