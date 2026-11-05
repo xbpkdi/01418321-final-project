@@ -475,6 +475,43 @@ export const SEED_ORDERS: Order[] = [
     decision: "คุ้มค่า",
     decided_qty: 120,
   }),
+  order({
+    // สั่งซื้อแล้ว รอ Supplier ส่งของ — คำสั่งซื้อ PO-0091 ครอบคลุม 2 Order (ORD-24195, ORD-24196)
+    // 6A รับสินค้า: เพิ่มเข้าสต๊อกในบริษัท แล้วทั้งสอง Order กลับไป 3S ทันที
+    order_id: "ORD-24195",
+    marketplace_order_id: "377841-20260923-0000195",
+    order_date: "2026-09-23T09:40:00+09:00",
+    channel_sku: "rk-chr003-ol",
+    sku: "OUT-CHR-003",
+    product_name: "เก้าอี้พับแคมป์ปิ้ง โครงอะลูมิเนียม",
+    variation: "สีเขียวมะกอก",
+    qty: 10,
+    shipping_address: "北海道札幌市中央区北一条西 2-1",
+    shipping_method: "RSL ขนาดใหญ่",
+    order_status: "สั่งซื้อแล้ว",
+    sku_rule_id: "RULE-OUT-CHR-003",
+    decision: "คุ้มค่า",
+    decided_qty: 60,
+    po_id: "PO-0091",
+  }),
+  order({
+    // Order ที่สองของคำสั่งซื้อ PO-0091 (7A ยกเลิกคำสั่งซื้อด้วย → Order นี้กลับไป 5A)
+    order_id: "ORD-24196",
+    marketplace_order_id: "377841-20260924-0000196",
+    order_date: "2026-09-24T08:15:00+09:00",
+    channel_sku: "rk-chr003-ol",
+    sku: "OUT-CHR-003",
+    product_name: "เก้าอี้พับแคมป์ปิ้ง โครงอะลูมิเนียม",
+    variation: "สีเขียวมะกอก",
+    qty: 12,
+    shipping_address: "宮城県仙台市青葉区一番町 3-3-1",
+    shipping_method: "RSL ขนาดใหญ่",
+    order_status: "สั่งซื้อแล้ว",
+    sku_rule_id: "RULE-OUT-CHR-003",
+    decision: "คุ้มค่า",
+    decided_qty: 60,
+    po_id: "PO-0091",
+  }),
 
   // ── 10A Order ที่ปิดแล้ว ──
   order({

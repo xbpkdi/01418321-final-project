@@ -155,10 +155,10 @@ const INSERT_ORDER = `
     tracking_number, carrier_name, dispatched_at, tracking_notified,
     tracking_notified_at, cancel_reason, cancelled_at, verified_at,
     created_at, updated_at, manual_reason, customer_cancel_requested, edit_log,
-    delivery_status
+    delivery_status, reorder_id, reorder_decision, decided_qty
   ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-    $15, $16, $17, $18, $19, $20, $21, $22
+    $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
   )
   ON CONFLICT (order_id) DO NOTHING
 `;
@@ -326,6 +326,9 @@ async function seedOrders(client: PoolClient, now: Date): Promise<void> {
       order.customer_cancel_request ?? false,
       JSON.stringify(order.edit_log ?? []),
       order.delivery_status ?? null,
+      order.po_id ?? null,
+      order.decision ?? null,
+      order.decided_qty ?? null,
     ]);
 
     await client.query(INSERT_ORDER_ITEM, [
@@ -412,8 +415,9 @@ export async function seedDatabase(options?: {
 
     await seedAdmins(client, now);
     await seedReferenceData(client, now);
-    await seedOrders(client, now);
+    // reorders first: orders.reorder_id references them (UC 6A).
     await seedReorders(client);
+    await seedOrders(client, now);
     await seedSyncStates(client, now);
   });
 }
