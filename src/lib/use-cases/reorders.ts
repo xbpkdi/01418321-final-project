@@ -2,6 +2,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { SupplierAdapter } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
+import { isFaultEnabled } from "@/lib/adapters/faults";
 import { withTransaction } from "@/lib/db";
 import {
   completeReorderAttempt,
@@ -63,6 +64,9 @@ export async function decideReorderUseCase(input: {
       return "no-price";
     }
     if (row.unit_cost === null) return "no-cost";
+    // Simulated save failure (/dev "db" fault): keep the Order status so the
+    // Admin can confirm again (5A, Q5A.3).
+    if (isFaultEnabled("db")) return "db";
 
     await saveReorderDecision(client, {
       orderId: input.orderId,

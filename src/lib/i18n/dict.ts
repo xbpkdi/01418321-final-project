@@ -351,6 +351,7 @@ const th = {
       "Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก",
     errHasRelated:
       "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่",
+    cannotDeleteTitle: "ลบสินค้าไม่ได้",
     switchToInactive: "เปลี่ยนเป็น ปิดการขาย แทน",
     okSaved: "บันทึกข้อมูลสินค้าสำเร็จ",
     okDeleted: (sku: string) => `ลบสินค้า ${sku} แล้ว`,
@@ -1057,6 +1058,7 @@ const en: typeof th = {
       "Reorder Threshold and Reorder Quantity must be positive whole numbers",
     errHasRelated:
       "This product cannot be deleted because it still has related records",
+    cannotDeleteTitle: "Cannot delete product",
     switchToInactive: "Set it to Off sale instead",
     okSaved: "Product saved",
     okDeleted: (sku: string) => `Product ${sku} deleted`,

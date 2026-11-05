@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { isFaultEnabled } from "@/lib/adapters/faults";
 import { withTransaction } from "@/lib/db";
 import {
   deleteClosedLabels,
@@ -50,6 +51,9 @@ export async function cleanupOrdersUseCase(input: {
       if (removed) deleted += 1;
       else skipped += 1;
     }
+    // Simulated database failure (/dev "db" fault): throw after the deletes so
+    // the whole set rolls back (10A, no partial deletion).
+    if (isFaultEnabled("db")) throw new Error("Simulated database fault");
     return { ok: true, deleted, skipped };
   });
 }

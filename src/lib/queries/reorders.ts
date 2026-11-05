@@ -107,7 +107,7 @@ export async function lockDecisionContext(
 export const Q5A_4 = `
   UPDATE orders
   SET reorder_decision = $2,
-      decided_qty = CASE WHEN $2 = 'คุ้มค่า' THEN $3 ELSE NULL END,
+      decided_qty = CASE WHEN $2 = 'คุ้มค่า' THEN $3::integer ELSE NULL END,
       order_status = $4,
       manual_reason = $5,
       updated_at = CURRENT_TIMESTAMP

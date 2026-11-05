@@ -85,6 +85,7 @@ export default function ProductScreen() {
   const [editingSku, setEditingSku] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [blockedDelete, setBlockedDelete] = useState<Product | null>(null);
   const [csvRows, setCsvRows] = useState<CsvRowResult[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [submitting, startSubmitting] = useTransition();
@@ -164,14 +165,7 @@ export default function ProductScreen() {
         return;
       }
       if (action.result === "has-related") {
-        toast.error(t.products.errHasRelated, {
-          action: product.active
-            ? {
-                label: t.products.switchToInactive,
-                onClick: () => toggleActive(product),
-              }
-            : undefined,
-        });
+        setBlockedDelete(product);
         return;
       }
       if (action.result === "ok") toast.success(t.products.okDeleted(product.sku));
@@ -332,6 +326,37 @@ export default function ProductScreen() {
           />
         }
       />
+
+      {/* ทางเลือก #1: ลบสินค้าที่ยังมีรายการเกี่ยวข้องไม่ได้ เสนอให้ปิดการขายแทน */}
+      <Dialog
+        open={blockedDelete !== null}
+        onOpenChange={(o) => !o && setBlockedDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.products.cannotDeleteTitle}</DialogTitle>
+            <DialogDescription>
+              {blockedDelete ? `${blockedDelete.sku} · ` : ""}
+              {t.products.errHasRelated}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBlockedDelete(null)}>
+              {t.common.cancel}
+            </Button>
+            {blockedDelete?.active && (
+              <Button
+                onClick={() => {
+                  toggleActive(blockedDelete);
+                  setBlockedDelete(null);
+                }}
+              >
+                {t.products.switchToInactive}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={draft !== null} onOpenChange={(o) => !o && setDraft(null)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
