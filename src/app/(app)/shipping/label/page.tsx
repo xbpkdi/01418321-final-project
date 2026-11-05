@@ -3,7 +3,7 @@
 // LabelPrintScreen — UC 9A พิมพ์ใบปะสินค้า · จุดออกรายงานที่ 1 (ใบปะสินค้า)
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู printLabel ใน lib/workflow.ts)
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -27,16 +27,48 @@ import { useStore } from "@/lib/store";
 import {
   findOrder,
   labelQueue,
-  printLabel,
   type PrintResult,
 } from "@/lib/workflow";
+import {
+  formatLabelsAction,
+  printLabelsAction,
+} from "@/app/(app)/actions";
 
 export default function LabelPrintScreen() {
   const router = useRouter();
   const t = useT();
-  const { state, run } = useStore();
+  const { state } = useStore();
   const [reprint, setReprint] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
+  const formatted = useRef(false);
+
+  useEffect(() => {
+    if (formatted.current) return;
+    formatted.current = true;
+    void formatLabelsAction().then((action) => {
+      if (!action.success) {
+        toast.error(t.errors[action.error]);
+        return;
+      }
+      for (const event of action.result) {
+        if (event.code === "label-created") {
+          toast.success(t.auto.labelCreated(event.count));
+        } else if (event.code === "label-no-address") {
+          toast.error(t.auto.labelNoAddress, {
+            description: t.common.orderRef(event.orderId),
+          });
+        } else if (event.code === "label-no-template") {
+          toast.error(t.auto.labelNoTemplate, {
+            description: t.common.orderRef(event.orderId),
+          });
+        } else {
+          toast.error(t.auto.labelService, {
+            description: t.common.orderRef(event.orderId),
+          });
+        }
+      }
+    });
+  }, [t]);
 
   // ขั้นตอนที่ 1: Order ที่พร้อมพิมพ์ + Order ที่ 6S ทำต่อไม่ได้ (รอดำเนินการด้วยตนเอง)
   const queue = labelQueue(state);
@@ -63,11 +95,15 @@ export default function LabelPrintScreen() {
   };
 
   // ขั้นตอนที่ 3: กด "พิมพ์ใบปะสินค้า" (Q9A.1 + Q9A.2)
-  function print(orderId: string, isReprint = false): boolean {
-    const { result, template } = run((s) => {
-      const r = printLabel(s, orderId, isReprint);
-      return { state: r.state, result: r.result, template: r.template };
-    });
+  async function print(orderId: string, isReprint = false): Promise<boolean> {
+    const action = await printLabelsAction([orderId], isReprint);
+    if (!action.success) {
+      toast.error(t.errors[action.error]);
+      return false;
+    }
+    const { result, template } = action.result[0] ?? {
+      result: "no-template" as const,
+    };
     if (result === "already") {
       setReprint(orderId);
       return false;
@@ -91,17 +127,28 @@ export default function LabelPrintScreen() {
   }
 
   // ขั้นตอนที่ 2: "พิมพ์ใบปะสินค้าทั้งหมด"
-  function printAll() {
+  async function printAll() {
     const ids = queue
       .filter((o) => o.order_status === "รอพิมพ์ใบปะสินค้า")
       .map((o) => o.order_id);
-    let ok = 0;
-    for (const id of ids) if (print(id)) ok++;
+    const action = await printLabelsAction(ids, false);
+    if (!action.success) {
+      toast.error(t.errors[action.error]);
+      return;
+    }
+    const ok = action.result.filter((result) => result.result === "ok").length;
+    for (const outcome of action.result) {
+      if (outcome.result !== "ok") {
+        toast.error(ERROR[outcome.result], {
+          description: t.common.orderRef(outcome.orderId),
+        });
+      }
+    }
     if (ids.length > 1)
       toast.info(t.label.printAllSummary(ok, ids.length - ok));
   }
 
-  const queueCols = queueColumns(t, (o) => print(o.order_id));
+  const queueCols = queueColumns(t, (o) => void print(o.order_id));
   const printedCols = printedColumns(t, (o) => setReprint(o.order_id));
 
   return (
@@ -185,7 +232,7 @@ export default function LabelPrintScreen() {
             </Button>
             <Button
               onClick={() => {
-                if (reprint) print(reprint, true);
+                if (reprint) void print(reprint, true);
                 setReprint(null);
               }}
             >

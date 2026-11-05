@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Anton, Archivo, Kanit, Noto_Sans_Thai } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/lib/i18n/context";
-import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
 // UI: Archivo สำหรับละติน ส่วนอักษรไทยตกไปที่ Noto Sans Thai
@@ -39,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
-          <StoreProvider>{children}</StoreProvider>
+          {children}
           <Toaster />
         </LanguageProvider>
       </body>

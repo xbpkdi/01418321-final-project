@@ -28,8 +28,8 @@ import {
   type StockLevel,
   type Supplier,
 } from "@/types/product";
-import { MOCK_USERS, type MockUser } from "@/mock/users";
 import {
+  MOCK_DAILY_VOLUME,
   SEED_CONNECTION,
   SEED_ORDERS,
   SEED_RMS_CANCEL_REQUESTS,
@@ -72,7 +72,7 @@ export type DeletionLog = {
 };
 
 export type AppState = {
-  version: 2;
+  version: 3;
   orders: Order[];
   products: Product[];
   suppliers: Supplier[];
@@ -80,10 +80,10 @@ export type AppState = {
   costs: CostComponents[];
   costLog: CostLog[];
   purchaseOrders: PurchaseOrder[];
+  dailyVolume: { date: string; count: number }[];
   rmsInbox: Omit<Order, "order_id" | "order_status">[];
   rmsCancelRequests: string[];
   connection: ChannelConnection;
-  users: MockUser[];
   session: { user_id: string; user_email: string } | null;
   faults: Record<FaultKey, boolean>;
   deletionLog: DeletionLog[];
@@ -100,7 +100,7 @@ export function createSeed(now = Date.now()): AppState {
   const iso = (offsetDays: number) =>
     new Date(now - offsetDays * DAY).toISOString();
   return {
-    version: 2,
+    version: 3,
     orders: structuredClone(SEED_ORDERS),
     products: structuredClone(SEED_PRODUCTS),
     suppliers: structuredClone(SEED_SUPPLIERS),
@@ -124,10 +124,10 @@ export function createSeed(now = Date.now()): AppState {
         status: "สั่งซื้อแล้ว",
       },
     ],
+    dailyVolume: MOCK_DAILY_VOLUME,
     rmsInbox: structuredClone(SEED_RMS_INBOX),
     rmsCancelRequests: [...SEED_RMS_CANCEL_REQUESTS],
     connection: { ...SEED_CONNECTION },
-    users: structuredClone(MOCK_USERS),
     session: null,
     faults: Object.fromEntries(FAULT_KEYS.map((k) => [k, false])) as Record<
       FaultKey,
@@ -235,63 +235,64 @@ export function stockTotal(s: AppState, sku: string) {
   };
 }
 
+/** Pure 4A validation shared by the browser-era flow and the server use case. */
+export function isImportableOrder(order: {
+  marketplace_order_id: string;
+  channel_sku: string;
+  qty: number;
+  shipping_address: string;
+  shipping_method: string;
+}): boolean {
+  return Boolean(
+    order.marketplace_order_id.trim() &&
+      order.channel_sku.trim() &&
+      Number.isInteger(order.qty) &&
+      order.qty > 0 &&
+      order.shipping_address.trim() &&
+      order.shipping_method.trim(),
+  );
+}
+
+/** Pure 2S rule: a channel SKU must resolve to exactly one active SKU rule. */
+export function chooseSkuRule<T>(matches: readonly T[]):
+  | { kind: "missing" }
+  | { kind: "multiple" }
+  | { kind: "matched"; value: T } {
+  if (matches.length === 0) return { kind: "missing" };
+  if (matches.length > 1) return { kind: "multiple" };
+  return { kind: "matched", value: matches[0] };
+}
+
+/** Pure 3S rule. A missing RSL value means only confirmed in-house stock is used. */
+export function chooseStockRoute(
+  quantity: number,
+  inHouseQuantity: number,
+  rslQuantity: number | null,
+): "enough" | "low" {
+  const available = inHouseQuantity + (rslQuantity ?? 0);
+  return available >= quantity ? "enough" : "low";
+}
+
+/** Pure 1S rule shared by the server matcher and the legacy state flow. */
+export function chooseRslMatch<T extends { rsl_order_id: string }>(
+  matches: readonly T[],
+  chosen?: string,
+):
+  | { kind: "not-found" }
+  | { kind: "multiple"; options: T[] }
+  | { kind: "matched"; value: T } {
+  if (matches.length === 0) return { kind: "not-found" };
+  const selected = chosen
+    ? matches.find((match) => match.rsl_order_id === chosen)
+    : matches.length === 1
+      ? matches[0]
+      : undefined;
+  if (!selected) return { kind: "multiple", options: [...matches] };
+  return { kind: "matched", value: selected };
+}
+
 /** สถานะที่ถือว่า Order ปิดแล้ว (7A Pre-Condition, 10A) */
 export const CLOSED_STATUSES: OrderStatus[] = ["จัดส่งสำเร็จ", "ยกเลิกแล้ว"];
-
-// 1A เข้าสู่ระบบ
-
-export const EMAIL_PATTERN = /^[A-Za-z0-9]+@[A-Za-z0-9]+\.[A-Za-z0-9]+$/;
-
-export type LoginResult =
-  "incomplete" | "email-format" | "locked" | "wrong" | "ok";
-
-export function login(
-  s: AppState,
-  email: string,
-  password: string,
-): { state: AppState; result: LoginResult } {
-  if (!email.trim() || !password.trim())
-    return { state: s, result: "incomplete" };
-  if (!EMAIL_PATTERN.test(email.trim()))
-    return { state: s, result: "email-format" };
-
-  // Q1A.1
-  const user = s.users.find((u) => u.user_email === email.trim());
-  if (user && user.fail_attempts >= 5) return { state: s, result: "locked" };
-  if (!user) return { state: s, result: "wrong" };
-  if (user.user_password !== password) {
-    // รหัสผ่านผิด: +1 ให้ fail_attempts
-    return {
-      state: {
-        ...s,
-        users: s.users.map((u) =>
-          u.user_id === user.user_id
-            ? { ...u, fail_attempts: u.fail_attempts + 1 }
-            : u,
-        ),
-      },
-      result: "wrong",
-    };
-  }
-  // สำเร็จ: fail_attempts = 0, last_login = ตอนนี้
-  return {
-    state: {
-      ...s,
-      users: s.users.map((u) =>
-        u.user_id === user.user_id
-          ? { ...u, fail_attempts: 0, last_login: nowIso() }
-          : u,
-      ),
-      session: { user_id: user.user_id, user_email: user.user_email },
-    },
-    result: "ok",
-  };
-}
-
-export function logout(s: AppState): AppState {
-  // ยกเลิก session อย่างเดียว ไม่แตะข้อมูลอื่น
-  return { ...s, session: null };
-}
 
 // 4A ดึง Order เข้าระบบ
 
@@ -1631,6 +1632,28 @@ export type AutoEvent =
   | { code: "stock-deducted"; orderId: string }
   | { code: "stock-insufficient"; orderId: string }
   | { code: "stock-sync"; orderId: string };
+
+/** Pure validation for label-service output before any database write. */
+export function validGeneratedLabels(
+  labels: readonly {
+    label_template: string;
+    parcel_seq: number;
+    parcel_total: number;
+  }[],
+): boolean {
+  if (labels.length === 0) return false;
+  const sequences = new Set(labels.map((label) => label.parcel_seq));
+  return (
+    labels.every(
+      (label) =>
+        label.label_template.trim().length > 0 &&
+        Number.isInteger(label.parcel_seq) &&
+        label.parcel_seq > 0 &&
+        Number.isInteger(label.parcel_total) &&
+        label.parcel_total === labels.length,
+    ) && sequences.size === labels.length
+  );
+}
 
 /**
  * ทำงานเหมือน scheduler: ประมวลผล Order ที่อยู่ในสถานะที่ระบบรับผิดชอบ จนไม่มีอะไรเปลี่ยน

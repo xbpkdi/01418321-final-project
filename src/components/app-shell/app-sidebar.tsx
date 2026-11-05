@@ -6,9 +6,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ChevronsUpDown, LogOut, UserRound } from "lucide-react";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,20 +38,18 @@ import { Button } from "@/components/ui/button";
 import { navGroups } from "@/lib/nav";
 import { useT } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
-import { logout as endSession } from "@/lib/workflow";
+import { logoutAction } from "@/app/login/actions";
 
-export function AppSidebar() {
+export function AppSidebar({ adminEmail }: { adminEmail: string }) {
   const pathname = usePathname();
-  const router = useRouter();
   const t = useT();
-  const { state, run, isDirty } = useStore();
+  const { isDirty } = useStore();
   const [confirming, setConfirming] = React.useState(false);
+  const [loggingOut, startLogout] = React.useTransition();
 
-  // UC 1A ขั้นตอนที่ 4: ล้าง session แล้ว redirect กลับหน้า Login (ไม่แตะข้อมูลอื่น)
+  // UC 1A ขั้นตอนที่ 4: revoke session ฝั่ง server แล้วกลับหน้า Login
   function logout() {
-    run((s) => ({ state: endSession(s) }));
-    toast.success(t.app.logoutDone);
-    router.push("/login");
+    startLogout(() => logoutAction());
   }
 
   // มีงานที่ยังไม่ได้บันทึก ต้องถามยืนยันก่อน
@@ -132,7 +129,7 @@ export function AppSidebar() {
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{t.app.admin}</span>
                     <span className="text-muted-foreground truncate text-xs">
-                      {state.session?.user_email}
+                      {adminEmail}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -165,7 +162,9 @@ export function AppSidebar() {
             <Button variant="outline" onClick={() => setConfirming(false)}>
               {t.common.cancel}
             </Button>
-            <Button onClick={logout}>{t.app.logout}</Button>
+            <Button onClick={logout} disabled={loggingOut}>
+              {t.app.logout}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

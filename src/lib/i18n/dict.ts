@@ -26,6 +26,16 @@ const th = {
     logoutDone: "ออกจากระบบแล้ว",
   },
 
+  errors: {
+    dataLoadTitle: "ไม่สามารถโหลดข้อมูลได้",
+    retry: "ลองอีกครั้ง",
+    databaseUnavailable: "ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
+    databaseFailure: "ไม่สามารถดำเนินการกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง",
+    externalUnavailable: "ไม่สามารถเชื่อมต่อระบบภายนอกได้ กรุณาลองใหม่ภายหลัง",
+    externalRejected: "ระบบภายนอกไม่สามารถดำเนินการตามคำขอได้",
+    externalInvalidResponse: "ได้รับข้อมูลที่ไม่ถูกต้องจากระบบภายนอก",
+  },
+
   nav: {
     groups: {
       main: "หน้าหลัก",
@@ -341,6 +351,7 @@ const th = {
       "Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก",
     errHasRelated:
       "ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่",
+    cannotDeleteTitle: "ลบสินค้าไม่ได้",
     switchToInactive: "เปลี่ยนเป็น ปิดการขาย แทน",
     okSaved: "บันทึกข้อมูลสินค้าสำเร็จ",
     okDeleted: (sku: string) => `ลบสินค้า ${sku} แล้ว`,
@@ -383,6 +394,12 @@ const th = {
     errIncomplete: "ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล",
     errRsl: "ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง",
     partialHint: "แสดงเฉพาะข้อมูลสต๊อกในคลังบริษัท",
+    adjustTitle: "ปรับยอดสต๊อก",
+    adjustReason: "เหตุผลที่ปรับ",
+    adjustReasonPlaceholder: "เช่น ตรวจนับสินค้าจริงประจำเดือน",
+    adjustSave: "บันทึกยอดสต๊อก",
+    adjustOk: "บันทึกยอดสต๊อกและประวัติแล้ว",
+    adjustInvalid: "กรอกจำนวนเต็มตั้งแต่ 0 ขึ้นไปและระบุเหตุผล",
   },
 
   cost: {
@@ -666,9 +683,17 @@ const th = {
     description:
       'ใช้จำลองข้อผิดพลาดจากระบบภายนอกตาม "ทางเลือก" ของแต่ละ UC เพื่อทดสอบและ capture รูปลงรายงาน (rubric ข้อ 33) — ไม่ใช่หน้าจอของระบบจริง',
     faultsTitle: "จำลองข้อผิดพลาด",
+    faultsHint:
+      "ค่าเหล่านี้ควบคุม mock adapter ฝั่งเซิร์ฟเวอร์และจะปิดทั้งหมดเมื่อรีสตาร์ทเซิร์ฟเวอร์",
+    resetFaults: "ปิดข้อผิดพลาดทั้งหมด",
+    faultsResetDone: "ปิดข้อผิดพลาดจำลองทั้งหมดแล้ว",
     reset: "รีเซ็ตข้อมูลตัวอย่าง",
-    resetHint: "ล้างทุกอย่างที่ทำไว้ กลับไปเป็นข้อมูลตั้งต้น",
+    resetHint:
+      "ล้างข้อมูลใน PostgreSQL แล้วโหลดข้อมูลตัวอย่างใหม่ โดยคงการเข้าสู่ระบบนี้ไว้",
+    resetConfirm:
+      "ยืนยันรีเซ็ตข้อมูลทั้งหมดใน PostgreSQL และโหลดข้อมูลตัวอย่างใหม่หรือไม่?",
     resetDone: "รีเซ็ตข้อมูลตัวอย่างแล้ว",
+    actionFailed: "ดำเนินการไม่สำเร็จ กรุณาลองใหม่",
     faults: {
       rms: "4A · เชื่อมต่อ Rakuten RMS ไม่ได้",
       marketplaceVerify: "2A · ดึงข้อมูลล่าสุดจาก Marketplace ไม่ได้",
@@ -684,7 +709,7 @@ const th = {
     } as Record<FaultKey, string>,
     accounts: "บัญชีทดสอบ",
     accountsHint:
-      "admin@colorado.jp / demo1234 · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
   },
 };
 
@@ -699,6 +724,16 @@ const en: typeof th = {
     logout: "Log out",
     logoutConfirm: "Do you want to log out?",
     logoutDone: "Logged out",
+  },
+
+  errors: {
+    dataLoadTitle: "Unable to load data",
+    retry: "Try again",
+    databaseUnavailable: "The database is unavailable. Please try again later.",
+    databaseFailure: "The database operation could not be completed. Please try again later.",
+    externalUnavailable: "An external service is unavailable. Please try again later.",
+    externalRejected: "An external service could not complete the request.",
+    externalInvalidResponse: "An external service returned an invalid response.",
   },
 
   nav: {
@@ -1023,6 +1058,7 @@ const en: typeof th = {
       "Reorder Threshold and Reorder Quantity must be positive whole numbers",
     errHasRelated:
       "This product cannot be deleted because it still has related records",
+    cannotDeleteTitle: "Cannot delete product",
     switchToInactive: "Set it to Off sale instead",
     okSaved: "Product saved",
     okDeleted: (sku: string) => `Product ${sku} deleted`,
@@ -1064,6 +1100,12 @@ const en: typeof th = {
     errIncomplete: "Stock data is incomplete. Please check the data source",
     errRsl: "Cannot fetch stock from RSL. Please try again later",
     partialHint: "Showing in-house stock only",
+    adjustTitle: "Adjust stock",
+    adjustReason: "Adjustment reason",
+    adjustReasonPlaceholder: "For example, monthly physical count",
+    adjustSave: "Save stock levels",
+    adjustOk: "Stock levels and history saved",
+    adjustInvalid: "Enter whole numbers of 0 or more and provide a reason",
   },
 
   cost: {
@@ -1350,9 +1392,16 @@ const en: typeof th = {
     description:
       "Simulate external-system failures from each use case's alternative flows for testing and report screenshots (rubric item 33). Not part of the real system",
     faultsTitle: "Simulate failures",
+    faultsHint:
+      "These controls drive the server-side mock adapters and all turn off when the server restarts",
+    resetFaults: "Clear all failures",
+    faultsResetDone: "All simulated failures cleared",
     reset: "Reset sample data",
-    resetHint: "Clear everything you did and go back to the starting data",
+    resetHint:
+      "Clear PostgreSQL and reload the sample data while keeping this session signed in",
+    resetConfirm: "Reset all PostgreSQL data and reload the sample data?",
     resetDone: "Sample data reset",
+    actionFailed: "The action failed. Please try again",
     faults: {
       rms: "4A · Cannot connect to Rakuten RMS",
       marketplaceVerify: "2A · Cannot fetch latest marketplace data",
@@ -1368,7 +1417,7 @@ const en: typeof th = {
     } as Record<FaultKey, string>,
     accounts: "Test accounts",
     accountsHint:
-      "admin@colorado.jp / demo1234 · locked@colorado.jp tests too many sign-in attempts",
+      "admin@colorado.jp uses the seeded password · locked@colorado.jp tests too many sign-in attempts",
   },
 };
 

@@ -2,17 +2,24 @@
 
 ## Core Principles
 
-### I. Pure Workflow, Single Store
+### I. Pure Rules, Database State
 
-Every use case MUST be implemented as a pure function in `src/lib/workflow.ts` with the shape
-`(AppState, ...args) => { state, result }`. All state changes MUST go through `run()` from
-`src/lib/store.tsx`, which commits the new state and then runs `runAutomation`.
-Screens MUST NOT mutate state directly. Screens MUST NOT hold business rules; they only map
-`result` codes to text from the i18n dictionary.
+The business rules of every use case MUST live as pure functions in `src/lib/workflow.ts` with
+the shape `(AppState, ...args) => { state, result }`. State lives in the PostgreSQL database.
+Every write MUST go through a server-side use case function that loads the rows it needs, applies
+the pure rule, and persists the outcome in one database transaction; the System (Auto) use cases
+(`runAutomation`) MUST run in the same transaction as the action that triggers them. Screens MUST
+NOT write data directly and MUST NOT hold business rules; they call the server and map `result`
+codes to text from the i18n dictionary.
 
-Rationale: one shared state and pure transitions keep every screen consistent, let the System
-(Auto) use cases chain after any Admin action, and let the same logic move behind a real database
-later without rewriting the screens.
+Transition: until the last phase of feature 002 removes it, the in-browser store
+(`src/lib/store.tsx`, `run()`, `localStorage`) remains the only write path for screens that have
+not been migrated yet. Once a screen is migrated it MUST NOT use the in-browser store, and when
+the migration is complete the store and the `localStorage` key MUST be deleted.
+
+Rationale: pure rules keep the behaviour testable by hand and traceable to the use case
+descriptions, and the database makes the data durable and shared across browsers while the same
+rules and the same screens keep working.
 
 ### II. Use Case Identity and Traceability
 
@@ -66,13 +73,21 @@ decoration, and the Topbar language toggle is part of the design.
 - Database access MUST use raw SQL through `pg`, with parameterized queries only (`$1`, `$2`).
   ORMs and string-built SQL are not allowed. Every SQL statement MUST be traceable to a use case
   so the full statement table can be produced for the report.
-- No backend is wired yet. `src/lib/db.ts` and `src/lib/queries/` MUST NOT be connected to
-  screens until the SQL in the use case document is rewritten against the ER diagram's tables and
-  columns and the Q-number recheck below is done. SQL in code MUST use the ER diagram's names.
-- Admin credentials MUST be stored in the database with the password hashed, never in plain text.
-  Plain-text passwords are allowed only in `src/mock/` while the app runs on mock data, and MUST
-  be removed when the database is wired in. TODO(ADMIN_BOOTSTRAP): how the first Admin account is
-  created is deferred; decide before the login use case (1A) is connected to the database.
+- `src/lib/db.ts` and `src/lib/queries/` MAY be connected to screens. SQL in code MUST use the
+  ER diagram's table and column names, and each query MUST carry a Q-number under the scheme in
+  Development Workflow. Q-numbers are provisional until the team's revised use case document
+  arrives; renaming them afterwards is accepted and is not a reason to block the work.
+- Outside systems (Rakuten RMS, RSL, the carrier, the supplier send) MUST be reached only through
+  an interface, and each interface MUST have a mock adapter selected by configuration. Use case
+  functions and screens MUST NOT depend on a concrete client. This keeps a real Rakuten client
+  addable later without changing any use case. No real outside connection is built or required
+  in feature 002.
+- Admin credentials MUST be stored in the database with the password hashed with Node's built-in
+  `scrypt` (no extra dependency), never in plain text. Login MUST create a session cookie, and
+  every screen inside `src/app/(app)/` MUST require a valid session on the server. Plain-text
+  passwords are allowed only in `src/mock/` while the in-browser store exists, and MUST be removed
+  when the login use case (1A) is connected to the database. The first Admin account is created
+  by the database seed script.
 - Order status vocabulary: the values of `orders.order_status` are exactly the 22 statuses in
   `src/lib/order-status.ts`, approved by the team on 2026-10-10. Where the use case document
   differs, the team will correct the document: 4A sets "รอตรวจสอบคำสั่งซื้อ"; 7A sets "ยกเลิกแล้ว"
@@ -111,15 +126,22 @@ decoration, and the Topbar language toggle is part of the design.
     independent of the others, such as one marked `[P]`, or to split a large phase.
   - `docs/<topic>`: documentation-only work (specs, constitution, source documents), for example
     `docs/sdd-setup`.
-  A branch MUST hold exactly one phase or one task, never a mix. Task IDs restart at T001 in each
-  feature, so when the same name was already used by another feature, add the feature number:
-  `feature/002-t-012`. The commit messages and the pull request description MUST name the task IDs
-  and the feature number (for example `001-order-status-alignment`).
+  A branch MUST hold exactly one phase or one task, never a mix. Task IDs and phase numbers
+  restart in each feature, so when the same name was already used by an earlier feature, add the
+  feature number: `feature/<nnn>-phase-<n>` (for example `feature/002-phase-3`) or
+  `feature/<nnn>-t-<nnn>` (for example `feature/002-t-012`). The commit messages and the pull
+  request description MUST name the task IDs and the feature number (for example
+  `001-order-status-alignment`).
+- Phase numbering: phase headings in `tasks.md` MUST be numbered from 0, so that "Phase N" in the
+  file is the branch `feature/phase-N` (or `feature/<nnn>-phase-N`).
 - Alternative-flow coverage: every alternative flow caused by an external system MUST have an
-  entry in `FAULT_KEYS` and a toggle on the `/dev` page. Seed data in `src/mock/` MUST cover every
-  use case path, with a comment saying which case each row tests.
-- Changes to `AppState` shape MUST bump `version` and the `localStorage` key together, so old
-  browsers do not load stale data.
+  entry in `FAULT_KEYS` and a toggle on the `/dev` page; once the mock adapters exist, the toggle
+  MUST act on the mock adapter of that outside system. Seed data (`src/mock/`, and the database
+  seed script that loads it) MUST cover every use case path, with a comment saying which case each
+  row tests.
+- While the in-browser store exists, changes to `AppState` shape MUST bump `version` and the
+  `localStorage` key together, so old browsers do not load stale data. Database schema changes
+  MUST be made as new migration files, never by editing a migration that was already merged.
 
 ## Governance
 
@@ -133,4 +155,4 @@ clarification. Reviewers MUST check each feature PR against Principles I to IV. 
 deviation MUST be justified in the PR description. Runtime guidance for agents lives in `CLAUDE.md`
 and `AGENTS.md`.
 
-**Version**: 1.4.0 | **Ratified**: 2026-10-10 | **Last Amended**: 2026-10-12
+**Version**: 1.5.0 | **Ratified**: 2026-10-10 | **Last Amended**: 2026-10-23

@@ -5,9 +5,7 @@
 // ด้านหลังเป็นตาราง blueprint จางๆ + แถบแสง ribbon โทนน้ำเงิน + แสงส้มจางๆ ตามเมาส์
 // ข้อความและเงื่อนไขตรวจสอบทุกอย่างมาจาก 321-sa-proj/report-doc/content/usecases.json
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useActionState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -23,17 +21,11 @@ import { GlowCard } from "@/components/landing/glow-card";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 import { useT } from "@/lib/i18n/context";
-import { useStore } from "@/lib/store";
-import { login } from "@/lib/workflow";
+import { loginAction } from "@/app/login/actions";
 
 export default function LoginScreen() {
-  const router = useRouter();
   const t = useT();
-  const { run } = useStore();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [state, formAction, submitting] = useActionState(loginAction, null);
   const hostRef = useRef<HTMLDivElement>(null);
   const still = usePrefersReducedMotion();
 
@@ -52,34 +44,16 @@ export default function LoginScreen() {
     });
   }
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setSubmitting(true);
-
-    // ขั้นตอนที่ 3 ทั้งหมด (ตรวจค่าว่าง → รูปแบบอีเมล → Q1A.1) อยู่ใน workflow.login
-    // ของจริงจะย้ายไปทำฝั่ง server และเทียบ hash แทนการเทียบตรงๆ
-    window.setTimeout(() => {
-      const { result } = run((s) => {
-        const r = login(s, email, password);
-        return { state: r.state, result: r.result };
-      });
-      setSubmitting(false);
-      if (result === "ok") {
-        toast.success(t.login.okLogin);
-        router.push("/dashboard");
-        return;
-      }
-      setError(
-        {
-          incomplete: t.login.errIncomplete,
-          "email-format": t.login.errEmailFormat,
-          locked: t.login.errTooManyAttempts,
-          wrong: t.login.errWrongCredentials,
-        }[result],
-      );
-    }, 600);
-  }
+  const error = state
+    ? {
+        incomplete: t.login.errIncomplete,
+        "email-format": t.login.errEmailFormat,
+        locked: t.login.errTooManyAttempts,
+        wrong: t.login.errWrongCredentials,
+        databaseUnavailable: t.errors.databaseUnavailable,
+        databaseFailure: t.errors.databaseFailure,
+      }[state.result]
+    : null;
 
   return (
     <div
@@ -134,7 +108,7 @@ export default function LoginScreen() {
               {t.login.description}
             </p>
 
-            <form onSubmit={handleSubmit} noValidate className="mt-6">
+            <form action={formAction} noValidate className="mt-6">
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="user_email">{t.login.email}</FieldLabel>
@@ -144,8 +118,6 @@ export default function LoginScreen() {
                     type="email"
                     autoComplete="email"
                     className="h-11"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     disabled={submitting}
                     aria-invalid={error !== null}
                   />
@@ -161,8 +133,6 @@ export default function LoginScreen() {
                     type="password"
                     autoComplete="current-password"
                     className="h-11"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     disabled={submitting}
                     aria-invalid={error !== null}
                   />

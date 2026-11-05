@@ -15,9 +15,17 @@ npm install
 npm run dev      # http://localhost:3000, redirects to /login
 npm run build
 npm run lint     # eslint (next core-web-vitals + typescript)
+
+# PostgreSQL (feature 002): copy .env.local.example to .env.local and set DATABASE_URL first
+npm run db:migrate   # apply db/migrations/*.sql
+npm run db:seed      # idempotent seed (re-running must not add rows)
+npm run db:setup     # migrate + seed
+npm run db:reset     # migrate + seed with reset (destructive; only when asked)
 ```
 
 No test runner is configured. `npx tsc --noEmit` is the only type check besides `next build`. Demo login: `admin@colorado.jp` / `demo1234` (`locked@colorado.jp` exercises the lockout path). The `/dev` page (not in the menu) resets seed data and toggles simulated external-system faults.
+
+`.env.local` also takes `SEED_ADMIN_PASSWORD` (seed input only; the DB stores a scrypt hash), `SESSION_DURATION_HOURS` (default 8) and `*_ADAPTER=mock` for each external system (only `mock` is accepted).
 
 **Verification:** no tests are mandatory (constitution policy). Verify with `npm run lint`, `npx tsc --noEmit` or `npm run build`, then walk the affected UC paths by hand, using the `/dev` fault toggles for alternative flows.
 
@@ -27,17 +35,23 @@ No test runner is configured. `npx tsc --noEmit` is the only type check besides 
 
 ## Architecture
 
-**No backend yet.** All screens read and write one shared client-side store. `src/lib/db.ts` (`pg` pool) and `src/lib/queries/` exist but are unused until the SQL is rewritten against the ER diagram; `DATABASE_URL` in `.env.local` is not needed to run the app. `src/app/api/` does not exist.
+**Feature 002 (`specs/002-real-database`) moved the app from a browser mock to PostgreSQL (Phases 0-9 implemented; T050 manual walkthrough pending).** Data is read and written server-side; the client only holds a read-only snapshot.
 
-**State flow (read these together):**
+- **Already server-side (phase 2):** login/logout (`src/app/login/actions.ts`), DB-backed sessions (`src/lib/auth/`, cookie `rsl_session`, only a SHA-256 of the token is stored), `requireSession()` in `src/app/(app)/layout.tsx` (DAL primitive; call it again in any new data loader or Server Action), schema and seed in `db/` (`db/migrations/*.sql`, `db/seed/`), and raw SQL in `src/lib/queries/` (`admin.ts`, `sessions.ts`).
+- **Client store (read-only snapshot):** `(app)` screens and `reports/` print views read `useStore()`, but `StoreProvider` (in the `(app)` and `reports` layouts) only holds a snapshot that `loadAppState` read from PostgreSQL. Writes go through Server Actions and a revalidated layout. `localStorage` no longer holds business data or session (Phase 9); only UI preferences remain (`rsl-hub-lang`, sidebar cookie). Don't add business data to browser storage.
+- **DB access:** `src/lib/db.ts` (`server-only`; `getPool`, `query`, `withTransaction`) is what `@/lib/db` resolves to. `src/lib/db/errors.ts` (`mapDatabaseError`) sits beside it. Query functions take a `QueryExecutor` (pool or transaction client) so a Server Action can run several in one `withTransaction`. Actions return result codes (`LoginActionResult`), not strings.
+- **External systems:** `src/lib/adapters/` (`contracts.ts` + `createAdapters`) is the switch point for Rakuten, RSL, label service, printer, carrier and supplier. Feature 002 only allows mock implementations.
+- No `src/app/api/`; mutations are Server Actions. No `middleware`/`proxy` file; auth is enforced per layout and loader.
+
+**Client store state flow (read these together):**
 - `src/lib/workflow.ts` holds every use case (UC) as a pure function `(AppState, ...args) => { state, result }`, plus `createSeed()` and `runAutomation()`. Screens never mutate state directly and never build user-facing result text here; they map `result` codes to strings from `src/lib/i18n/dict.ts`.
-- `src/lib/store.tsx` (`StoreProvider`, `useStore`) persists `AppState` in `localStorage` (key `rsl-hub-state-v2`) through `useSyncExternalStore`. Every change goes through `run(fn)`, which commits the new state, then calls `runAutomation`, then fires toasts for the automatic events. Changing the `AppState` shape requires bumping `version` and the key, or old browsers load stale data.
-- `runAutomation` plays the "System (Auto)" use cases (2S SKU rule match, 3S stock check, 6S label format, 7S stock deduction). It loops until no order changes (max 6 passes), so one user action can move an order several statuses forward.
+- `src/lib/store.tsx` (`StoreProvider`, `useStore`, `useUnsavedChanges`) exposes the DB snapshot plus an in-memory dirty flag. It has no `run`/`reset` and no persistence. Mutations and the "System (Auto)" steps run server-side in `src/lib/use-cases/` (`execute-workflow.ts`).
+- `runAutomation` plays the "System (Auto)" use cases (2S SKU rule match, 3S stock check, 6S label format, 7S stock deduction). It loops until no order changes (max 6 passes), so one user action can move an order several statuses forward. The server-side equivalent is `runAutomation` in `src/lib/use-cases/execute-workflow.ts`, which runs inside the same transaction as the triggering action; the pure version in `workflow.ts` is the rule reference.
 - Order lifecycle is driven by Thai status strings (`src/lib/order-status.ts`) compared literally throughout `workflow.ts`. `setStatus` clears `manual_reason` and `auto_error` on every transition; `toManual` parks an order at "รอดำเนินการด้วยตนเอง" with a `ManualReason`, which the owning screen's queue uses to pick it up.
 - External-system failures are simulated with `state.faults` (`FAULT_KEYS` in `workflow.ts`). Each key maps to an "alternative flow" in a UC; add a key there and a toggle in `/dev` when a new UC has one.
 - `src/mock/` supplies seed data that covers every UC path; comments there say which case each row tests.
 
-**Routing:** `src/app/login` is outside the shell. `src/app/(app)/` is wrapped by sidebar + header + `auth-guard`. `src/app/reports/` are print views. Menu structure is `src/lib/nav.ts`, shared with the sitemap page. Folders under `(app)` follow UC ids (2A verify, 1S RSL match, 5A+6A reorder, 8A shipping, 9A labels, 10A cleanup).
+**Routing:** `src/app/login` is outside the shell. `src/app/(app)/` is wrapped by sidebar + header and gated by `requireSession()`. `src/app/reports/` are print views. Menu structure is `src/lib/nav.ts`, shared with the sitemap page. Folders under `(app)` follow UC ids (2A verify, 1S RSL match, 5A+6A reorder, 8A shipping, 9A labels, 10A cleanup).
 
 **i18n:** `src/lib/i18n/` provides Thai (default) and English dictionaries via `useT()`. UI text must come from the dictionary.
 
@@ -47,8 +61,8 @@ No test runner is configured. `npx tsc --noEmit` is the only type check besides 
 
 Three team-supplied documents in `docs/source/` are the source of truth: `use-case-description.pdf` for behaviour, wording and step order; `bizflow-to-be.drawio.xml` for how use cases connect; `er-diagram.drawio.xml` for table and column names. The PDF stores Thai in a way `pdftotext` drops; extract it with PyMuPDF. The draw.io files are plain XML. They change; when the team sends a new version, replace the file here and re-check affected code against it. If they disagree with each other or with the code, the document wins and the conflict goes to the team as a question. Rakuten only: ignore Yahoo!/Amazon/eBay in the documents. Order statuses are the 22 in `src/lib/order-status.ts`; "จัดส่งสำเร็จ" is set only when the carrier confirms delivery (8A), so 7S must not set it. Code comments cite UC step numbers ("ทางเลือก #2", `Q5A.3`); keep those references when editing.
 
-When SQL is added under `src/lib/queries/`: raw SQL only (no ORM, the grading rubric requires listing every statement), constants named after the Q-number with `.` replaced by `_`, parameterized (`$1`) only. If SQL differs from the use case description, fix the description first. Target Q-number scheme is `Q<UC id>.<n>` (`Q4S.1` → `Q4S_1`), but the current UC document does not follow it yet (e.g. 3A uses Q13.1, 4A uses Q11.1). The team is revising it, so treat existing `// Q…` comments as provisional.
+When SQL is added under `src/lib/queries/`: raw SQL only (no ORM, the grading rubric requires listing every statement), constants named after the Q-number with `.` replaced by `_`, parameterized (`$1`) only. If SQL differs from the use case description, fix the description first. Q-number scheme is `Q<UC id>.<n>` (`Q4S.1` → `Q4S_1`), and the UC document revised on 2026-11-02 follows it, so its numbers are final (the Q-number recheck gate has passed; mapping table in `src/lib/queries/README.md`). Exceptions: `Q1A_2`–`Q1A_6` in `admin.ts` / `sessions.ts` are not in the document (it only has `Q1A.1`) and stay marked `(provisional)` until the team adds them.
 
 ## Spec-driven development (spec-kit)
 
-The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is ratified (four principles: pure workflow and single store, UC traceability, UC documents as source of truth, `DESIGN.md` authority); read it before specifying or planning. Spec-kit artifacts are written in Thai. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`. The active feature is `specs/001-order-status-alignment` (aligns code to the 22 statuses; its `tasks.md` drives the current work). Order of steps: specify, clarify, plan, tasks, analyze, implement; skipping one needs a reason in the PR.
+The repo is set up for spec-kit with the Claude integration: skills `speckit-specify`, `-clarify`, `-plan`, `-tasks`, `-analyze`, `-checklist`, `-implement`, `-converge`, `-constitution`, `-taskstoissues` in `.claude/skills/`; templates, PowerShell scripts and the `speckit` workflow in `.specify/`. The constitution at `.specify/memory/constitution.md` is ratified (four principles: pure workflow and single store, UC traceability, UC documents as source of truth, `DESIGN.md` authority); read it before specifying or planning. Spec-kit artifacts are written in Thai. Feature directory resolution uses `SPECIFY_FEATURE` / `SPECIFY_FEATURE_DIRECTORY` or `.specify/feature.json`. The active feature is `specs/002-real-database` (see `.specify/feature.json`; its `tasks.md` is split into numbered phases, one branch each, `feature/002-phase-<n>`; Phases 0-2 are merged). `specs/001-order-status-alignment` is the finished status alignment and its quickstart scenarios are re-run on the DB in 002. Order of steps: specify, clarify, plan, tasks, analyze, implement; skipping one needs a reason in the PR.
