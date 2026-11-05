@@ -1032,6 +1032,59 @@ export function purchase(
   return { state: next, result: { kind: "ok", po, supplier } };
 }
 
+// 6A รับสินค้าจาก Supplier
+
+export type ReceiveResult =
+  | { kind: "invalid-qty" }
+  | { kind: "not-found" }
+  | { kind: "already" }
+  | { kind: "not-ordered" }
+  | { kind: "ok"; sku: string; qty: number; orderIds: string[] };
+
+/**
+ * Admin บันทึกว่าได้รับสินค้าตามคำสั่งซื้อ (สถานะ "สั่งซื้อแล้ว") — เพิ่มจำนวนที่ได้รับ
+ * เข้าสต๊อกในบริษัท ปิดคำสั่งซื้อเป็น "ได้รับสินค้าแล้ว" (บันทึกได้ครั้งเดียว) แล้วส่ง
+ * Order ทุกรายการที่ผูกกับคำสั่งซื้อนี้กลับไป "รอตรวจสอบสต๊อก" ให้ 3S ทำงานต่อทันที
+ */
+export function receiveReorder(
+  s: AppState,
+  poId: string,
+  qty: number,
+): { state: AppState; result: ReceiveResult } {
+  if (!Number.isInteger(qty) || qty <= 0)
+    return { state: s, result: { kind: "invalid-qty" } };
+  const po = s.purchaseOrders.find((p) => p.po_id === poId);
+  if (!po) return { state: s, result: { kind: "not-found" } };
+  if (po.status === "ได้รับสินค้าแล้ว")
+    return { state: s, result: { kind: "already" } };
+  if (po.status !== "สั่งซื้อแล้ว")
+    return { state: s, result: { kind: "not-ordered" } };
+
+  let next: AppState = {
+    ...s,
+    purchaseOrders: s.purchaseOrders.map((p) =>
+      p.po_id === poId
+        ? {
+            ...p,
+            status: "ได้รับสินค้าแล้ว",
+            received_at: nowIso(),
+            received_qty: qty,
+          }
+        : p,
+    ),
+  };
+  next = adjustStock(next, po.sku, "in_house", qty);
+  const orderIds = next.orders
+    .filter((o) => o.po_id === poId && o.order_status === "สั่งซื้อแล้ว")
+    .map((o) => o.order_id);
+  for (const id of orderIds)
+    next = setStatus(next, id, "รอตรวจสอบสต๊อก");
+  return {
+    state: runAutomation(next).state,
+    result: { kind: "ok", sku: po.sku, qty, orderIds },
+  };
+}
+
 // 1S จับคู่ RSL
 
 /**
@@ -1469,13 +1522,33 @@ export function cancelOrder(
   }
   // ทางเลือก #2: ยกเลิกคำสั่งซื้อเติมสต๊อกที่ผูกกับ Order นี้ด้วย ถ้า Admin เลือก
   let poCancelled = false;
-  if (alsoCancelPo && check.linkedPo) {
+  if (
+    alsoCancelPo &&
+    check.linkedPo &&
+    (check.linkedPo.status === "สั่งซื้อแล้ว" ||
+      check.linkedPo.status === "รอส่งคำสั่งซื้อ")
+  ) {
+    const poId = check.linkedPo.po_id;
     next = {
       ...next,
       purchaseOrders: next.purchaseOrders.map((p) =>
-        p.po_id === check.linkedPo!.po_id ? { ...p, status: "ยกเลิกแล้ว" } : p,
+        p.po_id === poId ? { ...p, status: "ยกเลิกแล้ว" } : p,
       ),
     };
+    // Order อื่นที่ผูกกับคำสั่งซื้อเดียวกันไม่มีสินค้าเข้ามาแล้ว — กลับไปให้ Admin ตัดสินใจใหม่ (5A)
+    for (const other of next.orders) {
+      if (
+        other.order_id !== orderId &&
+        other.po_id === poId &&
+        (other.order_status === "สั่งซื้อแล้ว" ||
+          other.order_status === "รอส่งคำสั่งซื้อ")
+      )
+        next = setStatus(next, other.order_id, "รอ Admin ตัดสินใจสั่งซื้อ", {
+          po_id: undefined,
+          decision: undefined,
+          decided_qty: undefined,
+        });
+    }
     poCancelled = true;
   }
   // Q7A.1
@@ -1563,6 +1636,7 @@ export function planRangeCleanup(
       if (!before(p.order_date)) continue;
       const finished =
         p.status === "ยกเลิกแล้ว" ||
+        p.status === "ได้รับสินค้าแล้ว" ||
         (p.status === "สั่งซื้อแล้ว" && new Date(p.eta).getTime() < Date.now());
       const linked = s.orders.some(
         (o) => o.po_id === p.po_id && !CLOSED_STATUSES.includes(o.order_status),
