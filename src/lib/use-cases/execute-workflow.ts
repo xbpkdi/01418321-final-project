@@ -139,12 +139,13 @@ async function runOrderAutomation(
           stock.stockId,
           rslQuantity,
           orderId,
-          route === "enough"
-            ? "ยังไม่ได้จับคู่"
-            : "รอ Admin ตัดสินใจสั่งซื้อ",
+          route === "low"
+            ? "รอ Admin ตัดสินใจสั่งซื้อ"
+            : "ยังไม่ได้จับคู่",
+          route === "low" ? null : route,
         );
         events.push({
-          code: route === "enough" ? "stock-enough" : "stock-low",
+          code: route === "low" ? "stock-low" : "stock-enough",
           orderId,
         });
         break;

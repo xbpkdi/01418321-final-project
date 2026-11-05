@@ -82,12 +82,21 @@ export async function getOrderStock(
     : null;
 }
 
-// UC 3S / Q3S.1: persist the latest successful RSL reading and route the Order.
+// UC 3S / Q3S.1: persist the latest successful RSL reading, the stock source
+// 7S will deduct from ($5, NULL on the low route) and route the Order.
 export const Q3S_1_ROUTE = `
   WITH latest_stock AS (
     UPDATE stock
     SET rsl_qty = COALESCE($2, rsl_qty), updated_at = CURRENT_TIMESTAMP
     WHERE stock_id = $1
+  ), item_source AS (
+    UPDATE order_items
+    SET fulfill_source = COALESCE($5, fulfill_source)
+    WHERE order_id = $3
+      AND EXISTS (
+        SELECT 1 FROM orders
+        WHERE order_id = $3 AND order_status = 'รอตรวจสอบสต๊อก'
+      )
   )
   UPDATE orders
   SET order_status = $4, manual_reason = NULL, updated_at = CURRENT_TIMESTAMP
@@ -100,12 +109,14 @@ export async function saveStockRoute(
   rslQuantity: number | null,
   orderId: string,
   status: OrderStatus,
+  fulfillSource: "in_house" | "rsl" | null,
 ): Promise<void> {
   await executor.query(Q3S_1_ROUTE, [
     stockId,
     rslQuantity,
     orderId,
     status,
+    fulfillSource,
   ]);
 }
 

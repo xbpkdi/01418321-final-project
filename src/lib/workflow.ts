@@ -263,14 +263,19 @@ export function chooseSkuRule<T>(matches: readonly T[]):
   return { kind: "matched", value: matches[0] };
 }
 
-/** Pure 3S rule. A missing RSL value means only confirmed in-house stock is used. */
+/**
+ * Pure 3S rule. One source must cover the whole quantity because 7S deducts
+ * from one source: RSL first, then in-house. Only a combined total (or
+ * neither) is "low". A missing RSL value means RSL cannot ship.
+ */
 export function chooseStockRoute(
   quantity: number,
   inHouseQuantity: number,
   rslQuantity: number | null,
-): "enough" | "low" {
-  const available = inHouseQuantity + (rslQuantity ?? 0);
-  return available >= quantity ? "enough" : "low";
+): "rsl" | "in_house" | "low" {
+  if (rslQuantity !== null && rslQuantity >= quantity) return "rsl";
+  if (inHouseQuantity >= quantity) return "in_house";
+  return "low";
 }
 
 /** Pure 1S rule shared by the server matcher and the legacy state flow. */
@@ -1709,8 +1714,17 @@ export function runAutomation(input: AppState): {
       // 3S ตรวจสต๊อก → แยกเส้นทางตาม BizFlow "มีสินค้าเพียงพอไหม"
       if (o.order_status === "รอตรวจสอบสต๊อก") {
         const st = stockTotal(s, o.sku);
-        if (st && st.total >= o.qty) {
-          s = setStatus(s, o.order_id, "ยังไม่ได้จับคู่");
+        const route = st
+          ? chooseStockRoute(
+              o.qty,
+              st.row.in_house_qty,
+              st.partial ? null : st.row.rsl_qty,
+            )
+          : "low";
+        if (route !== "low") {
+          s = setStatus(s, o.order_id, "ยังไม่ได้จับคู่", {
+            fulfill_source: route,
+          });
           events.push({ code: "stock-enough", orderId: o.order_id });
         } else {
           // ไม่พอ → 4S คำนวณต้นทุน แล้วรอ Admin ตัดสินใจ (5A)

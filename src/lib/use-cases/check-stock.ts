@@ -44,10 +44,11 @@ export async function checkStockUseCase(
       stock.stockId,
       rslQuantity,
       orderId,
-      route === "enough" ? "ยังไม่ได้จับคู่" : "รอ Admin ตัดสินใจสั่งซื้อ",
+      route === "low" ? "รอ Admin ตัดสินใจสั่งซื้อ" : "ยังไม่ได้จับคู่",
+      route === "low" ? null : route,
     );
   });
-  return route;
+  return route === "low" ? "low" : "enough";
 }
 
 export const checkStock = checkStockUseCase;
