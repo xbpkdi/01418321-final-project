@@ -15,6 +15,11 @@ import {
   isCompleteCost,
 } from "../../src/types/product";
 
+// Seed row data comes from src/mock/*.ts. Each row there carries a comment naming
+// the UC alternative flow it exercises (e.g. "8A ทางเลือก #2"); alternative flows
+// driven by external-system faults are covered by the /dev toggles (FAULT_KEYS in
+// src/lib/workflow.ts), not by rows. The coverage table is in
+// specs/002-real-database/quickstart.md.
 const migrationsDirectory = join(process.cwd(), "db", "migrations");
 
 const seedPool = new Pool({ connectionString: process.env.DATABASE_URL });

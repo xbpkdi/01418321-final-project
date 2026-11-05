@@ -138,8 +138,8 @@
 
 **Purpose**: ลบ browser business store หลังทุกหน้า migrate และตรวจเกณฑ์สำเร็จรวม
 
-- [ ] T048 ลบ business data/session จาก `localStorage` และ client `AuthGuard` หลังย้ายครบทุกหน้าตาม constitution; คงเฉพาะ UI preferences ใน `src/lib/store.tsx`, `src/components/app-shell/auth-guard.tsx` และ `src/lib/i18n/context.tsx`
-- [ ] T049 ตรวจ seed row comments ครอบคลุมทุก UC/alternative flow และ query catalog มี UC/Q-number ครบใน `db/seed/`, `src/lib/queries/README.md` และ `specs/002-real-database/quickstart.md`
+- [x] T048 ลบ business data/session จาก `localStorage` และ client `AuthGuard` หลังย้ายครบทุกหน้าตาม constitution; คงเฉพาะ UI preferences ใน `src/lib/store.tsx`, `src/components/app-shell/auth-guard.tsx` และ `src/lib/i18n/context.tsx`
+- [x] T049 ตรวจ seed row comments ครอบคลุมทุก UC/alternative flow และ query catalog มี UC/Q-number ครบใน `db/seed/`, `src/lib/queries/README.md` และ `specs/002-real-database/quickstart.md`
 - [ ] T050 เดิน quickstart ทุก scenario, รัน `npm run lint`, `npx tsc --noEmit`, `npm run build` และบันทึกผล/ข้อยกเว้นใน `specs/002-real-database/quickstart.md`
 
 ## Dependencies & Execution Order

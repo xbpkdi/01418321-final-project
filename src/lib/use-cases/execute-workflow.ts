@@ -13,6 +13,7 @@ import {
 } from "@/lib/queries/orders";
 import { getOrderStock, saveStockRoute } from "@/lib/queries/stock";
 import {
+  completeDeliveredOrder,
   markLabelManual,
   recordLabelServiceError,
   saveGeneratedLabels,
@@ -217,6 +218,10 @@ async function runOrderAutomation(
           events.push({ code: "stock-insufficient", orderId });
         } else if (deducted.kind === "deducted") {
           events.push({ code: "stock-deducted", orderId });
+        }
+        if (deducted.kind !== "insufficient") {
+          // 8A: carrier confirmed delivery earlier, stock is now deducted.
+          await completeDeliveredOrder(client, orderId);
         }
         break;
       } catch (error) {

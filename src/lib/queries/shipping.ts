@@ -325,6 +325,30 @@ export interface NotificationRow extends QueryResultRow {
   delivery_status: DeliveryStatus | null;
 }
 
+// UC 8A / Q8A.1: the carrier already confirmed delivery and 7S has now
+// deducted stock, so close the Order. This is the only place besides the
+// carrier poll that sets "จัดส่งสำเร็จ" (7S itself never does).
+export const Q8A_1_DELIVERED = `
+  UPDATE orders
+  SET order_status = 'จัดส่งสำเร็จ', manual_reason = NULL,
+      updated_at = CURRENT_TIMESTAMP
+  WHERE order_id = $1
+    AND order_status = 'แจ้งเลขติดตามแล้ว'
+    AND tracking_notified = TRUE
+    AND delivery_status = 'delivered'
+    AND EXISTS (
+      SELECT 1 FROM order_items
+      WHERE order_id = $1 AND stock_deducted = TRUE
+    )
+`;
+
+export async function completeDeliveredOrder(
+  executor: QueryExecutor,
+  orderId: string,
+): Promise<void> {
+  await executor.query(Q8A_1_DELIVERED, [orderId]);
+}
+
 export const Q5S_1 = `
   SELECT order_id, order_status, marketplace_order_id, tracking_number,
          carrier_name, tracking_notified, delivery_status
