@@ -516,6 +516,24 @@ const th = {
     poId: "เลขที่คำสั่งซื้อ",
     orderDate: "วันที่สั่ง",
     eta: "คาดว่าจะได้รับ",
+    statusReceived: "ได้รับสินค้าแล้ว",
+    receive: "รับสินค้า",
+    receiveTitle: (poId: string) => `บันทึกการรับสินค้า ${poId}`,
+    receiveHint: (sku: string, qty: number) =>
+      `สั่ง ${sku} ไว้ ${qty} ชิ้น สินค้าที่ได้รับจะถูกเพิ่มเข้าสต๊อกในบริษัท และ Order ที่รอสินค้านี้จะกลับไปตรวจสอบสต๊อก`,
+    receivedQtyLabel: "จำนวนที่ได้รับ",
+    receivedQtyHint:
+      "แก้ได้หากได้รับไม่ครบหรือเกินจำนวนที่สั่ง บันทึกได้ครั้งเดียวต่อคำสั่งซื้อ",
+    receivedSummary: (qty: number, date: string) =>
+      `ได้รับ ${qty} ชิ้น · ${date}`,
+    okReceived: (sku: string, qty: number) =>
+      `เพิ่ม ${sku} เข้าสต๊อกในบริษัท ${qty} ชิ้นแล้ว`,
+    okReceivedHint: (n: number) =>
+      `Order ที่รอสินค้านี้ ${n} รายการกลับไปตรวจสอบสต๊อกแล้ว`,
+    errReceiveQty: "กรุณากรอกจำนวนที่ได้รับเป็นจำนวนเต็มบวก",
+    errReceiveAlready: "คำสั่งซื้อนี้บันทึกการรับสินค้าไปแล้ว",
+    errReceiveNotOrdered:
+      "รับสินค้าได้เฉพาะคำสั่งซื้อที่อยู่ในสถานะ สั่งซื้อแล้ว",
   },
 
   shipping: {
@@ -1232,6 +1250,24 @@ const en: typeof th = {
     poId: "PO number",
     orderDate: "Ordered on",
     eta: "Expected",
+    statusReceived: "Received",
+    receive: "Receive goods",
+    receiveTitle: (poId: string) => `Record goods received for ${poId}`,
+    receiveHint: (sku: string, qty: number) =>
+      `${qty} units of ${sku} were ordered. Received goods are added to in-house stock, and orders waiting for them go back to the stock check`,
+    receivedQtyLabel: "Quantity received",
+    receivedQtyHint:
+      "Change it if the delivery is short or over. Each purchase order can be received once",
+    receivedSummary: (qty: number, date: string) =>
+      `Received ${qty} · ${date}`,
+    okReceived: (sku: string, qty: number) =>
+      `Added ${qty} units of ${sku} to in-house stock`,
+    okReceivedHint: (n: number) =>
+      `${n} waiting orders went back to the stock check`,
+    errReceiveQty: "Enter the quantity received as a positive whole number",
+    errReceiveAlready: "Goods for this purchase order were already received",
+    errReceiveNotOrdered:
+      "Only purchase orders with status Ordered can be received",
   },
 
   shipping: {

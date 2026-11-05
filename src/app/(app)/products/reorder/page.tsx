@@ -2,6 +2,7 @@
 
 // ReorderDecisionScreen — UC 5A ตัดสินใจสั่งซื้อเพิ่ม + UC 6A สั่งซื้อจาก Supplier
 // สองขั้นตอนนี้รวมไว้หน้าเดียวตาม DESIGN.md
+// แท็บ "คำสั่งซื้อ" มีปุ่ม "รับสินค้า" (6A รับสินค้า) ให้ Order ที่ "สั่งซื้อแล้ว" กลับไปตรวจสอบสต๊อก
 // Order ที่ตัดสินใจ "คุ้มค่า" ใน 5A จะไปรออยู่ในแท็บ "รอสั่งซื้อเติมสต๊อก" ของ 6A ทันที
 // ข้อความและเงื่อนไขทั้งหมดมาจาก 321-sa-proj/report-doc/content/usecases.json (ดู decide / purchase ใน lib/workflow.ts)
 
@@ -39,11 +40,14 @@ import {
   unitCostOf,
   type DecideResult,
   type PurchaseRow,
+  type ReceiveResult,
 } from "@/lib/workflow";
+import type { PurchaseOrder } from "@/types/product";
 import type { Order } from "@/types/order";
 import {
   decideReorderAction,
   purchaseReorderAction,
+  receiveReorderAction,
 } from "@/app/(app)/actions";
 
 type Decision = "คุ้มค่า" | "ไม่คุ้มค่า";
@@ -64,6 +68,11 @@ export default function ReorderDecisionScreen() {
     qty: number;
     duplicateEta: string | null;
   } | null>(null);
+  const [receiving, setReceiving] = useState<{
+    po: PurchaseOrder;
+    qty: number;
+  } | null>(null);
+  const [receiveError, setReceiveError] = useState<string | null>(null);
   const [submitting, startSubmitting] = useTransition();
 
   // 5A ขั้นตอนที่ 1: Order ที่รอการตัดสินใจ รวม Order ที่ไม่มีราคาขาย (รอดำเนินการด้วยตนเอง)
@@ -184,6 +193,50 @@ export default function ReorderDecisionScreen() {
             },
           );
       }
+    });
+  }
+
+  // 6A รับสินค้า: ค่าเริ่มต้นเป็นจำนวนที่สั่ง แก้ได้หากได้รับไม่ครบหรือเกิน
+  function openReceive(po: PurchaseOrder) {
+    setReceiveError(null);
+    setReceiving({ po, qty: po.order_qty });
+  }
+
+  const RECEIVE_ERROR: Record<
+    Exclude<ReceiveResult["kind"], "ok">,
+    string
+  > = {
+    "invalid-qty": t.reorder.errReceiveQty,
+    "not-found": t.reorder.errReceiveNotOrdered,
+    already: t.reorder.errReceiveAlready,
+    "not-ordered": t.reorder.errReceiveNotOrdered,
+  };
+
+  function commitReceive() {
+    if (!receiving) return;
+    const { po, qty } = receiving;
+    startSubmitting(async () => {
+      const action = await receiveReorderAction(po.po_id, qty);
+      if (!action.success) {
+        setReceiveError(t.errors[action.error]);
+        return;
+      }
+      const result = action.result;
+      if (result.kind === "invalid-qty") {
+        setReceiveError(RECEIVE_ERROR[result.kind]);
+        return;
+      }
+      setReceiving(null);
+      if (result.kind !== "ok") {
+        toast.error(RECEIVE_ERROR[result.kind]);
+        return;
+      }
+      toast.success(t.reorder.okReceived(result.sku, result.qty), {
+        description:
+          result.orderIds.length > 0
+            ? t.reorder.okReceivedHint(result.orderIds.length)
+            : undefined,
+      });
     });
   }
 
@@ -361,6 +414,7 @@ export default function ReorderDecisionScreen() {
               t,
               lang,
               (id) => findSupplier(state, id)?.supplier_name ?? id,
+              openReceive,
             )}
             getRowId={(row) => row.po_id}
             emptyState={
@@ -503,6 +557,58 @@ export default function ReorderDecisionScreen() {
             </Button>
             <Button onClick={commitPurchase} disabled={submitting}>
               {buying?.duplicateEta ? t.common.confirm : t.reorder.purchase}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 6A รับสินค้า: ยืนยันจำนวนที่ได้รับจาก Supplier */}
+      <Dialog
+        open={receiving !== null}
+        onOpenChange={(o) => !o && setReceiving(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t.reorder.receiveTitle(receiving?.po.po_id ?? "")}
+            </DialogTitle>
+            <DialogDescription>
+              {receiving &&
+                t.reorder.receiveHint(receiving.po.sku, receiving.po.order_qty)}
+            </DialogDescription>
+          </DialogHeader>
+
+          {receiving && (
+            <Field>
+              <FieldLabel htmlFor="received_qty">
+                {t.reorder.receivedQtyLabel}
+              </FieldLabel>
+              <Input
+                id="received_qty"
+                type="number"
+                min={1}
+                value={receiving.qty}
+                onChange={(e) =>
+                  setReceiving({ ...receiving, qty: Number(e.target.value) })
+                }
+              />
+              <FieldDescription>{t.reorder.receivedQtyHint}</FieldDescription>
+            </Field>
+          )}
+
+          {receiveError && (
+            <SectionMessage appearance="error">{receiveError}</SectionMessage>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReceiving(null)}>
+              {t.common.cancel}
+            </Button>
+            <Button
+              onClick={commitReceive}
+              disabled={submitting || !(receiving && receiving.qty > 0)}
+            >
+              {t.reorder.receive}
             </Button>
           </DialogFooter>
         </DialogContent>

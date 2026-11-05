@@ -22,6 +22,7 @@ import { calculateCostUseCase } from "@/lib/use-cases/costs";
 import {
   decideReorderUseCase,
   purchaseReorderUseCase,
+  receiveReorderUseCase,
 } from "@/lib/use-cases/reorders";
 import { formatLabelsUseCase } from "@/lib/use-cases/format-labels";
 import { printLabelsUseCase } from "@/lib/use-cases/print-label";
@@ -303,6 +304,24 @@ export async function purchaseReorderAction(
       sku: validSku,
       quantity,
       confirmDuplicate: confirmDuplicate === true,
+    }),
+  );
+}
+
+export async function receiveReorderAction(reorderId: string, quantity: number) {
+  const session = await requireSession();
+  const validReorderId = safeId(reorderId);
+  if (!validReorderId) {
+    return { success: true as const, result: { kind: "not-found" as const } };
+  }
+  if (typeof quantity !== "number") {
+    return { success: true as const, result: { kind: "invalid-qty" as const } };
+  }
+  return runMutation(() =>
+    receiveReorderUseCase({
+      reorderId: validReorderId,
+      quantity,
+      adminId: session.adminId,
     }),
   );
 }
