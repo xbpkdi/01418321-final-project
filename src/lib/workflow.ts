@@ -15,7 +15,10 @@
  * เหมือน scheduler ที่ทำงานต่อทันทีเมื่อ Order เข้าสถานะที่รออยู่
  */
 
-import type { OrderStatus } from "@/lib/order-status";
+import {
+  STOCK_RESERVING_STATUSES,
+  type OrderStatus,
+} from "@/lib/order-status";
 import type { ChannelConnection, ManualReason, Order } from "@/types/order";
 import {
   calcUnitCost,
@@ -240,6 +243,24 @@ export function stockTotal(s: AppState, sku: string) {
     total: row.in_house_qty + (rslAvailable ? (row.rsl_qty ?? 0) : 0),
     partial: !rslAvailable,
   };
+}
+
+/** 3S: ยอดที่ Order อื่นของ SKU เดียวกันจองไว้ (ผ่าน 3S แล้ว ยังไม่ตัดสต๊อก) แยกตามแหล่ง (Q3S.1) */
+export function reservedStock(s: AppState, sku: string, exceptOrderId: string) {
+  let rsl = 0;
+  let inHouse = 0;
+  for (const o of s.orders) {
+    if (
+      o.order_id === exceptOrderId ||
+      o.sku !== sku ||
+      o.stock_deducted ||
+      !STOCK_RESERVING_STATUSES.includes(o.order_status)
+    )
+      continue;
+    if (o.fulfill_source === "rsl") rsl += o.qty;
+    else inHouse += o.qty;
+  }
+  return { rsl, inHouse };
 }
 
 /** Pure 4A validation shared by the browser-era flow and the server use case. */
@@ -1732,11 +1753,14 @@ export function runAutomation(input: AppState): {
       // 3S ตรวจสต๊อก → แยกเส้นทางตาม BizFlow "มีสินค้าเพียงพอไหม"
       if (o.order_status === "รอตรวจสอบสต๊อก") {
         const st = stockTotal(s, o.sku);
+        const reserved = reservedStock(s, o.sku, o.order_id);
         const route = st
           ? chooseStockRoute(
               o.qty,
-              st.row.in_house_qty,
-              st.partial ? null : st.row.rsl_qty,
+              st.row.in_house_qty - reserved.inHouse,
+              st.partial || st.row.rsl_qty === null
+                ? null
+                : st.row.rsl_qty - reserved.rsl,
             )
           : "low";
         if (route !== "low") {
