@@ -81,9 +81,11 @@ export type LabelOrder = Pick<
   | "rsl_reference_id"
   | "shipping_address"
   | "shipping_method"
+  | "fulfill_source"
 > & Pick<Order, "qty">;
 
 export type LabelRule = {
+  fulfill_source: Order["fulfill_source"];
   shipping_method: string;
   sales_channel: SalesChannel;
   label_template: string;
@@ -92,6 +94,7 @@ export type LabelRule = {
 
 export type GeneratedLabel = {
   label_template: string;
+  /** "" for in-house Orders (no RSL reference); stored as NULL. */
   rsl_no: string;
   parcel_seq: number;
   parcel_total: number;

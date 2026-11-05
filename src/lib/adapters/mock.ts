@@ -13,7 +13,7 @@ import {
   SEED_RMS_INBOX,
 } from "@/mock/orders";
 import { findRslMatches } from "@/mock/rsl";
-import { findTracking, trackCarrier } from "@/mock/delivery";
+import { findLabelRule, findTracking, trackCarrier } from "@/mock/delivery";
 import { getPool } from "@/lib/db";
 import { getRslQuantity } from "@/lib/queries/stock";
 
@@ -111,11 +111,7 @@ export const mockAdapterFactories: AdapterFactories = {
         if (isFaultEnabled("labelService")) {
           return unavailable("labelService");
         }
-        const rule = parcelRules.find(
-          (candidate) =>
-            candidate.shipping_method === order.shipping_method &&
-            candidate.sales_channel === order.sales_channel,
-        );
+        const rule = findLabelRule(parcelRules, order);
         if (!rule) {
           return {
             ok: false,
@@ -130,7 +126,11 @@ export const mockAdapterFactories: AdapterFactories = {
           ok: true,
           data: Array.from({ length: parcels }, (_, index) => ({
             label_template: rule.label_template,
-            rsl_no: order.rsl_reference_id ?? "",
+            // In-house Orders skip 1S and have no RSL reference.
+            rsl_no:
+              order.fulfill_source === "rsl"
+                ? (order.rsl_reference_id ?? "")
+                : "",
             parcel_seq: index + 1,
             parcel_total: parcels,
           })),

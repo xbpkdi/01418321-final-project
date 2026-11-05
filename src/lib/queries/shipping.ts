@@ -33,16 +33,17 @@ export interface LabelOrderRow extends QueryResultRow {
   shipping_address: string;
   shipping_method: string;
   qty: number;
+  fulfill_source: "in_house" | "rsl";
   order_status: OrderStatus;
 }
 
 // UC 6S / Q6S.1: load work waiting for automatic label generation.
 export const Q6S_1 = `
   SELECT o.order_id, o.sales_channel, o.rsl_no, o.shipping_address,
-         o.shipping_method, item.qty, o.order_status
+         o.shipping_method, item.qty, item.fulfill_source, o.order_status
   FROM orders o
   INNER JOIN LATERAL (
-    SELECT qty FROM order_items
+    SELECT qty, fulfill_source FROM order_items
     WHERE order_id = o.order_id ORDER BY order_item_id LIMIT 1
   ) item ON TRUE
   WHERE o.order_status = 'รอจัดรูปแบบใบปะสินค้า'
@@ -63,6 +64,7 @@ export function toLabelOrder(row: LabelOrderRow): LabelOrder {
     shipping_address: row.shipping_address,
     shipping_method: row.shipping_method,
     qty: Number(row.qty),
+    fulfill_source: row.fulfill_source,
   };
 }
 

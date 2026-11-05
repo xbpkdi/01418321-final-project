@@ -10,7 +10,7 @@ import {
   saveGeneratedLabels,
   toLabelOrder,
 } from "@/lib/queries/shipping";
-import { SHIPPING_RULES } from "@/mock/delivery";
+import { findLabelRule, SHIPPING_RULES } from "@/mock/delivery";
 import { validGeneratedLabels } from "@/lib/workflow";
 
 export type FormatLabelEvent =
@@ -43,11 +43,7 @@ export async function formatLabelsUseCase(
       events.push({ code: "label-no-address", orderId: row.order_id });
       continue;
     }
-    const rule = labelRules.find(
-      (candidate) =>
-        candidate.shipping_method === row.shipping_method &&
-        candidate.sales_channel === row.sales_channel,
-    );
+    const rule = findLabelRule(labelRules, row);
     if (!rule) {
       await withTransaction((client) =>
         markLabelManual(client, row.order_id, "template"),
