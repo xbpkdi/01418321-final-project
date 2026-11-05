@@ -6,6 +6,7 @@ import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
 import type { OrderWorkflowRow } from "@/lib/queries/orders";
 import {
   getOrderStock,
+  getReservedQuantity,
   saveStockRoute,
 } from "@/lib/queries/stock";
 import { logAdapterFailure } from "@/lib/use-cases/log-auto-error";
@@ -19,6 +20,10 @@ export type StockCheckResult = "missing-stock" | "rsl" | "in_house" | "low";
  * an Order locked at "รอตรวจสอบสต๊อก". RSL Orders go to 1S RSL matching
  * ("ยังไม่ได้จับคู่"); in-house Orders are shipped by the company, have no
  * RSL reference, and go straight to 6S ("รอจัดรูปแบบใบปะสินค้า").
+ *
+ * The stock row stays locked until the transaction ends, and each source only
+ * offers what is left after other in-flight Orders' reservations, so two
+ * Orders cannot both be routed to the same units before 7S deducts them.
  */
 export async function checkStockUseCase(
   client: PoolClient,
@@ -45,10 +50,15 @@ export async function checkStockUseCase(
     });
   }
   const rslQuantity = external.ok ? external.data : null;
+  const reserved = await getReservedQuantity(
+    client,
+    stock.skuId,
+    order.order_id,
+  );
   const route = chooseStockRoute(
     Number(order.qty),
-    stock.inHouseQuantity,
-    rslQuantity,
+    stock.inHouseQuantity - reserved.inHouse,
+    rslQuantity === null ? null : rslQuantity - reserved.rsl,
   );
   await saveStockRoute(
     client,

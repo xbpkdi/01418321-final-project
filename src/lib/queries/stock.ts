@@ -2,7 +2,10 @@ import "server-only";
 import type { QueryResultRow } from "pg";
 import { getPool, type QueryExecutor } from "@/lib/db";
 import type { StockLevel } from "@/types/product";
-import type { OrderStatus } from "@/lib/order-status";
+import {
+  STOCK_RESERVING_STATUSES,
+  type OrderStatus,
+} from "@/lib/order-status";
 
 interface StockRow extends QueryResultRow {
   sku: string;
@@ -55,31 +58,74 @@ export async function listStock(
 
 interface OrderStockRow extends QueryResultRow {
   stock_id: string;
+  sku_id: string;
   in_house_qty: number | string;
   rsl_qty: number | string | null;
 }
 
-// UC 3S / Q3S.1: read the stock row used to route one matched Order.
+// UC 3S / Q3S.1: lock and read the stock row used to route one matched
+// Order. The row lock makes concurrent 3S runs for the same SKU take turns,
+// so each one sees the reservations the previous one committed.
 export const Q3S_1_ORDER = `
-  SELECT stock.stock_id, stock.in_house_qty, stock.rsl_qty
+  SELECT stock.stock_id, stock.sku_id, stock.in_house_qty, stock.rsl_qty
   FROM stock
   INNER JOIN skus ON skus.sku_id = stock.sku_id
   WHERE skus.sku = $1
+  FOR UPDATE OF stock
 `;
 
 export async function getOrderStock(
   executor: QueryExecutor,
   sku: string,
-): Promise<{ stockId: string; inHouseQuantity: number; rslQuantity: number | null } | null> {
+): Promise<{
+  stockId: string;
+  skuId: string;
+  inHouseQuantity: number;
+  rslQuantity: number | null;
+} | null> {
   const result = await executor.query<OrderStockRow>(Q3S_1_ORDER, [sku]);
   const row = result.rows[0];
   return row
     ? {
         stockId: row.stock_id,
+        skuId: row.sku_id,
         inHouseQuantity: Number(row.in_house_qty),
         rslQuantity: row.rsl_qty === null ? null : Number(row.rsl_qty),
       }
     : null;
+}
+
+// UC 3S / Q3S.1: quantity already reserved per source by other Orders of the
+// same SKU that passed 3S and are still in flight ($2 = STOCK_RESERVING_STATUSES)
+// but not yet deducted by 7S. $3 excludes the Order being routed.
+export const Q3S_1_RESERVED = `
+  SELECT
+    COALESCE(SUM(item.qty) FILTER (WHERE item.fulfill_source = 'rsl'), 0)
+      AS rsl_reserved,
+    COALESCE(SUM(item.qty) FILTER (WHERE item.fulfill_source = 'in_house'), 0)
+      AS in_house_reserved
+  FROM order_items item
+  INNER JOIN orders ON orders.order_id = item.order_id
+  WHERE item.sku_id = $1
+    AND item.stock_deducted = FALSE
+    AND orders.order_status = ANY($2::text[])
+    AND orders.order_id <> $3
+`;
+
+export async function getReservedQuantity(
+  executor: QueryExecutor,
+  skuId: string,
+  orderId: string,
+): Promise<{ rsl: number; inHouse: number }> {
+  const result = await executor.query<{
+    rsl_reserved: number | string;
+    in_house_reserved: number | string;
+  }>(Q3S_1_RESERVED, [skuId, [...STOCK_RESERVING_STATUSES], orderId]);
+  const row = result.rows[0];
+  return {
+    rsl: Number(row?.rsl_reserved ?? 0),
+    inHouse: Number(row?.in_house_reserved ?? 0),
+  };
 }
 
 // UC 3S / Q3S.1: mock RSL adapter reads the RSL quantity kept in the database.
