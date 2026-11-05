@@ -88,7 +88,14 @@ export type AppState = {
   faults: Record<FaultKey, boolean>;
   deletionLog: DeletionLog[];
   /** Log ข้อผิดพลาดของงานอัตโนมัติ (4A ทางเลือก #1 ฯลฯ) */
-  errorLog: { at: string; message: string }[];
+  /** auto_error_logs rows (newest first) when loaded from PostgreSQL. */
+  errorLog: {
+    at: string;
+    message: string;
+    useCaseId?: string;
+    contextKey?: string;
+    errorCode?: string;
+  }[];
   nextOrderSeq: number;
   nextPoSeq: number;
 };

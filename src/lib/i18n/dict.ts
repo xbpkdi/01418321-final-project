@@ -710,6 +710,14 @@ const th = {
     accounts: "บัญชีทดสอบ",
     accountsHint:
       "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+    errorLogTitle: "บันทึกข้อผิดพลาดอัตโนมัติ",
+    errorLogHint: "50 รายการล่าสุดจากตาราง auto_error_logs (2S / 3S / 6S / 7S)",
+    errorLogEmpty: "ยังไม่มีข้อผิดพลาด",
+    errorLogAt: "เวลา",
+    errorLogUseCase: "UC",
+    errorLogContext: "อ้างอิง",
+    errorLogCode: "รหัส",
+    errorLogMessage: "ข้อความ",
   },
 };
 
@@ -1418,6 +1426,14 @@ const en: typeof th = {
     accounts: "Test accounts",
     accountsHint:
       "admin@colorado.jp uses the seeded password · locked@colorado.jp tests too many sign-in attempts",
+    errorLogTitle: "Automation error log",
+    errorLogHint: "Latest 50 rows from auto_error_logs (2S / 3S / 6S / 7S)",
+    errorLogEmpty: "No errors yet",
+    errorLogAt: "Time",
+    errorLogUseCase: "UC",
+    errorLogContext: "Reference",
+    errorLogCode: "Code",
+    errorLogMessage: "Message",
   },
 };
 

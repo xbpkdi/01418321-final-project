@@ -10,6 +10,7 @@ import { listCostHistory } from "@/lib/queries/cost-history";
 import { listReorders } from "@/lib/queries/reorders";
 import { listLabels } from "@/lib/queries/shipping";
 import { listDeletionHistory } from "@/lib/queries/cleanup";
+import { listRecentAutoErrorLogs } from "@/lib/queries/auto-error-logs";
 
 export async function loadAppState(session: {
   adminId: string;
@@ -26,6 +27,7 @@ export async function loadAppState(session: {
     purchaseOrders,
     labels,
     deletionLog,
+    errorLog,
   ] = await Promise.all([
     getDashboardData(),
     listOrders(),
@@ -37,6 +39,7 @@ export async function loadAppState(session: {
     listReorders(),
     listLabels(),
     listDeletionHistory(),
+    listRecentAutoErrorLogs(),
   ]);
 
   const labelsByOrder = new Map(labels.map((label) => [label.order_id, label]));
@@ -92,7 +95,7 @@ export async function loadAppState(session: {
     },
     faults: getFaultSnapshot(),
     deletionLog,
-    errorLog: [],
+    errorLog,
     nextOrderSeq: maxOrderSequence + 1,
     nextPoSeq: maxReorderSequence + 1,
   };
