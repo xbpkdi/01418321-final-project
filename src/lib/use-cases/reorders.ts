@@ -62,11 +62,20 @@ export async function decideReorderUseCase(input: {
   decision: "คุ้มค่า" | "ไม่คุ้มค่า";
   quantity: number;
 }): Promise<DecideResult> {
+  // 5A step 3.1: the reorder quantity must be a positive whole number.
   if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
-    return "no-cost";
+    return "invalid-qty";
   }
   return withTransaction(async (client) => {
     const row = await lockDecisionContext(client, input.orderId);
+    // ทางเลือก #3: an Order already parked for a missing price waits for 3A,
+    // so tell the Admin to set the price instead of "already decided".
+    if (
+      row?.order_status === "รอดำเนินการด้วยตนเอง" &&
+      row.manual_reason === "price"
+    ) {
+      return "no-price";
+    }
     if (!row || row.order_status !== "รอ Admin ตัดสินใจสั่งซื้อ") {
       return "not-pending";
     }

@@ -500,6 +500,7 @@ const th = {
     errDb: "ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง",
     errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
     errNoCost: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง",
+    errDecideQty: "กรุณากรอกจำนวนที่จะสั่งซื้อเป็นจำนวนเต็มบวก",
     errNotConfigured:
       "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
     errSendFailed: "ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่",
@@ -1234,6 +1235,7 @@ const en: typeof th = {
     errDb: "Cannot save the decision. Please try again later",
     errNoPrice: "No selling price found for this product. Please check",
     errNoCost: "Please enter complete and valid cost data",
+    errDecideQty: "Enter the quantity to order as a positive whole number",
     errNotConfigured:
       "Supplier or order quantity not found. Please configure before ordering",
     errSendFailed:

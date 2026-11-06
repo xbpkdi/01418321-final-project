@@ -64,6 +64,7 @@ export async function listReorders(
 export interface DecisionContextRow extends QueryResultRow {
   order_id: string;
   order_status: OrderStatus;
+  manual_reason: string | null;
   sku_id: string | null;
   sku: string | null;
   selling_price: string | number | null;
@@ -73,7 +74,8 @@ export interface DecisionContextRow extends QueryResultRow {
 // UC 5A / Q5A.1-Q5A.3: lock the Order and load authoritative price/cost.
 export const Q5A_1_FOR_UPDATE = `
   SELECT
-    o.order_id, o.order_status, item.sku_id, sku.sku, sku.selling_price,
+    o.order_id, o.order_status, o.manual_reason, item.sku_id, sku.sku,
+    sku.selling_price,
     COALESCE(
       cost.unit_cost,
       NULLIF(history.new_value ->> 'unit_cost', '')::numeric

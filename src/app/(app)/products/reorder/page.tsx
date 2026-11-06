@@ -30,6 +30,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable } from "@/components/shared/data-table";
 import { purchaseColumns, purchaseOrderColumns } from "./columns";
 import { useLanguage } from "@/lib/i18n/context";
+import { issueOf } from "@/lib/issues";
 import { useStore } from "@/lib/store";
 import { formatBaht, formatDate } from "@/lib/format";
 import {
@@ -99,6 +100,7 @@ export default function ReorderDecisionScreen() {
   }
 
   const DECIDE_ERROR: Record<Exclude<DecideResult, "ok">, string> = {
+    "invalid-qty": t.reorder.errDecideQty,
     "not-pending": t.reorder.errDecided,
     "no-price": t.reorder.errNoPrice,
     "no-cost": t.reorder.errNoCost,
@@ -133,7 +135,18 @@ export default function ReorderDecisionScreen() {
         });
         return;
       }
-      if (result === "no-price" || result === "not-pending") {
+      if (result === "no-price") {
+        // ทางเลือก #3: ราคาขายต้องตั้งใน 3A ก่อน Order จึงกลับมารอตัดสินใจ
+        setConfirming(null);
+        toast.error(DECIDE_ERROR[result], {
+          action: {
+            label: t.reorder.goProducts,
+            onClick: () => router.push("/products"),
+          },
+        });
+        return;
+      }
+      if (result === "not-pending") {
         setConfirming(null);
         toast.error(DECIDE_ERROR[result]);
         return;
@@ -287,6 +300,8 @@ export default function ReorderDecisionScreen() {
                   price === null || unitCost === null ? null : price - unitCost;
                 const po = pendingPo(state, o.sku);
                 const manual = o.order_status === "รอดำเนินการด้วยตนเอง";
+                // ทางเลือก #3: ปุ่มตัดสินใจซ่อนไว้ ให้ไปตั้งราคาขายตามหน้าที่ issueOf บอก
+                const issue = manual ? issueOf(o, t) : null;
                 return (
                   <article key={o.order_id} className="rounded-lg border">
                     <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3.5">
@@ -353,11 +368,11 @@ export default function ReorderDecisionScreen() {
                         </SectionMessage>
                       </div>
                     )}
-                    {manual && (
+                    {issue && (
                       <div className="border-t px-5 py-3">
                         <SectionMessage appearance="error">
                           {t.reorder.errNoPrice}{" "}
-                          <Link href="/products" className="underline">
+                          <Link href={issue.href} className="underline">
                             {t.reorder.goProducts}
                           </Link>
                         </SectionMessage>

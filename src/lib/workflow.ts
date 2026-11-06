@@ -829,7 +829,13 @@ export function unitCostForQty(c: Record<CostKey, number>, qty: number) {
 
 // 5A ตัดสินใจสั่งซื้อ
 
-export type DecideResult = "not-pending" | "no-price" | "no-cost" | "db" | "ok";
+export type DecideResult =
+  | "invalid-qty"
+  | "not-pending"
+  | "no-price"
+  | "no-cost"
+  | "db"
+  | "ok";
 
 export function decide(
   s: AppState,
@@ -837,7 +843,15 @@ export function decide(
   decision: "คุ้มค่า" | "ไม่คุ้มค่า",
   qty: number,
 ): { state: AppState; result: DecideResult } {
+  if (!Number.isInteger(qty) || qty <= 0)
+    return { state: s, result: "invalid-qty" };
   const o = findOrder(s, orderId);
+  // ทางเลือก #3: Order ที่รอราคาขายอยู่แล้ว ให้ไปตั้งราคาใน 3A
+  if (
+    o?.order_status === "รอดำเนินการด้วยตนเอง" &&
+    o.manual_reason === "price"
+  )
+    return { state: s, result: "no-price" };
   if (!o || o.order_status !== "รอ Admin ตัดสินใจสั่งซื้อ")
     return { state: s, result: "not-pending" };
   const product = findProduct(s, o.sku);
