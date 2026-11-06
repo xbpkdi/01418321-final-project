@@ -298,9 +298,10 @@ export const Q8A_1_STATUS = `
         WHEN $2 = 'failed' THEN 'จัดส่งไม่สำเร็จ'
         WHEN $2 = 'returned' THEN 'ตีกลับ/คืนสินค้า'
         WHEN $2 = 'delivered' AND tracking_notified = TRUE
-          AND EXISTS (
+          AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1)
+          AND NOT EXISTS (
             SELECT 1 FROM order_items
-            WHERE order_id = $1 AND stock_deducted = TRUE
+            WHERE order_id = $1 AND stock_deducted = FALSE
           ) THEN 'จัดส่งสำเร็จ'
         ELSE order_status
       END,
@@ -338,9 +339,10 @@ export const Q8A_1_DELIVERED = `
     AND order_status = 'แจ้งเลขติดตามแล้ว'
     AND tracking_notified = TRUE
     AND delivery_status = 'delivered'
-    AND EXISTS (
+    AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1)
+    AND NOT EXISTS (
       SELECT 1 FROM order_items
-      WHERE order_id = $1 AND stock_deducted = TRUE
+      WHERE order_id = $1 AND stock_deducted = FALSE
     )
 `;
 
