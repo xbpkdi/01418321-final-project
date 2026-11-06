@@ -411,9 +411,10 @@ export const Q5S_2 = `
       order_status = CASE
         WHEN $2 <> 'sent' AND tracking_notified = FALSE THEN 'รอแจ้งเลขติดตาม'
         WHEN $2 = 'sent' AND delivery_status = 'delivered'
-          AND EXISTS (
+          AND EXISTS (SELECT 1 FROM order_items WHERE order_id = o.order_id)
+          AND NOT EXISTS (
             SELECT 1 FROM order_items
-            WHERE order_id = o.order_id AND stock_deducted = TRUE
+            WHERE order_id = o.order_id AND stock_deducted = FALSE
           ) THEN 'จัดส่งสำเร็จ'
         WHEN $2 = 'sent' AND tracking_notified = FALSE THEN 'แจ้งเลขติดตามแล้ว'
         ELSE order_status
