@@ -6,7 +6,11 @@ import { getExternalAdapters } from "@/lib/adapters";
 import { withTransaction } from "@/lib/db";
 import { mapDatabaseError } from "@/lib/db/errors";
 import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
-import { listSkuRetryOrderIds, lockOrder } from "@/lib/queries/orders";
+import {
+  listSkuRetryOrderIds,
+  listStockDeductRetryOrderIds,
+  lockOrder,
+} from "@/lib/queries/orders";
 import {
   completeDeliveredOrder,
   markLabelManual,
@@ -191,6 +195,14 @@ export async function runAutomation(
     if (requested.has(orderId)) continue;
     const retried = await runOrderAutomation(client, orderId, adapters);
     events.push(...retried.filter((event) => event.code !== "sku-db"));
+  }
+
+  // UC 7S: 7S normally follows 5S on the same Order. An Order left at
+  // "แจ้งเลขติดตามแล้ว" with items not deducted (or delivered but not yet
+  // closed by 8A) is picked up by any later workflow action.
+  for (const orderId of await listStockDeductRetryOrderIds(client)) {
+    if (requested.has(orderId)) continue;
+    events.push(...(await runOrderAutomation(client, orderId, adapters)));
   }
 
   // Any later workflow action is also a retry opportunity for durable 7S

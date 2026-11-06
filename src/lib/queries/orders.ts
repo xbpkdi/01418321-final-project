@@ -472,6 +472,31 @@ export async function listSkuRetryOrderIds(
   return result.rows.map((row) => row.order_id);
 }
 
+// UC 7S / Q7S.1: Orders at "แจ้งเลขติดตามแล้ว" that still have items not
+// deducted, or that the carrier already delivered (8A closes them after 7S).
+export const Q7S_1_RETRY = `
+  SELECT o.order_id
+  FROM orders o
+  WHERE o.order_status = 'แจ้งเลขติดตามแล้ว'
+    AND (
+      EXISTS (
+        SELECT 1 FROM order_items item
+        WHERE item.order_id = o.order_id AND item.stock_deducted = FALSE
+      )
+      OR (o.delivery_status = 'delivered' AND o.tracking_notified = TRUE)
+    )
+  ORDER BY o.order_date, o.order_id
+  LIMIT 100
+  FOR UPDATE OF o SKIP LOCKED
+`;
+
+export async function listStockDeductRetryOrderIds(
+  executor: QueryExecutor,
+): Promise<string[]> {
+  const result = await executor.query<{ order_id: string }>(Q7S_1_RETRY);
+  return result.rows.map((row) => row.order_id);
+}
+
 // UC 1S / Q1S.1: persist a selected RSL reference and advance to label work.
 export const Q1S_1 = `
   UPDATE orders
