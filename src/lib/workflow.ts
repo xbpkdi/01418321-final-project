@@ -587,7 +587,12 @@ export function saveProduct(
       requeued++;
     }
   }
-  return { state: next, result: "ok", requeued };
+  // Order ที่ถูกส่งกลับคิวเดินต่อ 2S/3S/6S ทันที (ไม่ต้องรอ action ถัดไป)
+  return {
+    state: requeued > 0 ? runAutomation(next).state : next,
+    result: "ok",
+    requeued,
+  };
 }
 
 export function setProductActive(
