@@ -151,7 +151,10 @@ const th = {
     skuMissing: "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน",
     skuMultiple: "พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง",
     skuDb: "ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง",
-    stockEnough: (id: string) => `${id} สต๊อกเพียงพอ ส่งต่อไปจับคู่กับ RSL`,
+    stockEnough: (id: string, inHouse: boolean) =>
+      inHouse
+        ? `${id} คลังบริษัทมีสต๊อกพอ บริษัทจัดส่งเอง ส่งต่อไปจัดรูปแบบใบปะสินค้า`
+        : `${id} RSL มีสต๊อกพอ ส่งต่อไปจับคู่กับ RSL`,
     stockLow: (id: string) =>
       `${id} สต๊อกไม่เพียงพอ ส่งต่อไปคำนวณต้นทุนและรอ Admin ตัดสินใจสั่งซื้อ`,
     labelCreated: (n: number) => `สร้างใบปะสินค้าสำเร็จ ${n} ใบ`,
@@ -270,7 +273,8 @@ const th = {
     queueTitle: "ยังไม่ได้จับคู่",
     matchedTitle: "จับคู่แล้ว รอพิมพ์ใบปะสินค้า",
     emptyTitle: "จับคู่ครบทุก Order แล้ว",
-    emptyHint: "Order ที่ตรวจสต๊อกแล้วว่าเพียงพอจะเข้ามารอที่นี่",
+    emptyHint:
+      "Order ที่ RSL มีสต๊อกพอจะเข้ามารอที่นี่ (Order ที่บริษัทจัดส่งเองไม่ต้องจับคู่)",
     chooseFor: (orderId: string, sku: string) =>
       `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
     stockLeft: "คงเหลือในคลัง RSL",
@@ -464,7 +468,7 @@ const th = {
     tabOrdered: (n: number) => `คำสั่งซื้อ (${n})`,
     emptyDecideTitle: "ไม่มีรายการรอตัดสินใจ",
     emptyDecideHint:
-      "Order ที่สต๊อกไม่พอและคำนวณต้นทุนแล้วจะเข้ามารอการตัดสินใจที่นี่",
+      "Order ที่สต๊อกไม่พอ และ Order ที่รอราคาขาย จะเข้ามารอการตัดสินใจที่นี่",
     emptyPurchaseTitle: "ไม่มีรายการรอสั่งซื้อ",
     emptyPurchaseHint:
       "SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์ และ Order ที่ตัดสินใจว่าคุ้มค่าจะเข้ามาที่นี่",
@@ -590,7 +594,7 @@ const th = {
     emptySearchHint: "ลองค้นด้วย Order ID หรือที่อยู่จัดส่งอีกครั้ง",
     title: "พิมพ์ใบปะสินค้า",
     description:
-      "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จับคู่ RSL และจัดรูปแบบใบปะสินค้าแล้ว",
+      "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จัดรูปแบบใบปะสินค้าแล้ว ทั้งที่ RSL จัดส่งและบริษัทจัดส่งเอง",
     printAll: "พิมพ์ใบปะสินค้าทั้งหมด",
     print: "พิมพ์ใบปะสินค้า",
     reprint: "พิมพ์ซ้ำ",
@@ -600,7 +604,7 @@ const th = {
     parcels: "จำนวนกล่อง",
     emptyTitle: "ไม่มี Order ที่รอพิมพ์",
     emptyHint:
-      "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
+      "Order ที่จัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
     reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่",
     reprintHint: "ระบบจะบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ",
     reprintConfirm: "ยืนยันพิมพ์ซ้ำ",
@@ -884,8 +888,10 @@ const en: typeof th = {
       "No SKU rule matches this product. Please set up the SKU rule first",
     skuMultiple: "More than one SKU rule matches. Please choose manually",
     skuDb: "Cannot read SKU rules. Please try again later",
-    stockEnough: (id: string) =>
-      `${id} has enough stock and moves on to RSL matching`,
+    stockEnough: (id: string, inHouse: boolean) =>
+      inHouse
+        ? `${id} has enough company stock, ships in-house and moves on to label formatting`
+        : `${id} has enough RSL stock and moves on to RSL matching`,
     stockLow: (id: string) =>
       `${id} does not have enough stock and moves on to unit cost and the purchase decision`,
     labelCreated: (n: number) => `${n} shipping labels created`,
@@ -1008,7 +1014,8 @@ const en: typeof th = {
     queueTitle: "Not matched",
     matchedTitle: "Matched, awaiting label print",
     emptyTitle: "Every order is matched",
-    emptyHint: "Orders with enough stock wait here",
+    emptyHint:
+      "Orders with enough RSL stock wait here (in-house orders skip matching)",
     chooseFor: (orderId: string, sku: string) =>
       `Choose an RSL record for ${orderId} · ${sku}`,
     stockLeft: "Left in RSL",
@@ -1203,7 +1210,7 @@ const en: typeof th = {
     tabOrdered: (n: number) => `Purchase orders (${n})`,
     emptyDecideTitle: "Nothing to decide",
     emptyDecideHint:
-      "Orders without enough stock and with a calculated cost wait here for a decision",
+      "Orders without enough stock, and Orders waiting for a selling price, wait here for a decision",
     emptyPurchaseTitle: "Nothing to reorder",
     emptyPurchaseHint:
       "SKUs below the reorder point and orders judged worth it arrive here",
@@ -1332,7 +1339,7 @@ const en: typeof th = {
     emptySearchHint: "Try searching by order ID or shipping address again",
     title: "Shipping labels",
     description:
-      "Print parcel labels for orders that are matched with RSL and formatted",
+      "Print parcel labels for formatted orders, shipped by RSL or in-house",
     printAll: "Print all labels",
     print: "Print label",
     reprint: "Reprint",
@@ -1341,7 +1348,7 @@ const en: typeof th = {
     printedTitle: "Printed",
     parcels: "Parcels",
     emptyTitle: "No orders waiting to print",
-    emptyHint: "Orders matched with RSL and formatted wait here",
+    emptyHint: "Orders with formatted labels wait here",
     reprintTitle: "This order's label was already printed. Print it again?",
     reprintHint: "The system logs the reprint with time and operator",
     reprintConfirm: "Confirm reprint",
