@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { RotateCcw } from "lucide-react";
+import { LockOpen, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ import {
   resetFaultsAction,
   resetSampleDataAction,
   setFaultAction,
+  unlockAccountsAction,
 } from "./actions";
 
 export function DevToolsClient({
@@ -78,6 +79,17 @@ export function DevToolsClient({
       }
       setFaults(result.faults);
       toast.success(t.dev.resetDone);
+    });
+  }
+
+  function unlockAccounts() {
+    startTransition(async () => {
+      const result = await unlockAccountsAction();
+      if (!result.success) {
+        toast.error(t.dev.actionFailed);
+        return;
+      }
+      toast.success(t.dev.unlockDone(result.unlocked));
     });
   }
 
@@ -130,6 +142,15 @@ export function DevToolsClient({
           >
             <RotateCcw />
             {t.dev.reset}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-fit"
+            disabled={pending}
+            onClick={unlockAccounts}
+          >
+            <LockOpen />
+            {t.dev.unlock}
           </Button>
           <p className="text-muted-foreground text-sm">
             {t.dev.accounts}: {t.dev.accountsHint}

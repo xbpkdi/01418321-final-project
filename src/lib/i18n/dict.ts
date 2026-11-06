@@ -728,7 +728,12 @@ const th = {
     } as Record<FaultKey, string>,
     accounts: "บัญชีทดสอบ",
     accountsHint:
-      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ถูกล็อก 15 นาทีหลังรีเซ็ต ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+    unlock: "ปลดล็อกบัญชี",
+    unlockDone: (count: number) =>
+      count === 0
+        ? "ไม่มีบัญชีที่ถูกล็อกหรือมีการเข้าสู่ระบบผิด"
+        : `ปลดล็อกบัญชีและล้างจำนวนครั้งที่เข้าสู่ระบบผิดแล้ว ${count} บัญชี`,
     errorLogTitle: "บันทึกข้อผิดพลาดอัตโนมัติ",
     errorLogHint: "50 รายการล่าสุดจากตาราง auto_error_logs (2S / 3S / 6S / 7S)",
     errorLogEmpty: "ยังไม่มีข้อผิดพลาด",
@@ -1463,7 +1468,12 @@ const en: typeof th = {
     } as Record<FaultKey, string>,
     accounts: "Test accounts",
     accountsHint:
-      "admin@colorado.jp uses the seeded password · locked@colorado.jp tests too many sign-in attempts",
+      "admin@colorado.jp uses the seeded password · locked@colorado.jp is locked for 15 minutes after a reset to test too many sign-in attempts",
+    unlock: "Unlock accounts",
+    unlockDone: (count: number) =>
+      count === 0
+        ? "No account is locked or has failed sign-ins"
+        : `Unlocked and cleared failed sign-ins for ${count} account${count === 1 ? "" : "s"}`,
     errorLogTitle: "Automation error log",
     errorLogHint: "Latest 50 rows from auto_error_logs (2S / 3S / 6S / 7S)",
     errorLogEmpty: "No errors yet",

@@ -13,6 +13,7 @@ import {
   setSessionCookie,
 } from "@/lib/auth/sessions";
 import { withTransaction } from "@/lib/db";
+import { unlockAllAdmins } from "@/lib/queries/admin";
 import type { FaultKey } from "@/lib/workflow";
 import { seedDatabase } from "../../../../db/seed/index";
 
@@ -58,5 +59,17 @@ export async function resetSampleDataAction(): Promise<DevActionResult> {
     return { success: true, faults: getFaultSnapshot() };
   } catch {
     return { success: false, error: "databaseFailure" };
+  }
+}
+
+/** UC 1A test aid: clear failed attempts and locks on every Admin account. */
+export async function unlockAccountsAction(): Promise<
+  { success: true; unlocked: number } | { success: false }
+> {
+  await requireSession();
+  try {
+    return { success: true, unlocked: await unlockAllAdmins() };
+  } catch {
+    return { success: false };
   }
 }
