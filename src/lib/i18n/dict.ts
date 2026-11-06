@@ -174,8 +174,8 @@ const th = {
     footer: "Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น",
     errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ",
     errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง",
-    errTooManyAttempts:
-      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
+    errTooManyAttempts: (minutes: number) =>
+      `คุณพยายามเข้าสู่ระบบบ่อยเกินไป บัญชีถูกล็อกชั่วคราว กรุณารออีก ${minutes} นาทีก่อนลองใหม่อีกครั้ง`,
     errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
     okLogin: "เข้าสู่ระบบสำเร็จ",
     // ประโยคเดียวกับ description ใน metadata ของ layout
@@ -904,8 +904,8 @@ const en: typeof th = {
     footer: "Colorado Co., Ltd. · Internal system for administrators only",
     errIncomplete: "Required fields are missing",
     errEmailFormat: "The email format is not valid",
-    errTooManyAttempts:
-      "Too many sign-in attempts. Please wait a moment before trying again",
+    errTooManyAttempts: (minutes: number) =>
+      `Too many sign-in attempts. The account is locked for now. Please wait ${minutes} more minute${minutes === 1 ? "" : "s"} before trying again`,
     errWrongCredentials: "Incorrect email or password",
     okLogin: "Signed in successfully",
     tagline:

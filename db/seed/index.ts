@@ -104,8 +104,9 @@ const RESET_SEED_DATA = `
 // UC 1A / Q1A.7 (provisional): seed the two approved Admin test accounts.
 const INSERT_ADMIN = `
   INSERT INTO admins (
-    admin_id, user_email, user_password, fail_attempts, created_at
-  ) VALUES ($1, $2, $3, $4, $5)
+    admin_id, user_email, user_password, fail_attempts, locked_until,
+    created_at
+  ) VALUES ($1, $2, $3, $4, $5, $6)
   ON CONFLICT (admin_id) DO NOTHING
 `;
 
@@ -223,19 +224,26 @@ function requiredSeedPassword(): string {
   return password;
 }
 
+// Same as LOGIN_LOCK_MINUTES in src/lib/queries/admin.ts (server-only there).
+const SEED_LOCK_MINUTES = 15;
+
 async function seedAdmins(client: PoolClient, now: Date): Promise<void> {
   const encodedPassword = await hashPasswordValue(requiredSeedPassword());
+  // UC 1A: locked@ starts inside a fresh 15-minute lock; it unlocks by
+  // itself after that (or via /dev). A reset locks it again.
+  const lockedUntil = new Date(now.getTime() + SEED_LOCK_MINUTES * 60_000);
   const accounts = [
-    ["U001", "admin@colorado.jp", 0],
-    ["U002", "locked@colorado.jp", 5],
+    ["U001", "admin@colorado.jp", 0, null],
+    ["U002", "locked@colorado.jp", 5, lockedUntil],
   ] as const;
 
-  for (const [adminId, email, failedAttempts] of accounts) {
+  for (const [adminId, email, failedAttempts, until] of accounts) {
     await client.query(INSERT_ADMIN, [
       adminId,
       email,
       encodedPassword,
       failedAttempts,
+      until,
       now,
     ]);
   }

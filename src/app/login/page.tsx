@@ -48,7 +48,7 @@ export default function LoginScreen() {
     ? {
         incomplete: t.login.errIncomplete,
         "email-format": t.login.errEmailFormat,
-        locked: t.login.errTooManyAttempts,
+        locked: t.login.errTooManyAttempts(state.retryMinutes ?? 1),
         wrong: t.login.errWrongCredentials,
         databaseUnavailable: t.errors.databaseUnavailable,
         databaseFailure: t.errors.databaseFailure,
