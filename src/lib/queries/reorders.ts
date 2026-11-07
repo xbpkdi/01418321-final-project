@@ -234,6 +234,21 @@ export async function findRetryReorder(
   return result.rows[0] ?? null;
 }
 
+// UC 6A / Q6A.6: next running PO number (PO-0092 follows PO-0091).
+// reorder_no_seq comes from migration 008 and is kept in step by the seed.
+export const Q6A_1_NEXT_NUMBER = `
+  SELECT nextval('reorder_no_seq') AS reorder_no
+`;
+
+export async function nextReorderNumber(
+  executor: QueryExecutor,
+): Promise<string> {
+  const result = await executor.query<{ reorder_no: string | number }>(
+    Q6A_1_NEXT_NUMBER,
+  );
+  return String(result.rows[0].reorder_no).padStart(4, "0");
+}
+
 export const Q6A_1_INSERT = `
   INSERT INTO reorders (
     reorder_id, order_qty, reorder_status, expected_date, created_at,
