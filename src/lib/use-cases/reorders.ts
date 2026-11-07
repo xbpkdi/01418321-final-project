@@ -20,6 +20,7 @@ import {
   markReorderReceived,
   markDecisionMissingPrice,
   markLinkedReorderOrders,
+  nextReorderNumber,
   releaseReceivedOrders,
   saveReorderDecision,
   type PurchaseContextRow,
@@ -150,8 +151,10 @@ export async function purchaseReorderUseCase(
       )
         .toISOString()
         .slice(0, 10);
-      const reorderId = `PO-${randomUUID()}`;
-      const requestId = `SUPPLIER-${randomUUID()}`;
+      // Running number as in the report: PO-0092 / SUPPLIER-req-0092.
+      const reorderNo = await nextReorderNumber(client);
+      const reorderId = `PO-${reorderNo}`;
+      const requestId = `SUPPLIER-req-${reorderNo}`;
       await insertReorderAttempt(client, {
         reorderId,
         quantity: input.quantity,

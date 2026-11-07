@@ -191,6 +191,26 @@ const INSERT_REORDER = `
   ON CONFLICT (reorder_id) DO NOTHING
 `;
 
+// UC 6A (provisional): keep the PO running number after the seeded POs.
+// A reset restarts it, so the first new PO after a reset is always PO-0092;
+// a normal seed never moves it backwards.
+const SYNC_REORDER_NUMBER = `
+  SELECT setval(
+    'reorder_no_seq',
+    GREATEST(
+      COALESCE((
+        SELECT MAX(substring(reorder_id FROM '^PO-([0-9]+)$')::bigint)
+        FROM reorders
+      ), 0) + 1,
+      CASE WHEN $1::boolean THEN 1 ELSE (
+        SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+        FROM reorder_no_seq
+      ) END
+    ),
+    false
+  )
+`;
+
 // UC 5S / Q5S.1 (provisional): initial successful notification history.
 const INSERT_TRACKING_LOG = `
   INSERT INTO tracking_notification_logs (
@@ -425,6 +445,7 @@ export async function seedDatabase(options?: {
     await seedReferenceData(client, now);
     // reorders first: orders.reorder_id references them (UC 6A).
     await seedReorders(client);
+    await client.query(SYNC_REORDER_NUMBER, [options?.reset === true]);
     await seedOrders(client, now);
     await seedSyncStates(client, now);
   });
