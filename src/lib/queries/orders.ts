@@ -85,7 +85,7 @@ export const Q2A_1 = `
     sku.sku,
     sku.product_name,
     sku.selling_price,
-    reorder.reorder_id,
+    o.reorder_id,
     label.label_template,
     label.parcel_total,
     label.label_printed_at,
@@ -102,13 +102,6 @@ export const Q2A_1 = `
   LEFT JOIN skus sku ON sku.sku_id = item.sku_id
   LEFT JOIN stock stock_row ON stock_row.sku_id = sku.sku_id
   LEFT JOIN rakuten_stock_sync_states sync ON sync.stock_id = stock_row.stock_id
-  LEFT JOIN LATERAL (
-    SELECT r.reorder_id
-    FROM reorders r
-    WHERE r.order_id = o.order_id
-    ORDER BY r.created_at DESC
-    LIMIT 1
-  ) reorder ON TRUE
   LEFT JOIN LATERAL (
     SELECT
       MAX(l.label_template) AS label_template,
@@ -361,12 +354,7 @@ export const Q2A_1_FOR_UPDATE = `
     ORDER BY oi.order_item_id LIMIT 1
   ) item ON TRUE
   LEFT JOIN skus sku ON sku.sku_id = item.sku_id
-  LEFT JOIN LATERAL (
-    SELECT r.reorder_id, r.reorder_status
-    FROM reorders r
-    WHERE r.order_id = o.order_id
-    ORDER BY r.created_at DESC LIMIT 1
-  ) reorder ON TRUE
+  LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id
   WHERE o.order_id = $1
   FOR UPDATE OF o
 `;
@@ -465,6 +453,50 @@ export async function saveSkuMatch(
   await executor.query(Q2S_2, [orderId, skuId, status, manualReason]);
 }
 
+// UC 2S / Q2S.1: Orders still waiting at 2S (e.g. after the SKU rule data
+// could not be read) so the next workflow action retries them. SKIP LOCKED
+// leaves rows another transaction is working on to that transaction.
+export const Q2S_1_RETRY = `
+  SELECT order_id
+  FROM orders
+  WHERE order_status = 'รอจับคู่กฎ SKU'
+  ORDER BY order_date, order_id
+  LIMIT 100
+  FOR UPDATE SKIP LOCKED
+`;
+
+export async function listSkuRetryOrderIds(
+  executor: QueryExecutor,
+): Promise<string[]> {
+  const result = await executor.query<{ order_id: string }>(Q2S_1_RETRY);
+  return result.rows.map((row) => row.order_id);
+}
+
+// UC 7S / Q7S.1: Orders at "แจ้งเลขติดตามแล้ว" that still have items not
+// deducted, or that the carrier already delivered (8A closes them after 7S).
+export const Q7S_1_RETRY = `
+  SELECT o.order_id
+  FROM orders o
+  WHERE o.order_status = 'แจ้งเลขติดตามแล้ว'
+    AND (
+      EXISTS (
+        SELECT 1 FROM order_items item
+        WHERE item.order_id = o.order_id AND item.stock_deducted = FALSE
+      )
+      OR (o.delivery_status = 'delivered' AND o.tracking_notified = TRUE)
+    )
+  ORDER BY o.order_date, o.order_id
+  LIMIT 100
+  FOR UPDATE OF o SKIP LOCKED
+`;
+
+export async function listStockDeductRetryOrderIds(
+  executor: QueryExecutor,
+): Promise<string[]> {
+  const result = await executor.query<{ order_id: string }>(Q7S_1_RETRY);
+  return result.rows.map((row) => row.order_id);
+}
+
 // UC 1S / Q1S.1: persist a selected RSL reference and advance to label work.
 export const Q1S_1 = `
   UPDATE orders
@@ -487,11 +519,18 @@ export async function saveRslMatch(
 }
 
 // UC 1S / Q1S.1: list work that can be matched automatically or retried.
+// Only RSL-fulfilled Orders; in-house Orders skip 1S (3S sends them to 6S).
 export const Q1S_1_QUEUE = `
   SELECT o.order_id
   FROM orders o
-  WHERE o.order_status = 'ยังไม่ได้จับคู่'
-     OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl')
+  WHERE (
+      o.order_status = 'ยังไม่ได้จับคู่'
+      OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl')
+    )
+    AND EXISTS (
+      SELECT 1 FROM order_items oi
+      WHERE oi.order_id = o.order_id AND oi.fulfill_source = 'rsl'
+    )
   ORDER BY o.order_date, o.order_id
 `;
 
@@ -503,10 +542,12 @@ export async function listRslQueueIds(
 }
 
 // UC 1S alternative #3 / Q1S.1: clear the RSL link and generated labels.
+// Only Orders that carry an RSL reference; in-house Orders were never matched.
 export const Q1S_1_UNMATCH = `
   WITH eligible AS (
     SELECT order_id FROM orders
     WHERE order_id = $1
+      AND rsl_no IS NOT NULL
       AND (
         order_status IN ('รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า')
         OR (order_status = 'รอดำเนินการด้วยตนเอง' AND rsl_no IS NOT NULL)
@@ -553,17 +594,32 @@ export async function saveCancellation(
 export const Q7A_1_CANCEL_REORDER = `
   UPDATE reorders
   SET reorder_status = 'ยกเลิกแล้ว'
-  WHERE reorder_id = $1 AND reorder_status <> 'ยกเลิกแล้ว'
+  WHERE reorder_id = $1
+    AND reorder_status IN ('รอส่งคำสั่งซื้อ', 'สั่งซื้อแล้ว')
   RETURNING reorder_id
+`;
+
+// UC 7A alternative #2: the cancelled reorder may cover other Orders of the
+// same SKU. They no longer wait for goods, so they go back to the 5A decision.
+export const Q7A_1_RELEASE_ORDERS = `
+  UPDATE orders
+  SET order_status = 'รอ Admin ตัดสินใจสั่งซื้อ', manual_reason = NULL,
+      reorder_id = NULL, reorder_decision = NULL, decided_qty = NULL,
+      updated_at = CURRENT_TIMESTAMP
+  WHERE reorder_id = $1 AND order_id <> $2
+    AND order_status IN ('รอส่งคำสั่งซื้อ', 'สั่งซื้อแล้ว')
 `;
 
 export async function cancelLinkedReorder(
   executor: QueryExecutor,
   reorderId: string,
+  cancelledOrderId: string,
 ): Promise<boolean> {
   const result = await executor.query<{ reorder_id: string }>(
     Q7A_1_CANCEL_REORDER,
     [reorderId],
   );
-  return result.rowCount === 1;
+  if (result.rowCount !== 1) return false;
+  await executor.query(Q7A_1_RELEASE_ORDERS, [reorderId, cancelledOrderId]);
+  return true;
 }

@@ -61,3 +61,19 @@ const TONE_BY_STATUS: Record<OrderStatus, StatusTone> = {
 export function toneOf(status: OrderStatus): StatusTone {
   return TONE_BY_STATUS[status];
 }
+
+/**
+ * 3S: สถานะของ Order ที่ผ่าน 3S ไปแล้ว (เลือก fulfill_source แล้ว) และยังไม่ถูกตัดสต๊อก
+ * ยอดของ Order เหล่านี้ถือว่า "จองไว้" จากแหล่งของตัวเอง 3S ต้องหักออกก่อนตัดสินใจ
+ * Order ที่ยกเลิก ปิดแล้ว ส่งไม่สำเร็จ/ตีกลับ หรือรอดำเนินการด้วยตนเอง ไม่จองสต๊อก
+ */
+export const STOCK_RESERVING_STATUSES: readonly OrderStatus[] = [
+  "ยังไม่ได้จับคู่",
+  "รอจัดรูปแบบใบปะสินค้า",
+  "รอพิมพ์ใบปะสินค้า",
+  "พิมพ์ใบปะสินค้าแล้ว",
+  "รอส่งมอบ",
+  "อยู่ระหว่างจัดส่ง",
+  "รอแจ้งเลขติดตาม",
+  "แจ้งเลขติดตามแล้ว",
+];

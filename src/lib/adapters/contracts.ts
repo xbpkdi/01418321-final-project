@@ -1,5 +1,6 @@
 import type { DeliveryStatus, Order, SalesChannel } from "@/types/order";
 import type { PurchaseOrder } from "@/types/product";
+import type { QueryExecutor } from "@/lib/db";
 
 export type AdapterFailureCode =
   | "unavailable"
@@ -70,8 +71,15 @@ export type RslMatch = {
 export interface RslAdapter {
   /** UC 1S alternative #4. */
   matchOrder(order: Pick<Order, "sku" | "variation">): Promise<AdapterResult<RslMatch[]>>;
-  /** UC 3S alternatives #1 and #3. */
-  getStock(sku: string): Promise<AdapterResult<number>>;
+  /**
+   * UC 3S alternatives #1 and #3. `executor` is the caller's transaction;
+   * the mock reads `stock.rsl_qty` through it so the reading includes changes
+   * made earlier in the same transaction. A real adapter ignores it.
+   */
+  getStock(
+    sku: string,
+    executor?: QueryExecutor,
+  ): Promise<AdapterResult<number>>;
 }
 
 export type LabelOrder = Pick<
@@ -81,9 +89,11 @@ export type LabelOrder = Pick<
   | "rsl_reference_id"
   | "shipping_address"
   | "shipping_method"
+  | "fulfill_source"
 > & Pick<Order, "qty">;
 
 export type LabelRule = {
+  fulfill_source: Order["fulfill_source"];
   shipping_method: string;
   sales_channel: SalesChannel;
   label_template: string;
@@ -92,6 +102,7 @@ export type LabelRule = {
 
 export type GeneratedLabel = {
   label_template: string;
+  /** "" for in-house Orders (no RSL reference); stored as NULL. */
   rsl_no: string;
   parcel_seq: number;
   parcel_total: number;

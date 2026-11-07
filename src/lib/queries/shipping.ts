@@ -33,16 +33,17 @@ export interface LabelOrderRow extends QueryResultRow {
   shipping_address: string;
   shipping_method: string;
   qty: number;
+  fulfill_source: "in_house" | "rsl";
   order_status: OrderStatus;
 }
 
 // UC 6S / Q6S.1: load work waiting for automatic label generation.
 export const Q6S_1 = `
   SELECT o.order_id, o.sales_channel, o.rsl_no, o.shipping_address,
-         o.shipping_method, item.qty, o.order_status
+         o.shipping_method, item.qty, item.fulfill_source, o.order_status
   FROM orders o
   INNER JOIN LATERAL (
-    SELECT qty FROM order_items
+    SELECT qty, fulfill_source FROM order_items
     WHERE order_id = o.order_id ORDER BY order_item_id LIMIT 1
   ) item ON TRUE
   WHERE o.order_status = 'รอจัดรูปแบบใบปะสินค้า'
@@ -63,6 +64,7 @@ export function toLabelOrder(row: LabelOrderRow): LabelOrder {
     shipping_address: row.shipping_address,
     shipping_method: row.shipping_method,
     qty: Number(row.qty),
+    fulfill_source: row.fulfill_source,
   };
 }
 
@@ -296,9 +298,10 @@ export const Q8A_1_STATUS = `
         WHEN $2 = 'failed' THEN 'จัดส่งไม่สำเร็จ'
         WHEN $2 = 'returned' THEN 'ตีกลับ/คืนสินค้า'
         WHEN $2 = 'delivered' AND tracking_notified = TRUE
-          AND EXISTS (
+          AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1)
+          AND NOT EXISTS (
             SELECT 1 FROM order_items
-            WHERE order_id = $1 AND stock_deducted = TRUE
+            WHERE order_id = $1 AND stock_deducted = FALSE
           ) THEN 'จัดส่งสำเร็จ'
         ELSE order_status
       END,
@@ -336,9 +339,10 @@ export const Q8A_1_DELIVERED = `
     AND order_status = 'แจ้งเลขติดตามแล้ว'
     AND tracking_notified = TRUE
     AND delivery_status = 'delivered'
-    AND EXISTS (
+    AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1)
+    AND NOT EXISTS (
       SELECT 1 FROM order_items
-      WHERE order_id = $1 AND stock_deducted = TRUE
+      WHERE order_id = $1 AND stock_deducted = FALSE
     )
 `;
 
@@ -407,9 +411,10 @@ export const Q5S_2 = `
       order_status = CASE
         WHEN $2 <> 'sent' AND tracking_notified = FALSE THEN 'รอแจ้งเลขติดตาม'
         WHEN $2 = 'sent' AND delivery_status = 'delivered'
-          AND EXISTS (
+          AND EXISTS (SELECT 1 FROM order_items WHERE order_id = o.order_id)
+          AND NOT EXISTS (
             SELECT 1 FROM order_items
-            WHERE order_id = o.order_id AND stock_deducted = TRUE
+            WHERE order_id = o.order_id AND stock_deducted = FALSE
           ) THEN 'จัดส่งสำเร็จ'
         WHEN $2 = 'sent' AND tracking_notified = FALSE THEN 'แจ้งเลขติดตามแล้ว'
         ELSE order_status

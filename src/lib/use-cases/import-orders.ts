@@ -61,6 +61,7 @@ export async function importOrdersUseCase(
         channelSku: order.channel_sku,
         variation: order.variation,
         quantity: order.qty,
+        // Placeholder for the NOT NULL column; 3S (Q3S.1) sets the real source.
         fulfillSource: "rsl",
         skuId: registered ? rule.value.sku_id : null,
       });

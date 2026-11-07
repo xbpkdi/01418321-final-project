@@ -4,14 +4,13 @@ import type { PoolClient } from "pg";
 import type { ExternalAdapters } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
 import { withTransaction } from "@/lib/db";
-import { mapAdapterError, mapDatabaseError } from "@/lib/db/errors";
+import { mapDatabaseError } from "@/lib/db/errors";
 import { insertAutoErrorLog } from "@/lib/queries/auto-error-logs";
 import {
-  findSkuRules,
+  listSkuRetryOrderIds,
+  listStockDeductRetryOrderIds,
   lockOrder,
-  saveSkuMatch,
 } from "@/lib/queries/orders";
-import { getOrderStock, saveStockRoute } from "@/lib/queries/stock";
 import {
   completeDeliveredOrder,
   markLabelManual,
@@ -19,12 +18,13 @@ import {
   saveGeneratedLabels,
   toLabelOrder,
 } from "@/lib/queries/shipping";
+import { checkStockUseCase } from "@/lib/use-cases/check-stock";
 import { deductStockUseCase } from "@/lib/use-cases/deduct-stock";
+import { logAdapterFailure } from "@/lib/use-cases/log-auto-error";
+import { matchSkuUseCase } from "@/lib/use-cases/match-sku";
 import { syncRakutenStockUseCase } from "@/lib/use-cases/sync-rakuten-stock";
-import { SHIPPING_RULES } from "@/mock/delivery";
+import { findLabelRule, SHIPPING_RULES } from "@/mock/delivery";
 import {
-  chooseSkuRule,
-  chooseStockRoute,
   validGeneratedLabels,
   type AutoEvent,
 } from "@/lib/workflow";
@@ -45,24 +45,6 @@ class AutomationStepError extends Error {
   }
 }
 
-async function logAdapterFailure(
-  client: PoolClient,
-  input: {
-    useCaseId: "3S" | "6S";
-    contextKey: string;
-    failure: Parameters<typeof mapAdapterError>[0];
-  },
-): Promise<void> {
-  const safe = mapAdapterError(input.failure);
-  await insertAutoErrorLog(client, {
-    logId: randomUUID(),
-    useCaseId: input.useCaseId,
-    contextKey: input.contextKey,
-    errorCode: safe.code,
-    safeMessage: safe.messageKey,
-  });
-}
-
 async function runOrderAutomation(
   client: PoolClient,
   orderId: string,
@@ -76,30 +58,18 @@ async function runOrderAutomation(
 
     if (order.order_status === "รอจับคู่กฎ SKU") {
       try {
-        const selected = chooseSkuRule(
-          await findSkuRules(client, order.channel_sku, order.sales_channel),
-        );
-        if (selected.kind !== "matched") {
-          await saveSkuMatch(
-            client,
-            orderId,
-            null,
-            "รอดำเนินการด้วยตนเอง",
-            "sku-rule",
-          );
+        const matched = await matchSkuUseCase(client, order);
+        if (matched === "db-unavailable") {
+          events.push({ code: "sku-db", orderId });
+          break;
+        }
+        if (matched !== "ok") {
           events.push({
-            code: selected.kind === "missing" ? "sku-missing" : "sku-multiple",
+            code: matched === "missing" ? "sku-missing" : "sku-multiple",
             orderId,
           });
           break;
         }
-        await saveSkuMatch(
-          client,
-          orderId,
-          selected.value.sku_id,
-          "รอตรวจสอบสต๊อก",
-          null,
-        );
         events.push({ code: "sku-matched", count: 1 });
         continue;
       } catch (error) {
@@ -109,47 +79,21 @@ async function runOrderAutomation(
 
     if (order.order_status === "รอตรวจสอบสต๊อก" && order.sku) {
       try {
-        const stock = await getOrderStock(client, order.sku);
-        if (!stock) {
-          await insertAutoErrorLog(client, {
-            logId: randomUUID(),
-            useCaseId: "3S",
-            contextKey: orderId,
-            errorCode: "stock_missing",
-            safeMessage: "Stock record is unavailable",
-          });
-          break;
-        }
-        const external = await adapters.rsl.getStock(order.sku);
-        if (!external.ok) {
-          await logAdapterFailure(client, {
-            useCaseId: "3S",
-            contextKey: orderId,
-            failure: external.error,
-          });
-        }
-        const rslQuantity = external.ok ? external.data : null;
-        const route = chooseStockRoute(
-          Number(order.qty),
-          stock.inHouseQuantity,
-          rslQuantity,
-        );
-        await saveStockRoute(
+        const checked = await checkStockUseCase(
           client,
-          stock.stockId,
-          rslQuantity,
-          orderId,
-          route === "enough"
-            ? "ยังไม่ได้จับคู่"
-            : "รอ Admin ตัดสินใจสั่งซื้อ",
+          { ...order, sku: order.sku },
+          adapters.rsl,
         );
-        events.push({
-          code: route === "enough" ? "stock-enough" : "stock-low",
-          orderId,
-        });
+        if (checked !== "missing-stock") {
+          events.push({
+            code: checked === "low" ? "stock-low" : "stock-enough",
+            orderId,
+          });
+        }
+        // In-house Orders skip 1S RSL matching and go straight to 6S.
+        if (checked === "in_house") continue;
         break;
       } catch (error) {
-        if (error instanceof AutomationStepError) throw error;
         throw new AutomationStepError("3S", orderId, error);
       }
     }
@@ -161,11 +105,7 @@ async function runOrderAutomation(
           events.push({ code: "label-no-address", orderId });
           break;
         }
-        const rule = labelRules.find(
-          (candidate) =>
-            candidate.shipping_method === order.shipping_method &&
-            candidate.sales_channel === order.sales_channel,
-        );
+        const rule = findLabelRule(labelRules, order);
         if (!rule) {
           await markLabelManual(client, orderId, "template");
           events.push({ code: "label-no-template", orderId });
@@ -243,7 +183,25 @@ export async function runAutomation(
   adapters: ExternalAdapters = getExternalAdapters(),
 ): Promise<AutoEvent[]> {
   const events: AutoEvent[] = [];
-  for (const orderId of [...new Set(orderIds)]) {
+  const requested = new Set(orderIds);
+  for (const orderId of requested) {
+    events.push(...(await runOrderAutomation(client, orderId, adapters)));
+  }
+
+  // UC 2S alternative: an Order left at "รอจับคู่กฎ SKU" because SKU rule data
+  // was unreadable is retried by any later workflow action. A retry that still
+  // fails is only logged, not reported to this unrelated action.
+  for (const orderId of await listSkuRetryOrderIds(client)) {
+    if (requested.has(orderId)) continue;
+    const retried = await runOrderAutomation(client, orderId, adapters);
+    events.push(...retried.filter((event) => event.code !== "sku-db"));
+  }
+
+  // UC 7S: 7S normally follows 5S on the same Order. An Order left at
+  // "แจ้งเลขติดตามแล้ว" with items not deducted (or delivered but not yet
+  // closed by 8A) is picked up by any later workflow action.
+  for (const orderId of await listStockDeductRetryOrderIds(client)) {
+    if (requested.has(orderId)) continue;
     events.push(...(await runOrderAutomation(client, orderId, adapters)));
   }
 
@@ -281,22 +239,28 @@ async function recordRolledBackAutomationError(
   }
 }
 
-export type ExecuteWorkflowOptions = {
-  orderIds?: readonly string[];
+export type ExecuteWorkflowOptions<T = unknown> = {
+  /** Orders to automate. A function reads them from the action result when
+   * the action itself finds the Orders (e.g. 6A receive goods). */
+  orderIds?: readonly string[] | ((result: T) => readonly string[]);
   adapters?: ExternalAdapters;
 };
 
 /** Execute the triggering write and every resulting auto step atomically. */
 export async function executeWorkflow<T>(
   action: (client: PoolClient) => Promise<T>,
-  options: ExecuteWorkflowOptions = {},
+  options: ExecuteWorkflowOptions<T> = {},
 ): Promise<T> {
   try {
     return await withTransaction(async (client) => {
       const result = await action(client);
+      const orderIds =
+        typeof options.orderIds === "function"
+          ? options.orderIds(result)
+          : (options.orderIds ?? []);
       await runAutomation(
         client,
-        options.orderIds ?? [],
+        orderIds,
         options.adapters ?? getExternalAdapters(),
       );
       return result;

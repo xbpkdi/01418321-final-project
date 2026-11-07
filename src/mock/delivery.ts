@@ -1,4 +1,4 @@
-import type { DeliveryStatus } from "@/types/order";
+import type { DeliveryStatus, FulfillSource } from "@/types/order";
 
 /**
  * ข้อมูลผู้ให้บริการขนส่งตาม Q8A.1:
@@ -84,33 +84,76 @@ export function trackCarrier(trackingNumber: string) {
 /**
  * รูปแบบใบปะสินค้าตาม Q9A.1 / Q6S.1 (shipping_rules)
  * max_items_per_parcel ใช้แยกพัสดุ (Multi-parcel) ตาม 6S และ 9A ทางเลือก #4
- * วิธีจัดส่ง "จัดส่งเอง" ไม่มีรูปแบบ — ใช้ทดสอบ "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม"
+ * เลือกรูปแบบตามแหล่งที่จัดส่ง (fulfill_source ที่ 3S บันทึก):
+ * - rsl: เลือกตามวิธีจัดส่ง วิธี "จัดส่งเอง" ไม่มีรูปแบบของ RSL
+ *   ใช้ทดสอบ "ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม"
+ * - in_house: บริษัทจัดส่งเองจากคลังบริษัท ใช้รูปแบบของบริษัทรูปแบบเดียว
+ *   ไม่ขึ้นกับวิธีจัดส่ง และไม่มีเลข RSL
  */
 export const SHIPPING_RULES: {
+  fulfill_source: FulfillSource;
   shipping_method: string;
   sales_channel: string;
   label_template: string;
   max_items_per_parcel: number;
 }[] = [
   {
+    fulfill_source: "rsl",
     shipping_method: "RSL ปกติ",
     sales_channel: "Rakuten Ichiba",
     label_template: "RSL-STD-A6",
     max_items_per_parcel: 5,
   },
   {
+    fulfill_source: "rsl",
     shipping_method: "RSL ขนาดใหญ่",
     sales_channel: "Rakuten Ichiba",
     label_template: "RSL-LARGE-A5",
     max_items_per_parcel: 1,
   },
+  {
+    fulfill_source: "in_house",
+    shipping_method: "จัดส่งเอง",
+    sales_channel: "Rakuten Ichiba",
+    label_template: "INHOUSE-YAMATO-A6",
+    max_items_per_parcel: 5,
+  },
 ];
 
 export const SHIPPING_METHODS = ["RSL ปกติ", "RSL ขนาดใหญ่", "จัดส่งเอง"];
 
-export function findShippingRule(shippingMethod: string, salesChannel: string) {
-  return SHIPPING_RULES.find(
+/** เลือกรูปแบบใบปะของ Order ตามแหล่งที่จัดส่ง (ดู SHIPPING_RULES) */
+export function findLabelRule<
+  R extends {
+    fulfill_source: FulfillSource;
+    shipping_method: string;
+    sales_channel: string;
+  },
+>(
+  rules: readonly R[],
+  order: {
+    fulfill_source: FulfillSource;
+    shipping_method: string;
+    sales_channel: string;
+  },
+): R | undefined {
+  return rules.find(
     (r) =>
-      r.shipping_method === shippingMethod && r.sales_channel === salesChannel,
+      r.fulfill_source === order.fulfill_source &&
+      r.sales_channel === order.sales_channel &&
+      (order.fulfill_source === "in_house" ||
+        r.shipping_method === order.shipping_method),
   );
+}
+
+export function findShippingRule(
+  shippingMethod: string,
+  salesChannel: string,
+  fulfillSource: FulfillSource,
+) {
+  return findLabelRule(SHIPPING_RULES, {
+    fulfill_source: fulfillSource,
+    shipping_method: shippingMethod,
+    sales_channel: salesChannel,
+  });
 }

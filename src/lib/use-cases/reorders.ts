@@ -4,21 +4,32 @@ import type { SupplierAdapter } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
 import { isFaultEnabled } from "@/lib/adapters/faults";
 import { withTransaction } from "@/lib/db";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
+import {
+  adjustStock,
+  insertStockAdjustmentHistory,
+} from "@/lib/queries/stock";
 import {
   completeReorderAttempt,
   findPendingReorder,
   findRetryReorder,
   insertReorderAttempt,
-  listLinkedReorderOrders,
   lockDecisionContext,
   lockPurchaseContext,
+  lockReceiveContext,
+  markReorderReceived,
   markDecisionMissingPrice,
   markLinkedReorderOrders,
+  releaseReceivedOrders,
   saveReorderDecision,
   type PurchaseContextRow,
   type ReorderAttemptRow,
 } from "@/lib/queries/reorders";
-import type { DecideResult, PurchaseResult } from "@/lib/workflow";
+import type {
+  DecideResult,
+  PurchaseResult,
+  ReceiveResult,
+} from "@/lib/workflow";
 import type { PurchaseOrder, Supplier } from "@/types/product";
 
 function iso(value: Date | string): string {
@@ -51,11 +62,20 @@ export async function decideReorderUseCase(input: {
   decision: "คุ้มค่า" | "ไม่คุ้มค่า";
   quantity: number;
 }): Promise<DecideResult> {
+  // 5A step 3.1: the reorder quantity must be a positive whole number.
   if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
-    return "no-cost";
+    return "invalid-qty";
   }
   return withTransaction(async (client) => {
     const row = await lockDecisionContext(client, input.orderId);
+    // ทางเลือก #3: an Order already parked for a missing price waits for 3A,
+    // so tell the Admin to set the price instead of "already decided".
+    if (
+      row?.order_status === "รอดำเนินการด้วยตนเอง" &&
+      row.manual_reason === "price"
+    ) {
+      return "no-price";
+    }
     if (!row || row.order_status !== "รอ Admin ตัดสินใจสั่งซื้อ") {
       return "not-pending";
     }
@@ -125,10 +145,6 @@ export async function purchaseReorderUseCase(
 
     let attempt = await findRetryReorder(client, context.sku_id);
     if (!attempt) {
-      const linkedOrderIds = await listLinkedReorderOrders(
-        client,
-        context.sku_id,
-      );
       const expectedDate = new Date(
         Date.now() + supplier.lead_time * 24 * 60 * 60 * 1000,
       )
@@ -140,7 +156,6 @@ export async function purchaseReorderUseCase(
         reorderId,
         quantity: input.quantity,
         expectedDate,
-        orderId: linkedOrderIds[0] ?? null,
         skuId: context.sku_id,
         supplierId: supplier.supplier_id,
         requestId,
@@ -160,6 +175,7 @@ export async function purchaseReorderUseCase(
       context.sku_id,
       "รอส่งคำสั่งซื้อ",
       null,
+      attempt.reorder_id,
     );
     const po: PurchaseOrder = {
       po_id: attempt.reorder_id,
@@ -223,6 +239,7 @@ export async function purchaseReorderUseCase(
       prepared.context.sku_id,
       "สั่งซื้อแล้ว",
       null,
+      prepared.attempt.reorder_id,
     );
   });
 
@@ -231,4 +248,54 @@ export async function purchaseReorderUseCase(
     po: { ...prepared.po, status: "สั่งซื้อแล้ว" },
     supplier: prepared.supplier,
   };
+}
+
+/**
+ * UC 6A receive step: the Admin records goods from the Supplier. One
+ * executeWorkflow transaction closes the reorder once, adds the quantity to
+ * in-house stock (Rakuten sync pending + adjustment history), and sends every
+ * Order covered by the reorder back to 3S, which runs before commit.
+ */
+export async function receiveReorderUseCase(input: {
+  reorderId: string;
+  quantity: number;
+  adminId: string;
+}): Promise<ReceiveResult> {
+  if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+    return { kind: "invalid-qty" };
+  }
+  return executeWorkflow<ReceiveResult>(
+    async (client) => {
+      const row = await lockReceiveContext(client, input.reorderId);
+      if (!row) return { kind: "not-found" };
+      if (row.reorder_status === "ได้รับสินค้าแล้ว") return { kind: "already" };
+      if (row.reorder_status !== "สั่งซื้อแล้ว") return { kind: "not-ordered" };
+      if (!(await markReorderReceived(client, input.reorderId, input.quantity))) {
+        return { kind: "already" };
+      }
+
+      const previousInHouse = Number(row.in_house_qty);
+      const rsl = row.rsl_qty === null ? null : Number(row.rsl_qty);
+      // Supplier goods arrive at the company warehouse, not at RSL.
+      await adjustStock(
+        client,
+        row.stock_id,
+        previousInHouse + input.quantity,
+        rsl,
+      );
+      await insertStockAdjustmentHistory(client, {
+        historyId: `STOCK-HISTORY-${randomUUID()}`,
+        stockId: row.stock_id,
+        previousInHouseQuantity: previousInHouse,
+        inHouseQuantity: previousInHouse + input.quantity,
+        previousRslQuantity: rsl,
+        rslQuantity: rsl,
+        reason: `รับสินค้าจาก Supplier ตามคำสั่งซื้อ ${input.reorderId}`,
+        adminId: input.adminId,
+      });
+      const orderIds = await releaseReceivedOrders(client, input.reorderId);
+      return { kind: "ok", sku: row.sku, qty: input.quantity, orderIds };
+    },
+    { orderIds: (result) => (result.kind === "ok" ? result.orderIds : []) },
+  );
 }

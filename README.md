@@ -90,7 +90,9 @@ src/
 │   └── shared/             StatusBadge ฯลฯ
 ├── lib/
 │   ├── workflow.ts         ลำดับงานทุก UC เป็น pure function + งานอัตโนมัติ 2S/3S/6S/7S
-│   ├── store.tsx           ข้อมูลหน้าที่ยังไม่ migrate (ชั่วคราวจน feature 002 เสร็จ)
+│   ├── store.tsx           snapshot อ่านอย่างเดียวจาก PostgreSQL (loadAppState) + dirty flag; เขียนผ่าน Server Action
+│   ├── use-cases/          use case ฝั่งเซิร์ฟเวอร์ + executeWorkflow (2S/3S/6S/7S ใน transaction เดียว)
+│   ├── adapters/           ระบบภายนอก (mock) Rakuten, RSL, label, printer, carrier, supplier
 │   ├── auth/               scrypt, session cookie และ server-side guard
 │   ├── nav.ts              โครงเมนู (ใช้ร่วมกับหน้า sitemap)
 │   ├── order-status.ts     ค่าสถานะ Order + การ map สี badge

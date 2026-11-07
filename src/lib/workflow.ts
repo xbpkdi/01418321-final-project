@@ -15,7 +15,10 @@
  * เหมือน scheduler ที่ทำงานต่อทันทีเมื่อ Order เข้าสถานะที่รออยู่
  */
 
-import type { OrderStatus } from "@/lib/order-status";
+import {
+  STOCK_RESERVING_STATUSES,
+  type OrderStatus,
+} from "@/lib/order-status";
 import type { ChannelConnection, ManualReason, Order } from "@/types/order";
 import {
   calcUnitCost,
@@ -88,7 +91,14 @@ export type AppState = {
   faults: Record<FaultKey, boolean>;
   deletionLog: DeletionLog[];
   /** Log ข้อผิดพลาดของงานอัตโนมัติ (4A ทางเลือก #1 ฯลฯ) */
-  errorLog: { at: string; message: string }[];
+  /** auto_error_logs rows (newest first) when loaded from PostgreSQL. */
+  errorLog: {
+    at: string;
+    message: string;
+    useCaseId?: string;
+    contextKey?: string;
+    errorCode?: string;
+  }[];
   nextOrderSeq: number;
   nextPoSeq: number;
 };
@@ -235,6 +245,24 @@ export function stockTotal(s: AppState, sku: string) {
   };
 }
 
+/** 3S: ยอดที่ Order อื่นของ SKU เดียวกันจองไว้ (ผ่าน 3S แล้ว ยังไม่ตัดสต๊อก) แยกตามแหล่ง (Q3S.1) */
+export function reservedStock(s: AppState, sku: string, exceptOrderId: string) {
+  let rsl = 0;
+  let inHouse = 0;
+  for (const o of s.orders) {
+    if (
+      o.order_id === exceptOrderId ||
+      o.sku !== sku ||
+      o.stock_deducted ||
+      !STOCK_RESERVING_STATUSES.includes(o.order_status)
+    )
+      continue;
+    if (o.fulfill_source === "rsl") rsl += o.qty;
+    else inHouse += o.qty;
+  }
+  return { rsl, inHouse };
+}
+
 /** Pure 4A validation shared by the browser-era flow and the server use case. */
 export function isImportableOrder(order: {
   marketplace_order_id: string;
@@ -263,14 +291,19 @@ export function chooseSkuRule<T>(matches: readonly T[]):
   return { kind: "matched", value: matches[0] };
 }
 
-/** Pure 3S rule. A missing RSL value means only confirmed in-house stock is used. */
+/**
+ * Pure 3S rule. One source must cover the whole quantity because 7S deducts
+ * from one source: RSL first, then in-house. Only a combined total (or
+ * neither) is "low". A missing RSL value means RSL cannot ship.
+ */
 export function chooseStockRoute(
   quantity: number,
   inHouseQuantity: number,
   rslQuantity: number | null,
-): "enough" | "low" {
-  const available = inHouseQuantity + (rslQuantity ?? 0);
-  return available >= quantity ? "enough" : "low";
+): "rsl" | "in_house" | "low" {
+  if (rslQuantity !== null && rslQuantity >= quantity) return "rsl";
+  if (inHouseQuantity >= quantity) return "in_house";
+  return "low";
 }
 
 /** Pure 1S rule shared by the server matcher and the legacy state flow. */
@@ -554,7 +587,12 @@ export function saveProduct(
       requeued++;
     }
   }
-  return { state: next, result: "ok", requeued };
+  // Order ที่ถูกส่งกลับคิวเดินต่อ 2S/3S/6S ทันที (ไม่ต้องรอ action ถัดไป)
+  return {
+    state: requeued > 0 ? runAutomation(next).state : next,
+    result: "ok",
+    requeued,
+  };
 }
 
 export function setProductActive(
@@ -791,7 +829,13 @@ export function unitCostForQty(c: Record<CostKey, number>, qty: number) {
 
 // 5A ตัดสินใจสั่งซื้อ
 
-export type DecideResult = "not-pending" | "no-price" | "no-cost" | "db" | "ok";
+export type DecideResult =
+  | "invalid-qty"
+  | "not-pending"
+  | "no-price"
+  | "no-cost"
+  | "db"
+  | "ok";
 
 export function decide(
   s: AppState,
@@ -799,7 +843,15 @@ export function decide(
   decision: "คุ้มค่า" | "ไม่คุ้มค่า",
   qty: number,
 ): { state: AppState; result: DecideResult } {
+  if (!Number.isInteger(qty) || qty <= 0)
+    return { state: s, result: "invalid-qty" };
   const o = findOrder(s, orderId);
+  // ทางเลือก #3: Order ที่รอราคาขายอยู่แล้ว ให้ไปตั้งราคาใน 3A
+  if (
+    o?.order_status === "รอดำเนินการด้วยตนเอง" &&
+    o.manual_reason === "price"
+  )
+    return { state: s, result: "no-price" };
   if (!o || o.order_status !== "รอ Admin ตัดสินใจสั่งซื้อ")
     return { state: s, result: "not-pending" };
   const product = findProduct(s, o.sku);
@@ -999,14 +1051,72 @@ export function purchase(
   return { state: next, result: { kind: "ok", po, supplier } };
 }
 
+// 6A รับสินค้าจาก Supplier
+
+export type ReceiveResult =
+  | { kind: "invalid-qty" }
+  | { kind: "not-found" }
+  | { kind: "already" }
+  | { kind: "not-ordered" }
+  | { kind: "ok"; sku: string; qty: number; orderIds: string[] };
+
+/**
+ * Admin บันทึกว่าได้รับสินค้าตามคำสั่งซื้อ (สถานะ "สั่งซื้อแล้ว") — เพิ่มจำนวนที่ได้รับ
+ * เข้าสต๊อกในบริษัท ปิดคำสั่งซื้อเป็น "ได้รับสินค้าแล้ว" (บันทึกได้ครั้งเดียว) แล้วส่ง
+ * Order ทุกรายการที่ผูกกับคำสั่งซื้อนี้กลับไป "รอตรวจสอบสต๊อก" ให้ 3S ทำงานต่อทันที
+ */
+export function receiveReorder(
+  s: AppState,
+  poId: string,
+  qty: number,
+): { state: AppState; result: ReceiveResult } {
+  if (!Number.isInteger(qty) || qty <= 0)
+    return { state: s, result: { kind: "invalid-qty" } };
+  const po = s.purchaseOrders.find((p) => p.po_id === poId);
+  if (!po) return { state: s, result: { kind: "not-found" } };
+  if (po.status === "ได้รับสินค้าแล้ว")
+    return { state: s, result: { kind: "already" } };
+  if (po.status !== "สั่งซื้อแล้ว")
+    return { state: s, result: { kind: "not-ordered" } };
+
+  let next: AppState = {
+    ...s,
+    purchaseOrders: s.purchaseOrders.map((p) =>
+      p.po_id === poId
+        ? {
+            ...p,
+            status: "ได้รับสินค้าแล้ว",
+            received_at: nowIso(),
+            received_qty: qty,
+          }
+        : p,
+    ),
+  };
+  next = adjustStock(next, po.sku, "in_house", qty);
+  const orderIds = next.orders
+    .filter((o) => o.po_id === poId && o.order_status === "สั่งซื้อแล้ว")
+    .map((o) => o.order_id);
+  for (const id of orderIds)
+    next = setStatus(next, id, "รอตรวจสอบสต๊อก");
+  return {
+    state: runAutomation(next).state,
+    result: { kind: "ok", sku: po.sku, qty, orderIds },
+  };
+}
+
 // 1S จับคู่ RSL
 
-/** Order ที่รอจับคู่ RSL — รวม Order ที่ตกไปทำมือเพราะหา SKU ใน RSL ไม่เจอ */
+/**
+ * Order ที่รอจับคู่ RSL — รวม Order ที่ตกไปทำมือเพราะหา SKU ใน RSL ไม่เจอ
+ * เฉพาะ Order ที่ 3S เลือกให้ RSL จัดส่ง (Order จัดส่งจากคลังบริษัทข้าม 1S)
+ */
 export function rslQueue(s: AppState) {
   return s.orders.filter(
     (o) =>
-      o.order_status === "ยังไม่ได้จับคู่" ||
-      (o.order_status === "รอดำเนินการด้วยตนเอง" && o.manual_reason === "rsl"),
+      o.fulfill_source === "rsl" &&
+      (o.order_status === "ยังไม่ได้จับคู่" ||
+        (o.order_status === "รอดำเนินการด้วยตนเอง" &&
+          o.manual_reason === "rsl")),
   );
 }
 
@@ -1022,7 +1132,8 @@ export function matchRsl(
   chosen?: string,
 ): { state: AppState; result: MatchResult } {
   const o = findOrder(s, orderId);
-  if (!o) return { state: s, result: { kind: "not-found" } };
+  if (!o || o.fulfill_source !== "rsl")
+    return { state: s, result: { kind: "not-found" } };
   // ทางเลือก #4: คงไว้ที่ "ยังไม่ได้จับคู่" ให้ลองใหม่รอบถัดไป
   if (s.faults.rsl) return { state: s, result: { kind: "connection" } };
 
@@ -1070,7 +1181,8 @@ export function matchAllRsl(s: AppState) {
 /** ทางเลือก #3: ยกเลิกการจับคู่ — ล้าง rsl_reference_id และใบปะที่สร้างจากเลขเดิม */
 export function unmatchRsl(s: AppState, orderId: string) {
   const o = findOrder(s, orderId);
-  if (!o) return { state: s, result: "not-allowed" as const };
+  if (!o || !o.rsl_reference_id)
+    return { state: s, result: "not-allowed" as const };
   const allowed: OrderStatus[] = ["รอจัดรูปแบบใบปะสินค้า", "รอพิมพ์ใบปะสินค้า"];
   if (
     !allowed.includes(o.order_status) &&
@@ -1128,7 +1240,11 @@ export function printLabel(
     return { state: s, result: "already" };
 
   // Q9A.1
-  const rule = findShippingRule(o.shipping_method, o.sales_channel);
+  const rule = findShippingRule(
+    o.shipping_method,
+    o.sales_channel,
+    o.fulfill_source,
+  );
   if (!rule)
     return { state: toManual(s, orderId, "template"), result: "no-template" };
 
@@ -1425,13 +1541,33 @@ export function cancelOrder(
   }
   // ทางเลือก #2: ยกเลิกคำสั่งซื้อเติมสต๊อกที่ผูกกับ Order นี้ด้วย ถ้า Admin เลือก
   let poCancelled = false;
-  if (alsoCancelPo && check.linkedPo) {
+  if (
+    alsoCancelPo &&
+    check.linkedPo &&
+    (check.linkedPo.status === "สั่งซื้อแล้ว" ||
+      check.linkedPo.status === "รอส่งคำสั่งซื้อ")
+  ) {
+    const poId = check.linkedPo.po_id;
     next = {
       ...next,
       purchaseOrders: next.purchaseOrders.map((p) =>
-        p.po_id === check.linkedPo!.po_id ? { ...p, status: "ยกเลิกแล้ว" } : p,
+        p.po_id === poId ? { ...p, status: "ยกเลิกแล้ว" } : p,
       ),
     };
+    // Order อื่นที่ผูกกับคำสั่งซื้อเดียวกันไม่มีสินค้าเข้ามาแล้ว — กลับไปให้ Admin ตัดสินใจใหม่ (5A)
+    for (const other of next.orders) {
+      if (
+        other.order_id !== orderId &&
+        other.po_id === poId &&
+        (other.order_status === "สั่งซื้อแล้ว" ||
+          other.order_status === "รอส่งคำสั่งซื้อ")
+      )
+        next = setStatus(next, other.order_id, "รอ Admin ตัดสินใจสั่งซื้อ", {
+          po_id: undefined,
+          decision: undefined,
+          decided_qty: undefined,
+        });
+    }
     poCancelled = true;
   }
   // Q7A.1
@@ -1519,6 +1655,7 @@ export function planRangeCleanup(
       if (!before(p.order_date)) continue;
       const finished =
         p.status === "ยกเลิกแล้ว" ||
+        p.status === "ได้รับสินค้าแล้ว" ||
         (p.status === "สั่งซื้อแล้ว" && new Date(p.eta).getTime() < Date.now());
       const linked = s.orders.some(
         (o) => o.po_id === p.po_id && !CLOSED_STATUSES.includes(o.order_status),
@@ -1709,8 +1846,24 @@ export function runAutomation(input: AppState): {
       // 3S ตรวจสต๊อก → แยกเส้นทางตาม BizFlow "มีสินค้าเพียงพอไหม"
       if (o.order_status === "รอตรวจสอบสต๊อก") {
         const st = stockTotal(s, o.sku);
-        if (st && st.total >= o.qty) {
-          s = setStatus(s, o.order_id, "ยังไม่ได้จับคู่");
+        const reserved = reservedStock(s, o.sku, o.order_id);
+        const route = st
+          ? chooseStockRoute(
+              o.qty,
+              st.row.in_house_qty - reserved.inHouse,
+              st.partial || st.row.rsl_qty === null
+                ? null
+                : st.row.rsl_qty - reserved.rsl,
+            )
+          : "low";
+        if (route !== "low") {
+          // RSL → 1S จับคู่ RSL; คลังบริษัท → บริษัทจัดส่งเอง ข้าม 1S ไป 6S
+          s = setStatus(
+            s,
+            o.order_id,
+            route === "rsl" ? "ยังไม่ได้จับคู่" : "รอจัดรูปแบบใบปะสินค้า",
+            { fulfill_source: route },
+          );
           events.push({ code: "stock-enough", orderId: o.order_id });
         } else {
           // ไม่พอ → 4S คำนวณต้นทุน แล้วรอ Admin ตัดสินใจ (5A)
@@ -1728,7 +1881,11 @@ export function runAutomation(input: AppState): {
           continue;
         }
         // Q6S.1
-        const rule = findShippingRule(o.shipping_method, o.sales_channel);
+        const rule = findShippingRule(
+          o.shipping_method,
+          o.sales_channel,
+          o.fulfill_source,
+        );
         if (!rule) {
           s = toManual(s, o.order_id, "template");
           events.push({ code: "label-no-template", orderId: o.order_id });

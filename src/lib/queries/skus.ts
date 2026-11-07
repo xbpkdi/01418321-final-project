@@ -252,14 +252,14 @@ export async function requeueOrdersForSku(
     channelSku: string;
     hasSellingPrice: boolean;
   },
-): Promise<number> {
+): Promise<string[]> {
   const result = await executor.query<{ order_id: string }>(Q3A_1_REQUEUE, [
     input.channelSku,
     input.skuId,
     input.hasSellingPrice,
     input.sku,
   ]);
-  return result.rowCount ?? 0;
+  return [...new Set(result.rows.map((row) => row.order_id))];
 }
 
 // UC 3A alternative #1 / Q3A.1: a SKU with any business reference cannot be

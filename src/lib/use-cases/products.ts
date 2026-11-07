@@ -14,6 +14,7 @@ import {
   updateSku,
 } from "@/lib/queries/skus";
 import { saveCostDraft } from "@/lib/use-cases/costs";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 import type {
   CostForm,
   CsvRowResult,
@@ -62,16 +63,16 @@ async function saveProductInTransaction(
     costForm?: CostForm;
     adminId: string;
   },
-): Promise<{ result: ProductResult; requeued: number }> {
+): Promise<{ result: ProductResult; requeued: string[] }> {
   const draft = cleanProduct(input.draft);
   const validation = validateProduct(draft);
-  if (validation !== "ok") return { result: validation, requeued: 0 };
+  if (validation !== "ok") return { result: validation, requeued: [] };
 
   const original = input.originalSku
     ? await lockSku(client, input.originalSku)
     : null;
   if (input.originalSku && !original) {
-    return { result: "duplicate", requeued: 0 };
+    return { result: "duplicate", requeued: [] };
   }
   const conflict = await findSkuConflict(
     client,
@@ -79,9 +80,9 @@ async function saveProductInTransaction(
     draft.channel_sku,
     original?.sku_id ?? null,
   );
-  if (conflict) return { result: "duplicate", requeued: 0 };
+  if (conflict) return { result: "duplicate", requeued: [] };
   if (draft.supplier_id && !(await supplierExists(client, draft.supplier_id))) {
-    return { result: "incomplete", requeued: 0 };
+    return { result: "incomplete", requeued: [] };
   }
 
   const skuId = original?.sku_id ?? `SKU-${randomUUID()}`;
@@ -120,7 +121,12 @@ export async function saveProductUseCase(input: {
   costForm: CostForm;
   adminId: string;
 }): Promise<{ result: ProductResult; requeued: number }> {
-  return withTransaction((client) => saveProductInTransaction(client, input));
+  // UC 3A: requeued Orders go through 2S/3S/6S in the same transaction.
+  const saved = await executeWorkflow(
+    (client) => saveProductInTransaction(client, input),
+    { orderIds: (result) => result.requeued },
+  );
+  return { result: saved.result, requeued: saved.requeued.length };
 }
 
 export async function setProductActiveUseCase(input: {
@@ -175,17 +181,24 @@ export async function importProductsUseCase(input: {
   adminId: string;
 }): Promise<CsvRowResult[]> {
   const products = parseCsv(input.csv);
-  return withTransaction(async (client) => {
-    const rows: CsvRowResult[] = [];
-    for (const [index, draft] of products.entries()) {
-      const existing = await lockSku(client, draft.sku);
-      const saved = await saveProductInTransaction(client, {
-        draft,
-        originalSku: existing?.sku ?? null,
-        adminId: input.adminId,
-      });
-      rows.push({ row: index + 2, sku: draft.sku, result: saved.result });
-    }
-    return rows;
-  });
+  const imported = await executeWorkflow(
+    async (client) => {
+      const rows: CsvRowResult[] = [];
+      const requeued: string[] = [];
+      for (const [index, draft] of products.entries()) {
+        const existing = await lockSku(client, draft.sku);
+        const saved = await saveProductInTransaction(client, {
+          draft,
+          originalSku: existing?.sku ?? null,
+          adminId: input.adminId,
+        });
+        rows.push({ row: index + 2, sku: draft.sku, result: saved.result });
+        requeued.push(...saved.requeued);
+      }
+      return { rows, requeued };
+    },
+    // UC 3A: Orders requeued by any imported row follow 2S/3S/6S at once.
+    { orderIds: (result) => result.requeued },
+  );
+  return imported.rows;
 }

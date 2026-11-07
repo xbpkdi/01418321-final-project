@@ -13,8 +13,9 @@ import {
   SEED_RMS_INBOX,
 } from "@/mock/orders";
 import { findRslMatches } from "@/mock/rsl";
-import { findTracking, trackCarrier } from "@/mock/delivery";
-import { SEED_STOCK } from "@/mock/products";
+import { findLabelRule, findTracking, trackCarrier } from "@/mock/delivery";
+import { getPool } from "@/lib/db";
+import { getRslQuantity } from "@/lib/queries/stock";
 
 function unavailable(key: FaultKey): { ok: false; error: AdapterFailure } {
   return {
@@ -92,15 +93,17 @@ export const mockAdapterFactories: AdapterFactories = {
         if (isFaultEnabled("rsl")) return unavailable("rsl");
         return { ok: true, data: findRslMatches(order.sku, order.variation) };
       },
-      async getStock(sku) {
+      async getStock(sku, executor) {
         if (isFaultEnabled("rsl")) return unavailable("rsl");
-        const row = SEED_STOCK.find((stock) => stock.sku === sku);
-        return row?.rsl_qty === null || row?.rsl_qty === undefined
+        // A separate pool connection would miss uncommitted changes of the
+        // 3S transaction, and Q3S_1_ROUTE would write that stale value back.
+        const rslQuantity = await getRslQuantity(executor ?? getPool(), sku);
+        return rslQuantity === null
           ? {
               ok: false,
               error: { code: "unavailable", retryable: true },
             }
-          : { ok: true, data: row.rsl_qty };
+          : { ok: true, data: rslQuantity };
       },
     }),
   },
@@ -110,11 +113,7 @@ export const mockAdapterFactories: AdapterFactories = {
         if (isFaultEnabled("labelService")) {
           return unavailable("labelService");
         }
-        const rule = parcelRules.find(
-          (candidate) =>
-            candidate.shipping_method === order.shipping_method &&
-            candidate.sales_channel === order.sales_channel,
-        );
+        const rule = findLabelRule(parcelRules, order);
         if (!rule) {
           return {
             ok: false,
@@ -129,7 +128,11 @@ export const mockAdapterFactories: AdapterFactories = {
           ok: true,
           data: Array.from({ length: parcels }, (_, index) => ({
             label_template: rule.label_template,
-            rsl_no: order.rsl_reference_id ?? "",
+            // In-house Orders skip 1S and have no RSL reference.
+            rsl_no:
+              order.fulfill_source === "rsl"
+                ? (order.rsl_reference_id ?? "")
+                : "",
             parcel_seq: index + 1,
             parcel_total: parcels,
           })),

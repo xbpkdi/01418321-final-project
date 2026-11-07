@@ -106,11 +106,12 @@ export function purchaseColumns(
 
 const poCol = createColumnHelper<AppTableFeatures, PurchaseOrder>();
 
-/** ผลการสั่งซื้อที่บันทึกไว้ (Q6A.3) */
+/** ผลการสั่งซื้อที่บันทึกไว้ (Q6A.3) + ปุ่มรับสินค้า (6A รับสินค้า) */
 export function purchaseOrderColumns(
   t: Dict,
   lang: Lang,
   supplierName: (id: string) => string,
+  onReceive: (po: PurchaseOrder) => void,
 ) {
   return poCol.columns([
     poCol.accessor("po_id", {
@@ -165,6 +166,35 @@ export function purchaseOrderColumns(
       header: t.common.status,
       meta: { label: t.common.status },
       cell: (ctx) => <StatusBadge status={ctx.getValue()} />,
+    }),
+    poCol.display({
+      id: "actions",
+      cell: (ctx) => {
+        const po = ctx.row.original;
+        if (po.status === "สั่งซื้อแล้ว") {
+          return (
+            <div className="text-right">
+              <Button size="sm" variant="outline" onClick={() => onReceive(po)}>
+                {t.reorder.receive}
+              </Button>
+            </div>
+          );
+        }
+        if (po.status === "ได้รับสินค้าแล้ว" && po.received_qty) {
+          return (
+            <p
+              data-numeric
+              className="text-muted-foreground text-right text-xs"
+            >
+              {t.reorder.receivedSummary(
+                po.received_qty,
+                po.received_at ? formatDate(po.received_at, lang) : "—",
+              )}
+            </p>
+          );
+        }
+        return null;
+      },
     }),
   ]);
 }
