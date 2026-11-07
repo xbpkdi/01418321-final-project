@@ -24,12 +24,14 @@ export default function ShippingLabelReport({
   const r = t.reports;
   const template = order.label_template;
   const parcels = order.parcel_total ?? 1;
+  // In-house Orders skip 1S, so their labels carry no RSL reference (6S).
+  const scanRef = order.rsl_reference_id || order.order_id;
 
   return (
     <div className="bg-muted min-h-[100dvh] py-8 print:bg-white print:py-0">
       <PrintToolbar title={r.labelTitle} backHref="/shipping/label" />
 
-      {!template || !order.rsl_reference_id ? (
+      {!template ? (
         <p className="text-muted-foreground mx-auto w-[148mm] max-w-[calc(100%-2rem)] text-sm">
           {r.noLabel}
         </p>
@@ -55,7 +57,10 @@ export default function ShippingLabelReport({
 
               <section className="grid grid-cols-2 gap-4 border-b border-black py-3 text-xs">
                 <Field label="Order ID" value={order.order_id} />
-                <Field label={r.rslReference} value={order.rsl_reference_id!} />
+                <Field
+                  label={r.rslReference}
+                  value={order.rsl_reference_id || "—"}
+                />
                 <Field
                   label={t.common.salesChannel}
                   value={order.sales_channel}
@@ -122,9 +127,9 @@ export default function ShippingLabelReport({
               </section>
 
               <footer className="border-t-2 border-black pt-3">
-                {/* เลขอ้างอิงสำหรับสแกน: RSL + ลำดับกล่อง */}
+                {/* เลขอ้างอิงสำหรับสแกน: RSL (หรือ Order ID ถ้าบริษัทจัดส่งเอง) + ลำดับกล่อง */}
                 <p className="font-mono text-2xl tracking-[0.2em]">
-                  {order.rsl_reference_id}-{String(i + 1).padStart(2, "0")}
+                  {scanRef}-{String(i + 1).padStart(2, "0")}
                 </p>
                 <p className="mt-1 text-[10px] text-neutral-600">
                   {r.printedFrom(template)}

@@ -151,7 +151,10 @@ const th = {
     skuMissing: "ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน",
     skuMultiple: "พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง",
     skuDb: "ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง",
-    stockEnough: (id: string) => `${id} สต๊อกเพียงพอ ส่งต่อไปจับคู่กับ RSL`,
+    stockEnough: (id: string, inHouse: boolean) =>
+      inHouse
+        ? `${id} คลังบริษัทมีสต๊อกพอ บริษัทจัดส่งเอง ส่งต่อไปจัดรูปแบบใบปะสินค้า`
+        : `${id} RSL มีสต๊อกพอ ส่งต่อไปจับคู่กับ RSL`,
     stockLow: (id: string) =>
       `${id} สต๊อกไม่เพียงพอ ส่งต่อไปคำนวณต้นทุนและรอ Admin ตัดสินใจสั่งซื้อ`,
     labelCreated: (n: number) => `สร้างใบปะสินค้าสำเร็จ ${n} ใบ`,
@@ -174,8 +177,8 @@ const th = {
     footer: "Colorado Co., Ltd. · ระบบภายในสำหรับผู้ดูแลเท่านั้น",
     errIncomplete: "ข้อมูลที่กรอกมาไม่ครบ",
     errEmailFormat: "รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง",
-    errTooManyAttempts:
-      "คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง",
+    errTooManyAttempts: (minutes: number) =>
+      `คุณพยายามเข้าสู่ระบบบ่อยเกินไป บัญชีถูกล็อกชั่วคราว กรุณารออีก ${minutes} นาทีก่อนลองใหม่อีกครั้ง`,
     errWrongCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
     okLogin: "เข้าสู่ระบบสำเร็จ",
     // ประโยคเดียวกับ description ใน metadata ของ layout
@@ -270,7 +273,8 @@ const th = {
     queueTitle: "ยังไม่ได้จับคู่",
     matchedTitle: "จับคู่แล้ว รอพิมพ์ใบปะสินค้า",
     emptyTitle: "จับคู่ครบทุก Order แล้ว",
-    emptyHint: "Order ที่ตรวจสต๊อกแล้วว่าเพียงพอจะเข้ามารอที่นี่",
+    emptyHint:
+      "Order ที่ RSL มีสต๊อกพอจะเข้ามารอที่นี่ (Order ที่บริษัทจัดส่งเองไม่ต้องจับคู่)",
     chooseFor: (orderId: string, sku: string) =>
       `เลือกรายการ RSL สำหรับ ${orderId} · ${sku}`,
     stockLeft: "คงเหลือในคลัง RSL",
@@ -464,7 +468,7 @@ const th = {
     tabOrdered: (n: number) => `คำสั่งซื้อ (${n})`,
     emptyDecideTitle: "ไม่มีรายการรอตัดสินใจ",
     emptyDecideHint:
-      "Order ที่สต๊อกไม่พอและคำนวณต้นทุนแล้วจะเข้ามารอการตัดสินใจที่นี่",
+      "Order ที่สต๊อกไม่พอ และ Order ที่รอราคาขาย จะเข้ามารอการตัดสินใจที่นี่",
     emptyPurchaseTitle: "ไม่มีรายการรอสั่งซื้อ",
     emptyPurchaseHint:
       "SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์ และ Order ที่ตัดสินใจว่าคุ้มค่าจะเข้ามาที่นี่",
@@ -500,6 +504,7 @@ const th = {
     errDb: "ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง",
     errNoPrice: "ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ",
     errNoCost: "กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง",
+    errDecideQty: "กรุณากรอกจำนวนที่จะสั่งซื้อเป็นจำนวนเต็มบวก",
     errNotConfigured:
       "ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ",
     errSendFailed: "ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่",
@@ -516,6 +521,24 @@ const th = {
     poId: "เลขที่คำสั่งซื้อ",
     orderDate: "วันที่สั่ง",
     eta: "คาดว่าจะได้รับ",
+    statusReceived: "ได้รับสินค้าแล้ว",
+    receive: "รับสินค้า",
+    receiveTitle: (poId: string) => `บันทึกการรับสินค้า ${poId}`,
+    receiveHint: (sku: string, qty: number) =>
+      `สั่ง ${sku} ไว้ ${qty} ชิ้น สินค้าที่ได้รับจะถูกเพิ่มเข้าสต๊อกในบริษัท และ Order ที่รอสินค้านี้จะกลับไปตรวจสอบสต๊อก`,
+    receivedQtyLabel: "จำนวนที่ได้รับ",
+    receivedQtyHint:
+      "แก้ได้หากได้รับไม่ครบหรือเกินจำนวนที่สั่ง บันทึกได้ครั้งเดียวต่อคำสั่งซื้อ",
+    receivedSummary: (qty: number, date: string) =>
+      `ได้รับ ${qty} ชิ้น · ${date}`,
+    okReceived: (sku: string, qty: number) =>
+      `เพิ่ม ${sku} เข้าสต๊อกในบริษัท ${qty} ชิ้นแล้ว`,
+    okReceivedHint: (n: number) =>
+      `Order ที่รอสินค้านี้ ${n} รายการกลับไปตรวจสอบสต๊อกแล้ว`,
+    errReceiveQty: "กรุณากรอกจำนวนที่ได้รับเป็นจำนวนเต็มบวก",
+    errReceiveAlready: "คำสั่งซื้อนี้บันทึกการรับสินค้าไปแล้ว",
+    errReceiveNotOrdered:
+      "รับสินค้าได้เฉพาะคำสั่งซื้อที่อยู่ในสถานะ สั่งซื้อแล้ว",
   },
 
   shipping: {
@@ -571,7 +594,7 @@ const th = {
     emptySearchHint: "ลองค้นด้วย Order ID หรือที่อยู่จัดส่งอีกครั้ง",
     title: "พิมพ์ใบปะสินค้า",
     description:
-      "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จับคู่ RSL และจัดรูปแบบใบปะสินค้าแล้ว",
+      "พิมพ์ใบปะหน้าพัสดุสำหรับ Order ที่จัดรูปแบบใบปะสินค้าแล้ว ทั้งที่ RSL จัดส่งและบริษัทจัดส่งเอง",
     printAll: "พิมพ์ใบปะสินค้าทั้งหมด",
     print: "พิมพ์ใบปะสินค้า",
     reprint: "พิมพ์ซ้ำ",
@@ -581,7 +604,7 @@ const th = {
     parcels: "จำนวนกล่อง",
     emptyTitle: "ไม่มี Order ที่รอพิมพ์",
     emptyHint:
-      "Order ที่จับคู่กับ RSL และจัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
+      "Order ที่จัดรูปแบบใบปะสินค้าแล้วจะเข้ามารอที่นี่",
     reprintTitle: "Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่",
     reprintHint: "ระบบจะบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ",
     reprintConfirm: "ยืนยันพิมพ์ซ้ำ",
@@ -709,7 +732,20 @@ const th = {
     } as Record<FaultKey, string>,
     accounts: "บัญชีทดสอบ",
     accountsHint:
-      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+      "admin@colorado.jp ใช้รหัสจากการ seed · locked@colorado.jp ถูกล็อก 15 นาทีหลังรีเซ็ต ใช้ทดสอบเข้าสู่ระบบบ่อยเกินไป",
+    unlock: "ปลดล็อกบัญชี",
+    unlockDone: (count: number) =>
+      count === 0
+        ? "ไม่มีบัญชีที่ถูกล็อกหรือมีการเข้าสู่ระบบผิด"
+        : `ปลดล็อกบัญชีและล้างจำนวนครั้งที่เข้าสู่ระบบผิดแล้ว ${count} บัญชี`,
+    errorLogTitle: "บันทึกข้อผิดพลาดอัตโนมัติ",
+    errorLogHint: "50 รายการล่าสุดจากตาราง auto_error_logs (2S / 3S / 6S / 7S)",
+    errorLogEmpty: "ยังไม่มีข้อผิดพลาด",
+    errorLogAt: "เวลา",
+    errorLogUseCase: "UC",
+    errorLogContext: "อ้างอิง",
+    errorLogCode: "รหัส",
+    errorLogMessage: "ข้อความ",
   },
 };
 
@@ -852,8 +888,10 @@ const en: typeof th = {
       "No SKU rule matches this product. Please set up the SKU rule first",
     skuMultiple: "More than one SKU rule matches. Please choose manually",
     skuDb: "Cannot read SKU rules. Please try again later",
-    stockEnough: (id: string) =>
-      `${id} has enough stock and moves on to RSL matching`,
+    stockEnough: (id: string, inHouse: boolean) =>
+      inHouse
+        ? `${id} has enough company stock, ships in-house and moves on to label formatting`
+        : `${id} has enough RSL stock and moves on to RSL matching`,
     stockLow: (id: string) =>
       `${id} does not have enough stock and moves on to unit cost and the purchase decision`,
     labelCreated: (n: number) => `${n} shipping labels created`,
@@ -877,8 +915,8 @@ const en: typeof th = {
     footer: "Colorado Co., Ltd. · Internal system for administrators only",
     errIncomplete: "Required fields are missing",
     errEmailFormat: "The email format is not valid",
-    errTooManyAttempts:
-      "Too many sign-in attempts. Please wait a moment before trying again",
+    errTooManyAttempts: (minutes: number) =>
+      `Too many sign-in attempts. The account is locked for now. Please wait ${minutes} more minute${minutes === 1 ? "" : "s"} before trying again`,
     errWrongCredentials: "Incorrect email or password",
     okLogin: "Signed in successfully",
     tagline:
@@ -976,7 +1014,8 @@ const en: typeof th = {
     queueTitle: "Not matched",
     matchedTitle: "Matched, awaiting label print",
     emptyTitle: "Every order is matched",
-    emptyHint: "Orders with enough stock wait here",
+    emptyHint:
+      "Orders with enough RSL stock wait here (in-house orders skip matching)",
     chooseFor: (orderId: string, sku: string) =>
       `Choose an RSL record for ${orderId} · ${sku}`,
     stockLeft: "Left in RSL",
@@ -1171,7 +1210,7 @@ const en: typeof th = {
     tabOrdered: (n: number) => `Purchase orders (${n})`,
     emptyDecideTitle: "Nothing to decide",
     emptyDecideHint:
-      "Orders without enough stock and with a calculated cost wait here for a decision",
+      "Orders without enough stock, and Orders waiting for a selling price, wait here for a decision",
     emptyPurchaseTitle: "Nothing to reorder",
     emptyPurchaseHint:
       "SKUs below the reorder point and orders judged worth it arrive here",
@@ -1208,6 +1247,7 @@ const en: typeof th = {
     errDb: "Cannot save the decision. Please try again later",
     errNoPrice: "No selling price found for this product. Please check",
     errNoCost: "Please enter complete and valid cost data",
+    errDecideQty: "Enter the quantity to order as a positive whole number",
     errNotConfigured:
       "Supplier or order quantity not found. Please configure before ordering",
     errSendFailed:
@@ -1224,6 +1264,24 @@ const en: typeof th = {
     poId: "PO number",
     orderDate: "Ordered on",
     eta: "Expected",
+    statusReceived: "Received",
+    receive: "Receive goods",
+    receiveTitle: (poId: string) => `Record goods received for ${poId}`,
+    receiveHint: (sku: string, qty: number) =>
+      `${qty} units of ${sku} were ordered. Received goods are added to in-house stock, and orders waiting for them go back to the stock check`,
+    receivedQtyLabel: "Quantity received",
+    receivedQtyHint:
+      "Change it if the delivery is short or over. Each purchase order can be received once",
+    receivedSummary: (qty: number, date: string) =>
+      `Received ${qty} · ${date}`,
+    okReceived: (sku: string, qty: number) =>
+      `Added ${qty} units of ${sku} to in-house stock`,
+    okReceivedHint: (n: number) =>
+      `${n} waiting orders went back to the stock check`,
+    errReceiveQty: "Enter the quantity received as a positive whole number",
+    errReceiveAlready: "Goods for this purchase order were already received",
+    errReceiveNotOrdered:
+      "Only purchase orders with status Ordered can be received",
   },
 
   shipping: {
@@ -1281,7 +1339,7 @@ const en: typeof th = {
     emptySearchHint: "Try searching by order ID or shipping address again",
     title: "Shipping labels",
     description:
-      "Print parcel labels for orders that are matched with RSL and formatted",
+      "Print parcel labels for formatted orders, shipped by RSL or in-house",
     printAll: "Print all labels",
     print: "Print label",
     reprint: "Reprint",
@@ -1290,7 +1348,7 @@ const en: typeof th = {
     printedTitle: "Printed",
     parcels: "Parcels",
     emptyTitle: "No orders waiting to print",
-    emptyHint: "Orders matched with RSL and formatted wait here",
+    emptyHint: "Orders with formatted labels wait here",
     reprintTitle: "This order's label was already printed. Print it again?",
     reprintHint: "The system logs the reprint with time and operator",
     reprintConfirm: "Confirm reprint",
@@ -1417,7 +1475,20 @@ const en: typeof th = {
     } as Record<FaultKey, string>,
     accounts: "Test accounts",
     accountsHint:
-      "admin@colorado.jp uses the seeded password · locked@colorado.jp tests too many sign-in attempts",
+      "admin@colorado.jp uses the seeded password · locked@colorado.jp is locked for 15 minutes after a reset to test too many sign-in attempts",
+    unlock: "Unlock accounts",
+    unlockDone: (count: number) =>
+      count === 0
+        ? "No account is locked or has failed sign-ins"
+        : `Unlocked and cleared failed sign-ins for ${count} account${count === 1 ? "" : "s"}`,
+    errorLogTitle: "Automation error log",
+    errorLogHint: "Latest 50 rows from auto_error_logs (2S / 3S / 6S / 7S)",
+    errorLogEmpty: "No errors yet",
+    errorLogAt: "Time",
+    errorLogUseCase: "UC",
+    errorLogContext: "Reference",
+    errorLogCode: "Code",
+    errorLogMessage: "Message",
   },
 };
 

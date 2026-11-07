@@ -1,9 +1,9 @@
 import "server-only";
 import type { CarrierAdapter } from "@/lib/adapters/contracts";
 import { getExternalAdapters } from "@/lib/adapters";
-import { withTransaction } from "@/lib/db";
 import { listCarrierPollOrders, saveCarrierStatus } from "@/lib/queries/shipping";
 import { restoreCancelledOrderStock } from "@/lib/queries/stock";
+import { executeWorkflow } from "@/lib/use-cases/execute-workflow";
 import type { CarrierEvent } from "@/lib/workflow";
 
 /** UC 8A: persist only carrier-confirmed delivery outcomes. */
@@ -29,7 +29,9 @@ export async function pollCarrierUseCase(
     }
 
     let restocked = 0;
-    await withTransaction(async (client) => {
+    // A delivered Order runs 7S (if items are still not deducted) and the 8A
+    // closing rule in the same transaction as the carrier status.
+    await executeWorkflow(async (client) => {
       if (result.data === "returned" && row.stock_deducted && row.sku_id) {
         restocked = await restoreCancelledOrderStock(client, {
           orderId: row.order_id,
@@ -39,7 +41,7 @@ export async function pollCarrierUseCase(
         });
       }
       await saveCarrierStatus(client, row.order_id, result.data);
-    });
+    }, { orderIds: result.data === "delivered" ? [row.order_id] : [] });
 
     if (result.data === "failed") {
       events.push({ kind: "failed", orderId: row.order_id });

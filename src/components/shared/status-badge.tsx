@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toneOf, type OrderStatus, type StatusTone } from "@/lib/order-status";
 import { useT } from "@/lib/i18n/context";
+import type { PurchaseOrder } from "@/types/product";
 
 const TONE_CLASS: Record<StatusTone, string> = {
   waiting: "bg-status-waiting-bg text-status-waiting",
@@ -17,19 +18,21 @@ export function StatusBadge({
   status,
   className,
 }: {
-  status: OrderStatus;
+  status: OrderStatus | PurchaseOrder["status"];
   className?: string;
 }) {
   // ค่าสถานะที่ส่งเข้ามาเป็นค่าข้อมูลจริง ส่วนที่แสดงผลดึงจากดิกตามภาษาที่เลือก
   const t = useT();
+  // "ได้รับสินค้าแล้ว" เป็นสถานะของคำสั่งซื้อเติมสต๊อก (6A รับสินค้า) ไม่ใช่สถานะ Order
+  const received = status === "ได้รับสินค้าแล้ว";
 
   return (
     <Badge
       variant="secondary"
-      className={cn("gap-1.5 rounded-full font-semibold", TONE_CLASS[toneOf(status)], className)}
+      className={cn("gap-1.5 rounded-full font-semibold", TONE_CLASS[received ? "success" : toneOf(status)], className)}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
-      {t.statusLabel[status]}
+      {received ? t.reorder.statusReceived : t.statusLabel[status]}
     </Badge>
   );
 }

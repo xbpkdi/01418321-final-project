@@ -88,7 +88,9 @@ async function main(): Promise<void> {
 
     const baseline = await tableCounts(isolatedPool);
     await isolatedPool.query(
-      "UPDATE admins SET fail_attempts = 4 WHERE admin_id = $1",
+      `UPDATE admins
+       SET fail_attempts = 4, locked_until = CURRENT_TIMESTAMP + INTERVAL '1 hour'
+       WHERE admin_id = $1`,
       ["U001"],
     );
     await isolatedPool.query(
@@ -115,11 +117,18 @@ async function main(): Promise<void> {
       );
     }
 
-    const admin = await isolatedPool.query<{ fail_attempts: number }>(
-      "SELECT fail_attempts FROM admins WHERE admin_id = $1",
-      ["U001"],
-    );
+    const admin = await isolatedPool.query<{
+      fail_attempts: number;
+      locked_until: Date | null;
+    }>("SELECT fail_attempts, locked_until FROM admins WHERE admin_id = $1", [
+      "U001",
+    ]);
     assertEqual(admin.rows[0]?.fail_attempts, 0, "Seeded Admin was not restored");
+    assertEqual(
+      admin.rows[0]?.locked_until ?? null,
+      null,
+      "Seeded Admin lock was not cleared",
+    );
 
     const smokeSupplier = await isolatedPool.query<{ count: string }>(
       "SELECT COUNT(*)::text AS count FROM suppliers WHERE supplier_id = $1",

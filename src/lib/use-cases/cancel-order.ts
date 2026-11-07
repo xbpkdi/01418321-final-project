@@ -60,7 +60,7 @@ export async function cancelOrderUseCase(input: {
     const poCancelled = Boolean(
       input.alsoCancelPo &&
         order.reorder_id &&
-        (await cancelLinkedReorder(client, order.reorder_id)),
+        (await cancelLinkedReorder(client, order.reorder_id, order.order_id)),
     );
     await saveCancellation(
       client,

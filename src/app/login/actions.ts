@@ -5,8 +5,10 @@ import { withTransaction } from "@/lib/db";
 import { mapDatabaseError } from "@/lib/db/errors";
 import {
   findAdminByEmail,
+  LOGIN_MAX_ATTEMPTS,
   recordFailedLogin,
   recordSuccessfulLogin,
+  unlockAdmin,
 } from "@/lib/queries/admin";
 import { verifyPassword } from "@/lib/auth/password";
 import {
@@ -25,7 +27,15 @@ export type LoginActionResult =
   | "databaseUnavailable"
   | "databaseFailure";
 
-export type LoginActionState = { result: LoginActionResult } | null;
+/** `retryMinutes` is set only for "locked": minutes left until auto-unlock. */
+export type LoginActionState = {
+  result: LoginActionResult;
+  retryMinutes?: number;
+} | null;
+
+function minutesUntil(until: Date, now: Date): number {
+  return Math.max(1, Math.ceil((until.getTime() - now.getTime()) / 60_000));
+}
 
 /** UC 1A: validate credentials, update counters, and create a DB session. */
 export async function loginAction(
@@ -45,24 +55,43 @@ export async function loginAction(
     | undefined;
 
   try {
-    const result = await withTransaction(async (client) => {
-      const admin = await findAdminByEmail(email, client);
-      if (!admin) return "wrong" as const;
-      if (admin.fail_attempts >= 5) return "locked" as const;
+    const result = await withTransaction<LoginActionState | "ok">(
+      async (client) => {
+        const now = new Date();
+        const admin = await findAdminByEmail(email, client);
+        // Unknown email: no account to count against, same generic message.
+        if (!admin) return { result: "wrong" };
+        if (admin.locked_until && admin.locked_until > now) {
+          return {
+            result: "locked",
+            retryMinutes: minutesUntil(admin.locked_until, now),
+          };
+        }
+        // The lock has ended (or a legacy row has no end time): start over.
+        if (admin.locked_until || admin.fail_attempts >= LOGIN_MAX_ATTEMPTS) {
+          await unlockAdmin(admin.admin_id, client);
+        }
 
-      const valid = await verifyPassword(password, admin.user_password);
-      if (!valid) {
-        await recordFailedLogin(admin.admin_id, client);
-        return "wrong" as const;
-      }
+        const valid = await verifyPassword(password, admin.user_password);
+        if (!valid) {
+          const failed = await recordFailedLogin(admin.admin_id, now, client);
+          // The 5th failure locks the account and says so right away.
+          if (failed.lockedUntil && failed.lockedUntil > now) {
+            return {
+              result: "locked",
+              retryMinutes: minutesUntil(failed.lockedUntil, now),
+            };
+          }
+          return { result: "wrong" };
+        }
 
-      const now = new Date();
-      await recordSuccessfulLogin(admin.admin_id, now, client);
-      newSession = await createSessionRecord(admin.admin_id, client, now);
-      return "ok" as const;
-    });
+        await recordSuccessfulLogin(admin.admin_id, now, client);
+        newSession = await createSessionRecord(admin.admin_id, client, now);
+        return "ok";
+      },
+    );
 
-    if (result !== "ok") return { result };
+    if (result !== "ok") return result;
   } catch (error) {
     const safeError = mapDatabaseError(error);
     return {

@@ -104,8 +104,9 @@ const RESET_SEED_DATA = `
 // UC 1A / Q1A.7 (provisional): seed the two approved Admin test accounts.
 const INSERT_ADMIN = `
   INSERT INTO admins (
-    admin_id, user_email, user_password, fail_attempts, created_at
-  ) VALUES ($1, $2, $3, $4, $5)
+    admin_id, user_email, user_password, fail_attempts, locked_until,
+    created_at
+  ) VALUES ($1, $2, $3, $4, $5, $6)
   ON CONFLICT (admin_id) DO NOTHING
 `;
 
@@ -155,10 +156,10 @@ const INSERT_ORDER = `
     tracking_number, carrier_name, dispatched_at, tracking_notified,
     tracking_notified_at, cancel_reason, cancelled_at, verified_at,
     created_at, updated_at, manual_reason, customer_cancel_requested, edit_log,
-    delivery_status
+    delivery_status, reorder_id, reorder_decision, decided_qty
   ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-    $15, $16, $17, $18, $19, $20, $21, $22
+    $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
   )
   ON CONFLICT (order_id) DO NOTHING
 `;
@@ -188,6 +189,26 @@ const INSERT_REORDER = `
     created_at, sku_id, supplier_id
   ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
   ON CONFLICT (reorder_id) DO NOTHING
+`;
+
+// UC 6A (provisional): keep the PO running number after the seeded POs.
+// A reset restarts it, so the first new PO after a reset is always PO-0092;
+// a normal seed never moves it backwards.
+const SYNC_REORDER_NUMBER = `
+  SELECT setval(
+    'reorder_no_seq',
+    GREATEST(
+      COALESCE((
+        SELECT MAX(substring(reorder_id FROM '^PO-([0-9]+)$')::bigint)
+        FROM reorders
+      ), 0) + 1,
+      CASE WHEN $1::boolean THEN 1 ELSE (
+        SELECT CASE WHEN is_called THEN last_value + 1 ELSE last_value END
+        FROM reorder_no_seq
+      ) END
+    ),
+    false
+  )
 `;
 
 // UC 5S / Q5S.1 (provisional): initial successful notification history.
@@ -223,19 +244,26 @@ function requiredSeedPassword(): string {
   return password;
 }
 
+// Same as LOGIN_LOCK_MINUTES in src/lib/queries/admin.ts (server-only there).
+const SEED_LOCK_MINUTES = 15;
+
 async function seedAdmins(client: PoolClient, now: Date): Promise<void> {
   const encodedPassword = await hashPasswordValue(requiredSeedPassword());
+  // UC 1A: locked@ starts inside a fresh 15-minute lock; it unlocks by
+  // itself after that (or via /dev). A reset locks it again.
+  const lockedUntil = new Date(now.getTime() + SEED_LOCK_MINUTES * 60_000);
   const accounts = [
-    ["U001", "admin@colorado.jp", 0],
-    ["U002", "locked@colorado.jp", 5],
+    ["U001", "admin@colorado.jp", 0, null],
+    ["U002", "locked@colorado.jp", 5, lockedUntil],
   ] as const;
 
-  for (const [adminId, email, failedAttempts] of accounts) {
+  for (const [adminId, email, failedAttempts, until] of accounts) {
     await client.query(INSERT_ADMIN, [
       adminId,
       email,
       encodedPassword,
       failedAttempts,
+      until,
       now,
     ]);
   }
@@ -326,6 +354,9 @@ async function seedOrders(client: PoolClient, now: Date): Promise<void> {
       order.customer_cancel_request ?? false,
       JSON.stringify(order.edit_log ?? []),
       order.delivery_status ?? null,
+      order.po_id ?? null,
+      order.decision ?? null,
+      order.decided_qty ?? null,
     ]);
 
     await client.query(INSERT_ORDER_ITEM, [
@@ -412,8 +443,10 @@ export async function seedDatabase(options?: {
 
     await seedAdmins(client, now);
     await seedReferenceData(client, now);
-    await seedOrders(client, now);
+    // reorders first: orders.reorder_id references them (UC 6A).
     await seedReorders(client);
+    await client.query(SYNC_REORDER_NUMBER, [options?.reset === true]);
+    await seedOrders(client, now);
     await seedSyncStates(client, now);
   });
 }
